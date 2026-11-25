@@ -1,8 +1,8 @@
 {
- "sourceCommit": "06b69263661e986682f9e4208bab3ba54bd317db",
+ "sourceCommit": "48b1bfb46b87544d10b9bd74bdc96cb2ebdccd04",
  "sourceHasUncommittedChanges": false,
  "fileCount": 401,
- "totalBytes": 84445112,
+ "totalBytes": 84480068,
  "files": [
   {
    "path": "art.js",
@@ -1946,13 +1946,13 @@
   },
   {
    "path": "config.js",
-   "bytes": 559,
-   "sha256": "40e7d945319f73b1db158a6ff497d89cafea634b06ed6b40261cc03c851998a0"
+   "bytes": 682,
+   "sha256": "89a91f66a8a836a6e6a2b46a4f60b5998e05f65285cf195c5c5e114c269780e6"
   },
   {
    "path": "content.js",
-   "bytes": 19462,
-   "sha256": "389689d5ff2348d86a0d516fa6841945960d95825d58a6eb97f9fece844e9652"
+   "bytes": 20253,
+   "sha256": "af6708230a85ab08c8179eab58746093991ad58b088ccfe03dfd9a0d7af5d5d4"
   },
   {
    "path": "fonts.css",
@@ -1961,13 +1961,13 @@
   },
   {
    "path": "game.js",
-   "bytes": 125484,
-   "sha256": "6c3d066ee8fe66a4680c2cd8f8ef96b0680b6bc046365330fcaa28678a541012"
+   "bytes": 135950,
+   "sha256": "12d8f85a2613fac44d8b3749e8a2541581216ad7718232f5374a7d0292738fad"
   },
   {
    "path": "i18n.js",
-   "bytes": 183958,
-   "sha256": "62edf017e507fbe86fabb6fcd9092d51689f5e0eea93a2e66f6b09e74dbf2664"
+   "bytes": 201103,
+   "sha256": "9de8cf3cb1ff23aecd9b3e0f523863d3b87dc50620fe68af911e314ad38c3a8a"
   },
   {
    "path": "icon.png",
@@ -1976,8 +1976,8 @@
   },
   {
    "path": "index.html",
-   "bytes": 8097,
-   "sha256": "9a9d4e935cc11b017f312f796322e6aaf7c7baba963f91d460d6b6c1ee56cb91"
+   "bytes": 8209,
+   "sha256": "dedfe3ce1f57973a4de5d5481693af7267150cc28863a26240d83117493c1f2d"
   },
   {
    "path": "manifest.json",
@@ -2001,13 +2001,13 @@
   },
   {
    "path": "save.js",
-   "bytes": 26960,
-   "sha256": "ab3c960d3e84200bb69e0f6ced77c24f7aa90609ff38582ec1c71e295f940045"
+   "bytes": 28817,
+   "sha256": "e91f80d3256e03e3dd027aa4f40affce5a150d7b2ceca342aec44edfb2828faa"
   },
   {
    "path": "style.css",
-   "bytes": 46345,
-   "sha256": "2657e43864571bbe4f6cab6fac618e07d5fe6e874c30e203ee83c09a26304337"
+   "bytes": 50807,
+   "sha256": "752136003c9f81060391b38736d3521114a55d477ae32f0b26766d937f271d46"
   }
  ]
 }

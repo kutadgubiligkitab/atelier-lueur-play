@@ -6,7 +6,7 @@
 
 /* ---------------- تەڭشەكلەر ---------------- */
 const COLS = 7, ROWS = 8, N = COLS*ROWS;
-const ENERGY_CAP = 100, ENERGY_MS = 60000;     // ONE shared cap: passive regeneration stops at 100 (rewards may exceed it); +1 energy every 60 s
+const ENERGY_CAP = 100, ENERGY_MS = 120000;     // ONE shared cap: passive regeneration stops at 100 (rewards may exceed it); +1 energy every 2 minutes
 const INITIAL_ENERGY = 50;                    // a new game still starts with 50 (separate from the cap)
 const LEGACY_ENERGY_CAP = 50;                 // the cap before the 100 cap (used only to settle old saves exactly once)
 const MAXLV = 6, GEN_MAXLV = 3;
@@ -66,7 +66,8 @@ function newGame(){
     seen:{}, owned:{}, road:{}, album:{},
     cnt:{day:{k:dayKey()}, week:{k:weekKey()}, month:{k:monthKey()}}, claimed:{}, gift:'',
     eshop:{v:1, k:dayKey(), n20:0, n50:0},
-    set:{sound:true, music:true, soundVol:0.85, musicVol:0.40, vib:true, lang:(typeof pickBestLang==='function' ? pickBestLang(typeof navigator!=='undefined' && (navigator.language || (navigator.languages && navigator.languages[0]) || ''), Object.keys(LANGS)) : 'ug')}, secretSeen:false};
+    set:{sound:true, music:true, soundVol:0.85, musicVol:0.40, vib:true, lang:(typeof pickBestLang==='function' ? pickBestLang(typeof navigator!=='undefined' && (navigator.language || (navigator.languages && navigator.languages[0]) || ''), Object.keys(LANGS)) : 'ug')}, secretSeen:false,
+    tut:0, inv:{v:1, cap:4, items:[]}};
   b.forEach(it => { if (it && it.c) s.seen[it.c+it.l] = 1; });
   MSN.startMonth(s, monthKey(), MSN_CFG); MSN.startWeek(s, weekKey(), MSN_CFG); MSN.assignDay(s, MSN_CFG, dayKey());
   return s;
@@ -75,10 +76,18 @@ function newGame(){
    Anything but "ok" blocks autosave until the player resolves it, so unrecovered data is never overwritten. */
 let S = null, hasSave = false, recovery = null;
 const saveGate = {blocked: false, memoryOnly: false, warn: null};
+function playtestCoinTarget(){
+  const n = C && C.playtestCoinGrant;
+  return (typeof n === 'number' && isFinite(n) && n > 0 && n <= 1e9) ? Math.floor(n) : 0;
+}
+function applyPlaytestCoinGrant(s){          // play-site builds only (config.playtestCoinGrant > 0); tops up once per save
+  const n = playtestCoinTarget(); if (!n || !s || s.ptcg) return false;
+  if (s.coins < n) s.coins = n; s.ptcg = 1; return true;
+}
 function applyBoot(boot){
   hasSave = false; recovery = null; saveGate.blocked = false;
-  if (boot.status === 'ok'){ S = boot.state; hasSave = true; prepareCalendar(S); return; }
-  S = newGame();
+  if (boot.status === 'ok'){ S = boot.state; hasSave = true; prepareCalendar(S); applyPlaytestCoinGrant(S); return; }
+  S = newGame(); applyPlaytestCoinGrant(S);
   if (boot.status === 'fresh') return;
   recovery = boot; saveGate.blocked = true;
   if (boot.status === 'corrupt') recovery.preserved = persist.preserveCorrupt(boot.raw);   // original bytes kept before anything else happens
@@ -87,6 +96,8 @@ function applyBoot(boot){
 function prepareCalendar(s){
   if (!s.cnt.month) s.cnt.month = {k: monthKey()};
   if (!s.eshop || s.eshop.k !== dayKey()) s.eshop = {v:1, k: dayKey(), n20:0, n50:0};
+  if (s.tut === undefined) s.tut = 5;                 // existing saves skip the first-play tutorial
+  if (!s.inv) s.inv = {v:1, cap:4, items:[]};
   MSN.migrate(s, MSN_CFG, calendarKeys());
 }
 applyBoot(persist.read());
@@ -336,7 +347,7 @@ function accessibleChains(){
   const fam = CHAINS.filter(c => Object.keys(types).some(t => (GEN_CHAINS[t] || []).indexOf(c) >= 0));
   return fam.length ? fam : CHAINS.slice();
 }
-function fillOrders(){ migrateCustomers(); for (let i=0;i<3;i++) if (!S.orders[i]) S.orders[i] = newOrder(i); }
+function fillOrders(){ migrateCustomers(); for (let i=0;i<3;i++) if (!S.orders[i]) S.orders[i] = newOrder(i); seedTutorialOrder(); }
 function haveCount(c, l){ return S.board.filter(it => it && it.c===c && it.l===l).length; }
 const needs = o => window.PROGRESSION.reqs(o);
 function ready(o){ return !!o && needs(o).every(r => haveCount(r.c, r.l) >= r.n); }
@@ -352,8 +363,142 @@ function deliver(oi){
   const el = $('orders').children[oi]; if (el) el.classList.add('leave');
   lastWho[oi] = whoOf(o, oi); S.orders[oi] = null; save(); closeModal();
   if (atl.created){ setTimeout(() => { toast(L.atl.newCommission); renderSide(); }, 900); }
-  setTimeout(() => { S.orders[oi] = newOrder(oi); PSTATE[oi] = 'idle'; orderFx[oi] = 'arrive'; save(); renderOrders(); renderBoard(); }, 420);
-  renderTop(); renderBoard(); renderInfo(); renderNav();
+  if (S.tut === 3) tutAdvance(3);
+  setTimeout(() => { S.orders[oi] = newOrder(oi); PSTATE[oi] = 'idle'; orderFx[oi] = 'arrive'; save(); renderOrders(); renderBoard(); renderTut(); }, 420);
+  renderTop(); renderBoard(); renderInfo(); renderNav(); renderTut();
+}
+
+
+/* ---------------- ئامبار، قايتۇرۇش، تەبرىك ۋە قىسقا ئۆگىتىش ---------------- */
+const INV_CAPS = [4, 8, 12], INV_EXPAND = {8: 300, 12: 800}, UNDO_MS = 8000;
+function invState(){ return S.inv || (S.inv = {v:1, cap:4, items:[]}); }
+function invFree(){ const inv = invState(); return inv.cap - inv.items.length; }
+function storeSelected(){
+  const cell = selected, it = cell != null ? S.board[cell] : null; if (!it) return {ok:false, reason:'none'};
+  if (invFree() < 1){ toast(L.invFull); SFX.no(); return {ok:false, reason:'full'}; }
+  const r = txn(() => {
+    const inv = invState(); if (inv.items.length >= inv.cap) return {ok:false, reason:'full'};
+    const cur = S.board[cell]; if (!cur) return {ok:false, reason:'none'};
+    inv.items.push(cur.g ? {g:cur.g, l:cur.l} : {c:cur.c, l:cur.l}); S.board[cell] = null; return {ok:true};
+  });
+  if (r.ok){ selected = null; SFX.drop(); renderAll(); } else { SFX.no(); toast(r.reason==='full' ? L.invFull : L.supplyFail); }
+  return r;
+}
+function placeInv(i){
+  const r = txn(() => {
+    const inv = invState(), it = inv.items[i]; if (!it) return {ok:false, reason:'none'};
+    const j = emptyCell(); if (j < 0) return {ok:false, reason:'board'};
+    S.board[j] = it.g ? {g:it.g, l:it.l} : {c:it.c, l:it.l}; inv.items.splice(i, 1); return {ok:true, j};
+  });
+  if (r.ok){ selected = r.j; SFX.tap(); renderAll(); } else { SFX.no(); toast(r.reason==='board' ? L.boardFull : L.supplyFail); }
+  return r;
+}
+function expandInv(){
+  const r = txn(() => {
+    const inv = invState(), n = INV_CAPS[INV_CAPS.indexOf(inv.cap) + 1]; if (!n) return {ok:false, reason:'max'};
+    const price = INV_EXPAND[n]; if (S.coins < price) return {ok:false, reason:'coins'};
+    S.coins -= price; inv.cap = n; return {ok:true, cap:n};
+  });
+  if (r.ok){ SFX.shop(); toast(L.invExpanded(r.cap)); renderAll(); } else { SFX.no(); toast(r.reason==='coins' ? L.noCoins : L.supplyFail); }
+  return r;
+}
+function renderInv(){
+  const bar = $('invBar'); if (!bar) return;
+  const inv = invState(), next = INV_CAPS[INV_CAPS.indexOf(inv.cap) + 1];
+  let h = `<div class="invSlots">`;
+  for (let i = 0; i < inv.cap; i++){
+    const it = inv.items[i];
+    h += `<button type="button" class="invSlot${it ? ' full' : ''}" data-inv="${i}">${it ? itemArt(it) : ''}</button>`;
+  }
+  h += `</div>`;
+  if (next) h += `<button type="button" class="invExpand${S.coins < INV_EXPAND[next] ? ' no' : ''}" id="invExpand">${L.invExpand(INV_EXPAND[next])}</button>`;
+  bar.innerHTML = h;
+  bar.querySelectorAll('[data-inv]').forEach(b => b.onclick = () => {
+    const i = +b.dataset.inv; if (invState().items[i]) placeInv(i); else storeSelected();
+  });
+  const ex = $('invExpand'); if (ex) ex.onclick = expandInv;
+}
+
+let undoSale = null, undoTimer = 0;
+function clearUndo(){ undoSale = null; clearInterval(undoTimer); undoTimer = 0; renderUndo(); }
+function renderUndo(){
+  const el = $('undoBar'); if (!el) return;
+  const left = undoSale ? Math.ceil((undoSale.until - Date.now()) / 1000) : 0;
+  if (!undoSale || left <= 0){ el.hidden = true; el.innerHTML = ''; if (undoSale && left <= 0) undoSale = null; return; }
+  el.hidden = false;
+  el.innerHTML = `<button type="button" class="btn pink" id="bUndo">${L.undo} · ${L.undoLeft(left)}</button>`;
+  $('bUndo').onclick = undoLastSale;
+}
+function undoLastSale(){
+  if (!undoSale || Date.now() >= undoSale.until){ clearUndo(); return; }
+  const u = undoSale;
+  if (S.coins < u.coins){ toast(L.noCoins); SFX.no(); return; }
+  const r = txn(() => {
+    if (S.coins < u.coins) return {ok:false, reason:'coins'};
+    let j = (S.board[u.cell] == null) ? u.cell : emptyCell();
+    if (j < 0){
+      const inv = invState(); if (inv.items.length >= inv.cap) return {ok:false, reason:'board'};
+      inv.items.push({c:u.it.c, l:u.it.l}); S.coins -= u.coins;
+    } else { S.board[j] = {c:u.it.c, l:u.it.l}; S.coins -= u.coins; }
+    const dec = (obj, k, n) => { if (obj && obj[k]) obj[k] = Math.max(0, obj[k] - n); };
+    dec(S.cnt.day, 'coins', u.coins); dec(S.cnt.week, 'coins', u.coins); if (S.cnt.month) dec(S.cnt.month, 'coins', u.coins);
+    return {ok:true, j: j < 0 ? -1 : j};
+  });
+  if (!r.ok){ SFX.no(); toast(r.reason==='board' ? L.boardFull : L.noCoins); return; }
+  if (r.j >= 0) selected = r.j; SFX.drop(); clearUndo(); renderAll();
+}
+
+function genDropTable(l){ return l === 1 ? [{l:1,p:90},{l:2,p:10}] : l === 2 ? [{l:1,p:75},{l:2,p:25}] : [{l:1,p:60},{l:2,p:30},{l:3,p:10}]; }
+function openGenUpgrade(g, l){
+  const prev = {}, cur = genDropTable(l); genDropTable(l - 1).forEach(x => { prev[x.l] = x.p; });
+  const fams = GEN_CHAINS[g] || [];
+  const cells = fams.map(c => cur.map(d => {
+    const neu = prev[d.l] === undefined;
+    return `<div class="guOut${neu ? ' new' : ''}">${A.item(c, d.l)}<span class="guLv">${d.l}</span>${neu ? `<span class="guNew">${L.genUpNew}</span>` : ''}<span class="guP">${d.p}%</span></div>`;
+  }).join('')).join('');
+  modal(L.genUpTitle, `<div class="guHero">${A.gen(g, l)}</div><div class="center guName">${L.genUpName(L.gens[g], l)}</div>
+    <div class="center guLead">${L.genUpLead} ↑</div><div class="guLab">${L.genUpOutputs}</div><div class="guGrid">${cells}</div>
+    <div class="center muted guGo">${L.genUpContinue}</div>`);
+  $('modal').classList.add('genUp');
+}
+
+function prevDayKey(k){
+  const p = String(k || '').split('-').map(Number); if (p.length !== 3 || p.some(n => !isFinite(n))) return '';
+  const d = new Date(p[0], p[1] - 1, p[2] - 1);
+  return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+}
+function giftStreakNext(){ const dk = dayKey(); return (S.gst && S.gst.k === prevDayKey(dk)) ? Math.min(3, (S.gst.n || 1) + 1) : 1; }
+function giftReward(n){ const k = Math.max(1, Math.min(3, n)); return {energy: 20 + 10 * k, coins: 20 + 10 * k}; }
+function claimDailyGift(){
+  const dk = dayKey(); if (S.gift === dk) return {ok:false, reason:'already'};
+  const n = giftStreakNext(), rew = giftReward(n);
+  S.gift = dk; S.gst = {k: dk, n}; give(rew); SFX.coin(); save();
+  if (S.tut === 4) tutAdvance(4);
+  return {ok:true, n, rew};
+}
+
+function seedTutorialOrder(){
+  if (!S || S.lv !== 1 || haveCount('per', 1) < 1) return;
+  if (S.tut > 3) return;
+  const o = S.orders[0]; if (o && o.c === 'per' && o.l === 1 && o.n === 1 && !o.m) return;
+  const who = o && o.who; S.orders[0] = {c:'per', l:1, n:1, coins:8, stars:4}; if (who) S.orders[0].who = who;
+}
+function startTutorial(){ if (S.tut === 0){ S.tut = 1; save(); } renderTut(); }
+function skipTut(){ S.tut = 5; save(); renderTut(); }
+function tutAdvance(from){ if (S.tut !== from) return; S.tut = from === 4 ? 5 : from + 1; save(); renderTut(); }
+function renderTut(){
+  const layer = $('tutLayer'); if (!layer) return;
+  document.querySelectorAll('.tutPulse').forEach(el => el.classList.remove('tutPulse'));
+  if (!S || S.tut < 1 || S.tut > 4){ layer.hidden = true; layer.innerHTML = ''; return; }
+  layer.hidden = false;
+  const txt = [L.tut1, L.tut2, L.tut3, L.tut4][S.tut - 1];
+  layer.innerHTML = `<div class="tutCard"><div class="tutN ltr">${S.tut}/4</div><p>${txt}</p><button type="button" id="tutSkip">${L.tutSkip}</button></div>`;
+  $('tutSkip').onclick = ev => { ev.stopPropagation(); skipTut(); };
+  const pulse = ids => ids.forEach(i => { const c = $('board') && $('board').children[i]; if (c) c.classList.add('tutPulse'); });
+  if (S.tut === 1) pulse([2, 4]);
+  if (S.tut === 2) pulse([16, 17]);
+  if (S.tut === 3){ const o = $('orders') && $('orders').children[0]; if (o) o.classList.add('tutPulse'); }
+  if (S.tut === 4){ const b = document.querySelector('#nav button[data-k="shop"]'); if (b) b.classList.add('tutPulse'); const g = $('shGift'); if (g) g.classList.add('tutPulse'); }
 }
 
 /* ---------------- تاختا ھەرىكەتلىرى ---------------- */
@@ -370,7 +515,8 @@ function produce(i){
   const it = {c: pick(GEN_CHAINS[g.g]), l};
   S.board[best] = it; discover(it); count('tap');
   SFX.spawn(); buzz(8); save();
-  renderBoard({fly:{to:best, from:i}}); renderTop(); renderOrders(); renderInfo(); renderNav();
+  if (S.tut === 1) tutAdvance(1);
+  renderBoard({fly:{to:best, from:i}}); renderTop(); renderOrders(); renderInfo(); renderNav(); renderTut();
 }
 function discover(it){
   if (!it.c) return;
@@ -387,11 +533,15 @@ function drop(from, to){
   if (to == null || to === from) return;
   const a = S.board[from], b = S.board[to];
   if (canMerge(a, b)){
+    const genUp = !!(a.g), genType = a.g, genLv = a.l + 1, lipMerge = !!(a.c && a.c === 'lip');
     S.board[to] = a.c ? {c:a.c, l:a.l+1} : {g:a.g, l:a.l+1};
     S.board[from] = null; discover(S.board[to]); count('merge'); if (a.c){ MSN.countMerge(S, a.c, MSN_CFG); MSN.sync(S, MSN_CFG); }   // per-family merge counter (ordinary families only)
     const atl = S.board[to].c && !ATL.hasChapter(S) ? atelierNotes() : [];      // lipstick/powder rank 6 may complete the unlock prerequisites
     selected = to; SFX.merge(a.l+1); buzz(15); save(); if (atl.length) announceLevelUps(atl);
-    renderBoard({pop:to}); renderTop(); renderOrders(); renderInfo(); renderNav(); return;
+    if (lipMerge && S.tut === 2) tutAdvance(2);
+    renderBoard({pop:to}); renderTop(); renderOrders(); renderInfo(); renderNav(); renderTut();
+    if (genUp) openGenUpgrade(genType, genLv);
+    return;
   }
   S.board[to] = a; S.board[from] = b; selected = to; SFX.drop(); save(); renderAll();
 }
@@ -402,12 +552,16 @@ function tap(i){
   if (it.g) produce(i); else { SFX.tap(); renderBoard(); renderInfo(); }
 }
 function sell(){
-  const it = S.board[selected]; if (!it || it.g) return;
-  give({coins: it.l*2}); S.board[selected] = null; selected = null; SFX.coin(); save(); renderAll();
+  const it = S.board[selected]; if (!it || it.g) return;          // generators stay unsellable
+  const cell = selected, copy = {c:it.c, l:it.l}, coins = it.l * 2;
+  give({coins}); S.board[selected] = null; selected = null; SFX.coin(); save();
+  undoSale = {it:copy, cell, coins, until: Date.now() + UNDO_MS};
+  clearInterval(undoTimer); undoTimer = setInterval(() => { if (!undoSale || Date.now() >= undoSale.until) clearUndo(); else renderUndo(); }, 200);
+  renderAll(); renderUndo();
 }
 
 /* ---------------- كۆرسىتىش ---------------- */
-function renderAll(){ renderTop(); renderOrders(); renderBoard(); renderInfo(); renderNav(); renderSide(); if (page==='salon') renderSalon(); layout(); }
+function renderAll(){ renderTop(); renderOrders(); renderBoard(); renderInfo(); renderNav(); renderSide(); renderInv(); renderUndo(); if (page==='salon') renderSalon(); layout(); renderTut(); }
 
 function renderTop(){
   const pct = Math.min(100, S.stars/starsNeed(S.lv)*100);
@@ -593,7 +747,8 @@ function renderInfoInner(){
   }
   if (!it){ box.innerHTML = `<div class="art">${A.icon('gift')}</div><div class="txt"><div class="hint">${L.idleHint}</div></div>`; return; }
   box.innerHTML = infoItemHtml(it);
-  if (!it.g) $('bSell').onclick = sell;
+  if ($('bStore')) $('bStore').onclick = storeSelected;
+  if (!it.g && $('bSell')) $('bSell').onclick = sell;
 }
 function infoItemHtml(it){                  // markup of the selected-item panel (also used, off-screen, to measure the tallest possible content)
   const max = it.g ? GEN_MAXLV : MAXLV;
@@ -601,8 +756,10 @@ function infoItemHtml(it){                  // markup of the selected-item panel
   let hint;
   if (it.g) hint = `${L.genHint}. ${next ? L.genMerge : L.genMax}`;
   else hint = next ? `${L.mergeInto} <i>${itemArt(next)}</i> ${itemName(next)}` : L.maxLevel;
+  const store = `<button class="btn" id="bStore"${invFree() < 1 ? ' disabled' : ''}>${L.invStore}</button>`;
+  const sellBtn = it.g ? '' : `<button class="btn pink" id="bSell">${L.sell} <span class="rw"><i>${A.icon('coin')}</i>${it.l*2}</span></button>`;
   return `<div class="art">${itemArt(it)}</div><div class="txt"><div class="ttl">${itemName(it)} · ${L.level(it.l)}</div><div class="hint">${hint}</div></div>
-    ${it.g ? '' : `<button class="btn pink" id="bSell">${L.sell} <span class="rw"><i>${A.icon('coin')}</i>${it.l*2}</span></button>`}`;
+    <div class="infoActs">${store}${sellBtn}</div>`;
 }
 /* Height the panel needs for the LONGEST content in the current language and width (every item rank, every producer, the delivery-tray row), measured off-screen once per width/language.
    The panel always reserves this height, so selecting a long-named item never resizes the panel or the board (geometry stays stable) and nothing is ever cut off. */
@@ -848,8 +1005,10 @@ function closeModal(){
   const was = $('overlay').classList.contains('on');
   tasksOpen = false; taskOpenKey = ''; energyOpen = false;
   $('overlay').classList.remove('on');
+  $('modal').classList.remove('genUp');
   if (was) SFX.close();
   if (saveGate.blocked && recovery) showRecovery();
+  renderTut();
 }
 $('overlay').addEventListener('click', e => { if (e.target.id==='overlay' || e.target.closest('[data-close]')) closeModal(); });
 
@@ -1194,14 +1353,19 @@ function openEnergy(){ openShop('energy'); }
 function openShop(mode){
   if (typeof mode !== 'string') mode = '';
   const ready = S.gift !== dayKey();
+  const streak = ready ? giftStreakNext() : (S.gst && S.gst.k === dayKey() ? S.gst.n : 1);
+  const grew = giftReward(ready ? streak : (S.gst && S.gst.n) || 1);
+  const dots = [1,2,3].map(i => `<i class="gdot${i <= streak ? ' on' : ''}"></i>`).join('');
   eshopState();
   modal(mode === 'energy' ? L.energyTitle : L.shopTitle, (mode === 'energy' ? energyInfoHtml() : '') + `
-    <div class="row"><div class="art">${A.icon('heart')}</div><div class="grow">${L.dailyGift}<br>${rwHtml({energy:30, coins:30})}</div>
+    <div class="row"><div class="art">${A.icon('heart')}</div><div class="grow">${L.dailyGift} <span class="gstreak">${L.giftStreak(streak)}</span> ${dots}<br>${rwHtml(grew)}
+      <div class="muted" style="font-size:11px;margin-top:2px">${L.giftStreakHint}</div></div>
       <button class="btn" id="shGift" ${ready?'':'disabled'}>${ready ? L.take : L.tomorrow}</button></div>
     ${packRow(20)}${packRow(50)}
     <div class="muted center" style="font-size:12px;margin:2px 0 8px">${L.shopLadderNote}</div>${supplyHtml()}`);
   energyOpen = mode === 'energy'; wireSupply(() => openShop(mode));
-  $('shGift').onclick = () => { if (S.gift===dayKey()) return; S.gift = dayKey(); give({energy:30, coins:30}); SFX.coin(); save(); renderTop(); openShop(mode); };
+  $('shGift').onclick = () => { if (!claimDailyGift().ok) return; renderTop(); openShop(mode); };
+  renderTut();
   const onBuy = pack => {
     const r = buyEnergy(pack);
     if (!r.ok){ SFX.no(); toast(r.reason === 'coins' ? L.noCoins : L.shopSoldOut); openShop(mode); return; }
@@ -1281,6 +1445,7 @@ function sumTable(cols){
 function adoptState(state){                                // only after a successful, verified commit
   S = state; saveGate.blocked = false; saveGate.memoryOnly = false; recovery = null; hasSave = true;
   selected = null; [0,1,2].forEach(i => { PSTATE[i] = 'idle'; });
+  prepareCalendar(S); applyPlaytestCoinGrant(S);
   migrateEnergy(); applyLang(); applyAudio(); tick(); fillOrders(); setSaveWarn(null); save(); migrateLegacyEvents(); migrateSupply(); if (curDef) applyContent(curDef);
   $('recovery').classList.remove('on');
   if ($('start').classList.contains('on')) showStart();
@@ -1294,6 +1459,7 @@ function replaceSave(incoming){
 }
 function startNewGame(){
   const old = S, fresh = newGame(); fresh.set = S.set;
+  applyPlaytestCoinGrant(fresh);
   S = fresh; fillOrders();
   const res = persist.commit(S, {current: saveGate.blocked ? null : old});
   if (!res.ok){ S = old; return res; }
@@ -1531,6 +1697,14 @@ function layout(){
   root.style.setProperty('--infoH', Math.max(base, infoNeed(), Math.min(104, base + Math.max(0, spare - 12))) + 'px');
   const c = Math.floor(Math.min((w.clientWidth-18)/COLS, (w.clientHeight-20)/ROWS));
   document.documentElement.style.setProperty('--cell', Math.max(20, c) + 'px');
+  const nav = $('nav');
+  if (nav){
+    const overflow = nav.getBoundingClientRect().bottom - window.innerHeight;
+    if (overflow > 2){
+      const cell = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--cell')) || 20;
+      document.documentElement.style.setProperty('--cell', Math.max(20, cell - Math.ceil(overflow / ROWS)) + 'px');
+    }
+  }
 }
 window.addEventListener('resize', layout);
 
@@ -1552,6 +1726,7 @@ function enterGame(){
   audio(); SFX.tap();
   $('start').classList.remove('on'); $('game').classList.add('on');
   renderAll(); layout();
+  startTutorial();
   setTimeout(layout, 50);
 }
 $('btnStart').onclick = enterGame;
@@ -1571,5 +1746,5 @@ setInterval(save, 5000);
 document.addEventListener('visibilitychange', () => { if (document.hidden) save(true); else { tick(); renderAll(); refreshContent(false).catch(() => {}); } });
 
 // سىناق ئۈچۈن
-window.__game = { AUDIO, applyAudio, atelier: {open: () => openAtelier(), env: atelierEnv, notes: atelierNotes}, ALL_CHAINS, buyProp, buyColour, equipColour, salonInp, taskCounts, openTasks, tasksFor, get EV(){ return EV; }, energyTimes, ENERGY_CAP, ENERGY_PACKS, energyOffer, buyEnergy, eshopState, dayKey, weekKey, monthKey, tick, applyLang, buyProducer, placeQueued, producerPrice, equivOf, grantMilestones, claimEvent, newOrder, accessibleChains, deliver: oi => deliver(oi), save: () => save(), get contentInfo(){ return contentInfo; }, refreshContent, get S(){ return S; }, get gate(){ return saveGate; }, get recovery(){ return recovery; }, renderAll, openShop, MSN, MSN_CFG };
+window.__game = { AUDIO, applyAudio, atelier: {open: () => openAtelier(), env: atelierEnv, notes: atelierNotes}, ALL_CHAINS, buyProp, buyColour, equipColour, salonInp, taskCounts, openTasks, tasksFor, get EV(){ return EV; }, energyTimes, ENERGY_CAP, ENERGY_MS, ENERGY_PACKS, energyOffer, buyEnergy, eshopState, dayKey, weekKey, monthKey, tick, applyLang, buyProducer, placeQueued, producerPrice, equivOf, grantMilestones, claimEvent, newOrder, accessibleChains, deliver: oi => deliver(oi), save: () => save(), get contentInfo(){ return contentInfo; }, refreshContent, get S(){ return S; }, get gate(){ return saveGate; }, get recovery(){ return recovery; }, renderAll, openShop, MSN, MSN_CFG, select: i => { selected = i; renderBoard(); renderInfo(); }, storeSelected, placeInv, expandInv, undoLastSale, get undoSale(){ return undoSale; }, openGenUpgrade, genDropTable, claimDailyGift, giftStreakNext, giftReward, skipTut, tutAdvance, INV_CAPS, INV_EXPAND };
 })();

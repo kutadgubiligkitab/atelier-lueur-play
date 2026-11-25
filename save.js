@@ -72,7 +72,7 @@
     if (!CFG) throw new Error('SAVE.configure() was not called');
     const bad = code => ({ ok: false, code });
     if (!isObj(s)) return bad('not-object');
-    const allowed = ['v', 'board', 'energy', 'et', 'coins', 'stars', 'lv', 'orders', 'seen', 'owned', 'road', 'album', 'cnt', 'claimed', 'gift', 'set', 'secretSeen', 'ev', 'queue', 'qid', 'pg', 'pbuy', 'ecap', 'vo', 've', 'atl', 'msn', 'eshop'];
+    const allowed = ['v', 'board', 'energy', 'et', 'coins', 'stars', 'lv', 'orders', 'seen', 'owned', 'road', 'album', 'cnt', 'claimed', 'gift', 'set', 'secretSeen', 'ev', 'queue', 'qid', 'pg', 'pbuy', 'ecap', 'vo', 've', 'atl', 'msn', 'eshop', 'ptcg', 'tut', 'inv', 'gst'];
     for (const k of Object.keys(s)) if (allowed.indexOf(k) < 0) return bad('unknown-field:' + k);
     if (s.v !== 2) return bad('version');
 
@@ -231,6 +231,31 @@
     }
 
     let ecap; if (s.ecap !== undefined) { if (!isInt(s.ecap, 1, 100000)) return bad('ecap'); ecap = s.ecap; }   // energy-cap version of this save (absent = written under the old cap)
+    let ptcg; if (s.ptcg !== undefined) { if (s.ptcg !== 0 && s.ptcg !== 1) return bad('ptcg'); ptcg = s.ptcg; }   // playtest coin-grant flag (optional; ignored when the grant is off)
+    let tut; if (s.tut !== undefined) { if (!isInt(s.tut, 0, 5)) return bad('tut'); tut = s.tut; }   // 0-4 first-play tutorial step, 5 = finished (existing saves migrate to 5)
+    let inv;
+    if (s.inv !== undefined) {
+      const v = s.inv, caps = [4, 8, 12];
+      if (!isObj(v) || v.v !== 1 || Object.keys(v).some(k => k !== 'v' && k !== 'cap' && k !== 'items') || caps.indexOf(v.cap) < 0 || !Array.isArray(v.items) || v.items.length > v.cap) return bad('inv');
+      const items = [];
+      for (const it of v.items) {
+        if (!isObj(it)) return bad('inv');
+        const keys = Object.keys(it);
+        if (it.c !== undefined && it.g === undefined) {
+          if (CFG.CHAINS.indexOf(it.c) < 0 || !isInt(it.l, 1, CFG.MAXLV) || keys.some(k => k !== 'c' && k !== 'l')) return bad('inv');
+          items.push({ c: it.c, l: it.l });
+        } else if (it.g !== undefined && it.c === undefined) {
+          if (CFG.GEN_TYPES.indexOf(it.g) < 0 || !isInt(it.l, 1, CFG.GEN_MAXLV) || keys.some(k => k !== 'g' && k !== 'l')) return bad('inv');
+          items.push({ g: it.g, l: it.l });
+        } else return bad('inv');
+      }
+      inv = { v: 1, cap: v.cap, items };
+    }
+    let gst;
+    if (s.gst !== undefined) {
+      if (!isObj(s.gst) || Object.keys(s.gst).some(k => k !== 'k' && k !== 'n') || typeof s.gst.k !== 'string' || s.gst.k.length > 20 || !isInt(s.gst.n, 1, 3)) return bad('gst');
+      gst = { k: s.gst.k, n: s.gst.n };
+    }
 
     const out = { ok: true, state: {
       v: 2, board, energy: s.energy, et, coins: s.coins, stars: s.stars, lv: s.lv, orders, seen, owned, road, album,
@@ -247,6 +272,10 @@
     if (atl !== undefined) out.state.atl = atl;
     if (msn !== undefined) out.state.msn = msn;
     if (eshop !== undefined) out.state.eshop = eshop;
+    if (ptcg !== undefined) out.state.ptcg = ptcg;
+    if (tut !== undefined) out.state.tut = tut;
+    if (inv !== undefined) out.state.inv = inv;
+    if (gst !== undefined) out.state.gst = gst;
     return out;
   }
 

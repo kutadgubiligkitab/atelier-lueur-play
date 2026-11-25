@@ -382,7 +382,23 @@ function deliver(oi){
 
 /* ---------------- ئامبار، قايتۇرۇش، تەبرىك ۋە قىسقا ئۆگىتىش ---------------- */
 const INV_CAPS = [4, 8, 12], INV_EXPAND = {8: 300, 12: 800}, UNDO_MS = 8000;
-function invState(){ return S.inv || (S.inv = {v:1, cap:4, items:[]}); }
+function invCapFit(n, used){                         // only 4 / 8 / 12; never auto-upgrade because the player has many coins
+  const need = Math.max(used || 0, INV_CAPS[0]);
+  let cap = INV_CAPS[0];
+  for (const c of INV_CAPS){ if (c >= need){ cap = c; break; } cap = c; }
+  if (INV_CAPS.indexOf(n) >= 0 && n >= need) return n;
+  return cap;
+}
+function invState(){
+  if (!S.inv) S.inv = {v:1, cap:4, items:[]};
+  const used = Array.isArray(S.inv.items) ? S.inv.items.length : 0;
+  const cap = invCapFit(S.inv.cap, used);
+  if (S.inv.cap !== cap) S.inv.cap = cap;            // repair a bad cap; never raise it past what was paid for / needed
+  return S.inv;
+}
+function showIdleHint(){                             // first-play tutorial and other brand-new games only; established saves see storage
+  return !!(S && S.tut < 5 && !isEstablishedSave(S));
+}
 function invFree(){ const inv = invState(); return inv.cap - inv.items.length; }
 function storeSelected(){
   const cell = selected, it = cell != null ? S.board[cell] : null; if (!it) return {ok:false, reason:'none'};
@@ -413,21 +429,29 @@ function expandInv(){
   if (r.ok){ SFX.shop(); toast(L.invExpanded(r.cap)); renderAll(); } else { SFX.no(); toast(r.reason==='coins' ? L.noCoins : L.supplyFail); }
   return r;
 }
-function renderInv(){
-  const bar = $('invBar'); if (!bar) return;
+const INV_MARK = `<svg viewBox="0 0 100 100" aria-hidden="true"><rect x="14" y="40" width="72" height="48" rx="8" fill="#fff6fa" stroke="#d24b84" stroke-width="5"/><path d="M14 54H86" stroke="#f5c84c" stroke-width="6"/><path d="M50 40V88" stroke="#f5b5d2" stroke-width="4"/><path d="M22 40L50 18L78 40" fill="#ffe6f1" stroke="#d24b84" stroke-width="5" stroke-linejoin="round"/></svg>`;
+function invPanelHtml(){
   const inv = invState(), next = INV_CAPS[INV_CAPS.indexOf(inv.cap) + 1];
-  let h = `<div class="invSlots">`;
+  let h = `<div class="invPanel"><div class="invLab"><span class="invIco">${INV_MARK}</span><span class="invName">${L.invTitle}</span></div><div class="invRow"><div class="invSlots">`;
   for (let i = 0; i < inv.cap; i++){
     const it = inv.items[i];
     h += `<button type="button" class="invSlot${it ? ' full' : ''}" data-inv="${i}">${it ? itemArt(it) : ''}</button>`;
   }
   h += `</div>`;
-  if (next) h += `<button type="button" class="invExpand${S.coins < INV_EXPAND[next] ? ' no' : ''}" id="invExpand">${L.invExpand(INV_EXPAND[next])}</button>`;
-  bar.innerHTML = h;
-  bar.querySelectorAll('[data-inv]').forEach(b => b.onclick = () => {
+  if (next) h += `<button type="button" class="invExpand${S.coins < INV_EXPAND[next] ? ' no' : ''}" id="invExpand" aria-label="${L.invExpand(INV_EXPAND[next])}"><span class="invPlus">+</span><span class="rw"><i>${A.icon('coin')}</i>${INV_EXPAND[next]}</span></button>`;
+  h += `</div></div>`;
+  return h;
+}
+function bindInv(){
+  const root = $('info') || $('invBar'); if (!root) return;
+  root.querySelectorAll('[data-inv]').forEach(b => b.onclick = () => {
     const i = +b.dataset.inv; if (invState().items[i]) placeInv(i); else storeSelected();
   });
-  const ex = $('invExpand'); if (ex) ex.onclick = expandInv;
+  const ex = $('invExpand'); if (ex) ex.onclick = ev => { ev.preventDefault(); ev.stopPropagation(); expandInv(); };
+}
+function renderInv(){                                // storage is drawn inside #info when that panel is in storage mode
+  const box = $('info'); if (!box || !box.classList.contains('invMode')) return;
+  bindInv();
 }
 
 let undoSale = null, undoTimer = 0;
@@ -751,12 +775,24 @@ function renderInfoInner(){
   const it = selected != null ? S.board[selected] : null, box = $('info');
   if (!it && S.queue && S.queue.length){             // persistent delivery tray (only when a producer is waiting): same panel, board size unchanged
     const q = S.queue[0], free = emptyCell() >= 0;
+    box.classList.remove('invMode');
     box.innerHTML = `<div class="art">${A.gen(q.g, q.l)}</div><div class="txt"><div class="ttl">${L.trayWaiting(S.queue.length)}</div><div class="hint">${L.gens[q.g]} · ${L.level(q.l)}${free ? '' : ' · ' + L.trayBoardFull}</div></div>
       <button class="btn pink" id="bTray" ${free ? '' : 'disabled'}>${L.trayPlace}</button>`;
     $('bTray').onclick = () => { const r = placeQueued(q.id); if (r.ok){ SFX.tap(); renderBoard(); renderInfo(); toast(L.trayPlaced); } else { SFX.no(); toast(L.trayBoardFull); } };
     return;
   }
-  if (!it){ box.innerHTML = `<div class="art">${A.icon('gift')}</div><div class="txt"><div class="hint">${L.idleHint}</div></div>`; return; }
+  if (!it){
+    if (showIdleHint()){
+      box.classList.remove('invMode');
+      box.innerHTML = `<div class="art">${A.icon('gift')}</div><div class="txt"><div class="hint">${L.idleHint}</div></div>`;
+      return;
+    }
+    box.classList.add('invMode');
+    box.innerHTML = invPanelHtml();
+    bindInv();
+    return;
+  }
+  box.classList.remove('invMode');
   box.innerHTML = infoItemHtml(it);
   if ($('bStore')) $('bStore').onclick = storeSelected;
   if (!it.g && $('bSell')) $('bSell').onclick = sell;
@@ -767,10 +803,10 @@ function infoItemHtml(it){                  // markup of the selected-item panel
   let hint;
   if (it.g) hint = `${L.genHint}. ${next ? L.genMerge : L.genMax}`;
   else hint = next ? `${L.mergeInto} <i>${itemArt(next)}</i> ${itemName(next)}` : L.maxLevel;
-  const store = `<button class="btn" id="bStore"${invFree() < 1 ? ' disabled' : ''}>${L.invStore}</button>`;
+  const store = `<button type="button" class="invStoreBtn" id="bStore"${invFree() < 1 ? ' disabled' : ''} aria-label="${L.invStore}">${INV_MARK}</button>`;
   const sellBtn = it.g ? '' : `<button class="btn pink" id="bSell">${L.sell} <span class="rw"><i>${A.icon('coin')}</i>${it.l*2}</span></button>`;
-  return `<div class="art">${itemArt(it)}</div><div class="txt"><div class="ttl">${itemName(it)} · ${L.level(it.l)}</div><div class="hint">${hint}</div></div>
-    <div class="infoActs">${store}${sellBtn}</div>`;
+  return `${store}<div class="art">${itemArt(it)}</div><div class="txt"><div class="ttl">${itemName(it)} · ${L.level(it.l)}</div><div class="hint">${hint}</div></div>
+    ${sellBtn}`;
 }
 /* Height the panel needs for the LONGEST content in the current language and width (every item rank, every producer, the delivery-tray row), measured off-screen once per width/language.
    The panel always reserves this height, so selecting a long-named item never resizes the panel or the board (geometry stays stable) and nothing is ever cut off. */
@@ -1703,20 +1739,13 @@ const INFO_BASE = () => (window.innerWidth <= 360 ? 74 : window.innerWidth <= 40
 function layout(){
   const w = $('boardWrap'); if (!w.clientHeight) return;
   /* the info panel is as tall as its content needs (long names / descriptions wrap instead of being cut off). On phones where the board is width-limited there is spare
-     height between board and panel: reserve part of it for the panel so the board keeps its size; on height-limited phones the panel grows only when its content needs it. */
+     height between board and panel: reserve part of it for the panel so the board keeps its size; on height-limited phones the panel grows only when its content needs it.
+     Storage lives inside this panel (not a new row), so the board keeps the pre-storage cell size. */
   const inf = $('info'), base = INFO_BASE(), root = document.documentElement;
   const avail = w.clientHeight + inf.offsetHeight, cellW = Math.floor((w.clientWidth-18)/COLS), need = cellW*ROWS + 20, spare = avail - need - base;
   root.style.setProperty('--infoH', Math.max(base, infoNeed(), Math.min(104, base + Math.max(0, spare - 12))) + 'px');
   const c = Math.floor(Math.min((w.clientWidth-18)/COLS, (w.clientHeight-20)/ROWS));
   document.documentElement.style.setProperty('--cell', Math.max(20, c) + 'px');
-  const nav = $('nav');
-  if (nav){
-    const overflow = nav.getBoundingClientRect().bottom - window.innerHeight;
-    if (overflow > 2){
-      const cell = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--cell')) || 20;
-      document.documentElement.style.setProperty('--cell', Math.max(20, cell - Math.ceil(overflow / ROWS)) + 'px');
-    }
-  }
 }
 window.addEventListener('resize', layout);
 

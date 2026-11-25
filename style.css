@@ -24,7 +24,7 @@ button{font:inherit;color:inherit}
 /* ---------- screens ---------- */
 .screen{position:fixed;inset:0;display:none;flex-direction:column;max-width:520px;margin:0 auto;
   padding:calc(env(safe-area-inset-top) + 8px) 10px calc(env(safe-area-inset-bottom) + 6px);gap:8px}
-.screen.on{display:flex;overflow:hidden}
+.screen.on{display:flex}
 #bg{position:fixed;inset:0;z-index:-1;background:
   radial-gradient(circle at 15% 12%,#fff 0 3px,transparent 4px),
   radial-gradient(circle at 80% 30%,#fff9 0 30px,transparent 31px),
@@ -113,7 +113,7 @@ button{font:inherit;color:inherit}
 #ghost{position:fixed;z-index:60;pointer-events:none;width:calc(var(--cell)*1.15);height:calc(var(--cell)*1.15);transform:translate(-50%,-65%);filter:drop-shadow(0 6px 6px rgba(106,35,80,.35))}
 
 /* ---------- info strip ---------- */
-.info{flex:none;display:grid;grid-template-columns:auto minmax(0,1fr) auto;column-gap:8px;row-gap:2px;align-items:center;min-height:var(--infoH,64px);height:auto;overflow:visible;padding:4px 10px;background:#fffd;border:2.5px solid var(--panel-edge);border-radius:16px}
+.info{position:relative;flex:none;display:grid;grid-template-columns:auto minmax(0,1fr) auto;column-gap:8px;row-gap:2px;align-items:center;min-height:var(--infoH,64px);height:auto;overflow:visible;padding:4px 10px;background:#fffd;border:2.5px solid var(--panel-edge);border-radius:16px}
 .info .art{width:42px;height:42px;flex:none}
 .info .txt{flex:1;min-width:0}
 .info .ttl{font-weight:800;font-size:14px;line-height:1.25;overflow-wrap:anywhere}
@@ -531,17 +531,29 @@ button.taskTitle:focus-visible{outline:3px solid #ff5fa2;outline-offset:2px;bord
 .vol::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:2px solid #e86a9a;margin-top:-8px;box-shadow:0 1px 3px #0002}
 
 /* ---------- inventory, undo, tutorial, generator upgrade ---------- */
-.invBar{flex:none;display:flex;align-items:center;gap:6px;min-height:40px;padding:2px 2px 0}
-.invSlots{display:flex;flex-wrap:wrap;gap:3px;flex:1;min-width:0}
-.invSlot{width:32px;height:32px;padding:1px;border:1.5px solid var(--panel-edge);border-radius:8px;background:#fff8fb;cursor:pointer;display:grid;place-items:center;overflow:hidden}
+/* storage lives inside the existing #info panel (invMode); it must not add a row under the board or grow the panel */
+.info.invMode{display:flex;align-items:center;gap:8px;height:var(--infoH,64px);min-height:var(--infoH,64px);max-height:var(--infoH,64px);overflow:hidden;padding:4px 8px}
+.invPanel{display:flex;align-items:center;gap:8px;width:100%;min-width:0;height:100%}
+.invLab{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:36px}
+.invIco{width:22px;height:22px;display:block}
+.invIco svg{width:22px;height:22px}
+.invName{font-weight:800;font-size:10.5px;line-height:1.1;text-align:center;max-width:100%}
+.invRow{flex:1;min-width:0;display:flex;align-items:center;gap:6px;height:100%}
+.invSlots{display:flex;flex-wrap:nowrap;align-items:center;gap:5px;flex:1;min-width:0;height:100%;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.invSlots::-webkit-scrollbar{display:none}
+.invSlot{flex:none;width:44px;height:44px;padding:2px;border:1.5px solid var(--panel-edge);border-radius:12px;background:#fff8fb;cursor:pointer;display:grid;place-items:center;overflow:hidden}
 .invSlot.full{border-color:var(--gold);background:#fffdf5}
-.invSlot .sprite,.invSlot img,.invSlot svg{width:28px;height:28px;display:block}
-.invExpand{flex:none;max-width:42%;border:0;border-radius:12px;padding:4px 8px;background:#fff;color:var(--ink);font:800 11px/1.2 inherit;box-shadow:0 2px 0 var(--panel-edge);border:1.5px solid var(--panel-edge);cursor:pointer}
+.invSlot .sprite,.invSlot img,.invSlot svg{width:38px;height:38px;display:block}
+.invExpand{flex:none;width:44px;height:44px;margin:0;padding:2px 0 3px;border-radius:12px;background:#fff;color:var(--ink);font:800 10.5px/1 inherit;box-shadow:0 2px 0 var(--panel-edge);border:1.5px solid var(--panel-edge);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
+.invExpand .invPlus{font-size:16px;font-weight:800;line-height:1;color:var(--pink-dark)}
+.invExpand .rw{display:inline-flex;align-items:center;gap:1px;font-size:10.5px;font-weight:800;direction:ltr}
+.invExpand .rw i{width:11px;height:11px}
 .invExpand.no{opacity:.45}
-.info .hint{grid-column:2}
-.infoActs{display:flex;flex-direction:column;align-items:stretch;gap:3px;grid-column:3;grid-row:1 / span 2;align-self:center}
+.invStoreBtn{position:absolute;inset-inline-end:10px;bottom:5px;width:22px;height:22px;padding:2px;border:1.5px solid var(--panel-edge);border-radius:8px;background:#fff8fb;cursor:pointer;z-index:1;display:grid;place-items:center}
+.invStoreBtn svg{width:16px;height:16px;display:block}
+.invStoreBtn:disabled{opacity:.35;pointer-events:none}
+.infoActs{display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;justify-content:flex-end;gap:4px;grid-column:3;grid-row:1;align-self:center}
 .infoActs .btn{padding:4px 8px;font-size:11px;white-space:nowrap}
-#game{position:relative}
 #undoBar{position:absolute;left:10px;right:10px;bottom:calc(env(safe-area-inset-bottom) + 58px);z-index:28;display:flex;justify-content:center;pointer-events:none}
 #undoBar[hidden]{display:none !important}
 #undoBar .btn{pointer-events:auto;box-shadow:0 3px 0 var(--pink-dark),0 6px 16px rgba(214,60,130,.3)}
@@ -569,18 +581,7 @@ button.taskTitle:focus-visible{outline:3px solid #ff5fa2;outline-offset:2px;bord
 .gdot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#efd0de;margin-inline-start:3px;vertical-align:middle}
 .gdot.on{background:var(--gold);box-shadow:0 0 0 1px #c48a14}
 @media (max-height:700px){
-  .invSlot{width:28px;height:28px}
-  .invSlot .sprite,.invSlot img,.invSlot svg{width:24px;height:24px}
   .tutCard{padding:6px 8px;gap:6px}
   .tutCard p{font-size:12px}
   #undoBar,#tutLayer{bottom:calc(env(safe-area-inset-bottom) + 50px)}
-}
-
-/* short-screen fit: keep the nav on 375x667 after adding the inventory row */
-@media (max-height:700px){
-  .invBar{min-height:0;padding:0;gap:4px}
-  .invSlot{width:26px;height:26px;border-radius:7px}
-  .invSlot .sprite,.invSlot img,.invSlot svg{width:22px;height:22px}
-  .invExpand{padding:3px 6px;font-size:10px}
-  .info{padding:3px 8px}
 }

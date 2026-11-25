@@ -2,7 +2,7 @@
  "sourceCommit": "0a79101a86047e536632bfa38215cfbbed93e487",
  "sourceHasUncommittedChanges": true,
  "fileCount": 397,
- "totalBytes": 83933132,
+ "totalBytes": 83949979,
  "files": [
   {
    "path": "art.js",
@@ -1941,13 +1941,13 @@
   },
   {
    "path": "game.js",
-   "bytes": 121098,
-   "sha256": "ef706f7ec755a3bc4bca542aaaa246858d16bce1cc72f6b118a16d97c27e15e3"
+   "bytes": 123642,
+   "sha256": "c8722fbc97440881ad4b53c5b869e98508f50686270a54fa3aaedd94ef387a7d"
   },
   {
    "path": "i18n.js",
-   "bytes": 38800,
-   "sha256": "5681428a09a2d09ccd551b0f9d2fa22f3ca1b2d10331ce470e9c98ee1f77ae50"
+   "bytes": 40897,
+   "sha256": "a2aff70c819b447543f3305994c05644dafe1f440b8bf47955a47166a0d971b2"
   },
   {
    "path": "icon.png",
@@ -1966,8 +1966,8 @@
   },
   {
    "path": "missions.js",
-   "bytes": 12781,
-   "sha256": "f1bcfe80c37ce29370588cd13ccfebe5739d5da28c676249bc91e279d7a0416f"
+   "bytes": 24133,
+   "sha256": "db5cd7739eb7913ae1ed22433fc07a0814bad829ff61367e3222d32c29152e7a"
   },
   {
    "path": "progression.js",
@@ -1981,13 +1981,13 @@
   },
   {
    "path": "save.js",
-   "bytes": 25254,
-   "sha256": "1359cd0398568eabd305ec98762bb2c7e857cf5d060ef2db7abee62455823d61"
+   "bytes": 26058,
+   "sha256": "d7cd4e63a68a53ac96a966981bf1a2f89a2463e11f826486622ac58f818084a7"
   },
   {
    "path": "style.css",
-   "bytes": 45012,
-   "sha256": "8b0a63149e059ebfbbc4d16eb4f5b598a5ad237c76babb4416124196a2c614e1"
+   "bytes": 45062,
+   "sha256": "25c329907de957dd180bbd68f47106f94311888401ccb28aa9e5c81c246de7da"
   }
  ]
 }

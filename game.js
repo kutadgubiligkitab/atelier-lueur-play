@@ -22,12 +22,14 @@ const GEN_CHAINS = { pink:['lip','nail'], lav:['per','cmp'], skn:['skn'], [ATL.P
 const MSN = window.MISSIONS;
 const MSN_CFG = { orderChains: CHAINS, genChains: GEN_CHAINS, hasAtelier: s => ATL.hasChapter(s), daily: [{k:'merge', n:15}, {k:'order', n:4}],
   get mixedFrom(){ const pr = window.PROGRESSION.PROFILES[window.CONFIG.progressionProfile]; return pr && pr.mixed ? pr.mixed.fromLevel : Infinity; } };
+const ENERGY_PACKS = {
+  20: { amt: 20, ladder: [60, 90, 130, 180, 240, 310, 390, 480], cap: 4 },
+  50: { amt: 50, ladder: [140, 200, 280, 380, 500, 640, 800, 980], cap: 4 }
+};
 const SALON = window.SALON;               // salon-data.js: the one canonical registry (props, prices, positions, gates)
 const DECOS = SALON.areaById('studio').stages[0].props;         // the Studio room, exactly as shipped (id, price, [x,y,w,h])
 const DRAW_ORDER = SALON.areaById('studio').draw;
 const TASKS = {
-  daily:  [{id:'d1',k:'merge',n:15,r:{coins:30}}, {id:'d2',k:'order',n:4,r:{energy:20}}, {id:'d3',k:'tap',n:30,r:{coins:40}}, {id:'d4',k:'coins',n:200,r:{stars:15}}],
-  weekly: [{id:'w1',k:'order',n:30,r:{coins:300}}, {id:'w2',k:'merge',n:120,r:{energy:60}}, {id:'w3',k:'deco',n:2,r:{stars:40}}],
   ach:    [{id:'a1',k:'level',n:5,r:{coins:200}}, {id:'a2',k:'discover',n:12,r:{energy:50}}, {id:'a3',k:'deco',n:8,r:{energy:100}}, {id:'a4',k:'level',n:10,r:{coins:500}}, {id:'a5',k:'discover',n:24,r:{coins:800}}],
 };
 const starsNeed = lv => 30 + lv*20;
@@ -51,6 +53,8 @@ const persist = SAVE.createStore({
 }, {primary: KEY, backup: KEY + '.backup', before: KEY + '.backup.before', corrupt: KEY + '.corrupt'});
 const dayKey = () => { const d = new Date(); return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); };
 const weekKey = () => { const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() - ((d.getDay()+6)%7)); return 'w'+d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); };
+const monthKey = () => { const d = new Date(); return d.getFullYear()+'-'+(d.getMonth()+1); };
+const calendarKeys = () => ({ day: dayKey(), week: weekKey(), month: monthKey() });
 
 /* ---------------- ھالەت ---------------- */
 function newGame(){
@@ -60,10 +64,11 @@ function newGame(){
   b[19] = {c:'per', l:1};
   const s = {v:2, board:b, energy:INITIAL_ENERGY, et:Date.now(), ecap:ENERGY_CAP, coins:60, stars:0, lv:1, orders:[],
     seen:{}, owned:{}, road:{}, album:{},
-    cnt:{day:{k:dayKey()}, week:{k:weekKey()}}, claimed:{}, gift:'',
+    cnt:{day:{k:dayKey()}, week:{k:weekKey()}, month:{k:monthKey()}}, claimed:{}, gift:'',
+    eshop:{v:1, k:dayKey(), n20:0, n50:0},
     set:{sound:true, vib:true, lang:'ug'}, secretSeen:false};
   b.forEach(it => { if (it && it.c) s.seen[it.c+it.l] = 1; });
-  MSN.startWeek(s, weekKey(), MSN_CFG); MSN.assignDay(s, MSN_CFG, dayKey());     // a NEW game starts with the new mission contract; existing saves switch at their next daily/weekly reset
+  MSN.startMonth(s, monthKey(), MSN_CFG); MSN.startWeek(s, weekKey(), MSN_CFG); MSN.assignDay(s, MSN_CFG, dayKey());
   return s;
 }
 /* Boot classification: a genuine first launch, a readable save, a corrupt/missing save, or a storage error are DIFFERENT cases.
@@ -72,11 +77,17 @@ let S = null, hasSave = false, recovery = null;
 const saveGate = {blocked: false, memoryOnly: false, warn: null};
 function applyBoot(boot){
   hasSave = false; recovery = null; saveGate.blocked = false;
-  if (boot.status === 'ok'){ S = boot.state; hasSave = true; return; }
+  if (boot.status === 'ok'){ S = boot.state; hasSave = true; prepareCalendar(S); return; }
   S = newGame();
   if (boot.status === 'fresh') return;
   recovery = boot; saveGate.blocked = true;
   if (boot.status === 'corrupt') recovery.preserved = persist.preserveCorrupt(boot.raw);   // original bytes kept before anything else happens
+}
+/* Existing saves: accept v1 snapshots, then upgrade S.msn to v2 immediately (counters and already-claimed rewards stay). */
+function prepareCalendar(s){
+  if (!s.cnt.month) s.cnt.month = {k: monthKey()};
+  if (!s.eshop || s.eshop.k !== dayKey()) s.eshop = {v:1, k: dayKey(), n20:0, n50:0};
+  MSN.migrate(s, MSN_CFG, calendarKeys());
 }
 applyBoot(persist.read());
 let L = LANGS[S.set.lang] || LANGS.ug;
@@ -150,13 +161,19 @@ function tick(){
 /* Daily/weekly reset (existing calendar keys). The OLD day's completions are recorded first; today's assignment is snapshotted ONCE here (deterministic, never re-rolled by reload, language or re-import).
    A save from before this feature keeps its current day/week legacy tasks untouched until its next reset. Old per-day/per-week claim records are pruned (they would otherwise grow without bound). */
 function rolloverTasks(){
-  const dk = dayKey(), wk = weekKey(), dayChanged = S.cnt.day.k !== dk, weekChanged = S.cnt.week.k !== wk;
-  if (!dayChanged && !weekChanged) return;
+  const dk = dayKey(), wk = weekKey(), mk = monthKey();
+  if (!S.cnt.month) S.cnt.month = {k: mk};
+  const dayChanged = S.cnt.day.k !== dk, weekChanged = S.cnt.week.k !== wk, monthChanged = S.cnt.month.k !== mk;
+  if (!dayChanged && !weekChanged && !monthChanged) return;
   MSN.sync(S, MSN_CFG);
-  if (dayChanged) S.cnt.day = {k: dk};
+  if (monthChanged) { S.cnt.month = {k: mk}; MSN.startMonth(S, mk, MSN_CFG); }
   if (weekChanged) { S.cnt.week = {k: wk}; MSN.startWeek(S, wk, MSN_CFG); }
-  if (dayChanged) MSN.assignDay(S, MSN_CFG, dk);
-  Object.keys(S.claimed).forEach(k => { if ((/^d[1-4]\d{4}-\d{1,2}-\d{1,2}$/.test(k) && k.slice(2) !== dk) || (/^w[1-5]w\d{4}-\d{1,2}-\d{1,2}$/.test(k) && k.slice(2) !== wk)) delete S.claimed[k]; });
+  if (dayChanged) { S.cnt.day = {k: dk}; S.eshop = {v:1, k: dk, n20:0, n50:0}; MSN.assignDay(S, MSN_CFG, dk); }
+  Object.keys(S.claimed).forEach(k => {
+    if (/^d[1-8]\d{4}-\d{1,2}-\d{1,2}$/.test(k) && k.replace(/^d[1-8]/,'') !== dk) delete S.claimed[k];
+    if (/^w[1-5]w\d{4}-\d{1,2}-\d{1,2}$/.test(k) && k.replace(/^w[1-5]/,'') !== wk) delete S.claimed[k];
+    if (/^m[1-4]\d{4}-\d{1,2}$/.test(k) && k.replace(/^m[1-4]/,'') !== mk) delete S.claimed[k];
+  });
 }
 const fmtDur = s => { s = Math.max(0, Math.ceil(s)); const h = Math.floor(s/3600), m = Math.floor(s%3600/60), x = s%60; return h ? h + ':' + String(m).padStart(2,'0') + ':' + String(x).padStart(2,'0') : m + ':' + String(x).padStart(2,'0'); };
 function energyTimes(now){                   // seconds to the next +1 and to full (0 when at/above the cap), from the persisted anchor
@@ -166,6 +183,7 @@ function energyTimes(now){                   // seconds to the next +1 and to fu
 function count(k, n=1){
   S.cnt.day[k] = (S.cnt.day[k]||0) + n;
   S.cnt.week[k] = (S.cnt.week[k]||0) + n;
+  if (S.cnt.month) S.cnt.month[k] = (S.cnt.month[k]||0) + n;
   MSN.sync(S, MSN_CFG);                                                    // record a daily objective the moment it is completed (same state change as the event)
   if (EV && !evSuppress) { try { if (EV.onCount(k, n)) evDirty = true; } catch(e){} }   // monthly-event progress (lives inside S.ev, saved with the wallet)
 }
@@ -612,13 +630,13 @@ function infoNeed(){
 /* ONE eligibility rule for badges and claim buttons: a task is claimable when its goal is met and it is not claimed; an event goal / bonus likewise (EV.claimable). */
 const taskIsClaimable = (g, t) => taskDone(g, t) && !isClaimed(g, t);
 function taskCounts(){
-  const c = {daily: 0, weekly: 0, ach: 0, events: 0};
-  for (const g of ['daily', 'weekly', 'ach']) tasksFor(g).forEach(t => { if (taskIsClaimable(g, t)) c[g]++; });
+  const c = {daily: 0, weekly: 0, month: 0, ach: 0, events: 0};
+  for (const g of ['daily', 'weekly', 'month', 'ach']) tasksFor(g).forEach(t => { if (taskIsClaimable(g, t)) c[g]++; });
   if (EV){ try { c.events = EV.claimable(); } catch(e){} }
-  c.total = c.daily + c.weekly + c.ach + c.events; return c;
+  c.total = c.daily + c.weekly + c.month + c.ach + c.events; return c;
 }
 function tasksClaimable(){ return taskCounts().total; }
-const TAB_ORDER = ['daily', 'weekly', 'ach', 'events'];
+const TAB_ORDER = ['daily', 'weekly', 'month', 'ach', 'events'];
 let lastTaskKey = '';
 function renderNav(){
   const tabs = [['tasks','tasks',openTasks],['board','gift',()=>go('board')],['salon','salon',()=>go('salon')],['album','book',openAlbum],['shop','shop',openShop]];
@@ -854,38 +872,27 @@ function openOrder(oi){
 
 /* the task list of a tab: the snapshotted mission contract when one is active for today / this week, otherwise the legacy list (existing saves keep their current day and week until the next reset) */
 function tasksFor(g){
-  if (g === 'daily' && MSN.active(S)){
-    const d = S.msn.day, t3 = d.t === 'tap' ? {id:'d3', k:'tap', n:d.n, r:d.r3} : d.t === 'mix' ? {id:'d3', k:'mix', n:d.n, r:d.r3} : {id:'d3', k:'fam', n:MSN.FAM_COUNT, per:MSN.FAM_NEED, r:d.r3};
-    return [TASKS.daily[0], TASKS.daily[1], t3, {id:'d4', k:'coins', n:d.n4, r:d.r4, alt:!!d.a}];
-  }
-  if (g === 'weekly' && MSN.week5(S)){                                      // FIVE-objective week: three anchors + two rotating objectives (frozen snapshot)
-    const s = S.msn.week.s, W = MSN.W5;
-    return [{id:'w1', k:'order', n:W.order.n, r:W.order.r}, {id:'w2', k:'merge', n:W.merge.n, r:W.merge.r}, {id:'w3', k:'days', n:W.days.n, r:W.days.r},
-      s.a === 'fam' ? {id:'w4', k:'fam', n:MSN.FAM_COUNT, per:s.n4, r:s.r4} : {id:'w4', k:'tap', n:s.n4, r:s.r4},
-      {id:'w5', k:s.b === 'coin' ? 'coins' : s.b, n:s.n5, r:s.r5}];
-  }
-  if (g === 'weekly' && MSN.weekActive(S)) return [TASKS.weekly[0], TASKS.weekly[1], {id:'w3', k:'days', n:MSN.WEEK_N, r:MSN.WEEK_REWARD}];   // the earlier THREE-objective week, kept until its reset
-  return TASKS[g];
+  if (g === 'daily' && MSN.active(S)) return MSN.dayTasks(S);
+  if (g === 'weekly' && MSN.weekActive(S) && (S.msn.week.slots || S.msn.week.s)) return MSN.weekTasks(S);
+  if (g === 'month' && MSN.monthActive(S)) return MSN.monthTasks(S);
+  return TASKS[g] || [];
 }
 function taskProgress(g, t){
-  if (g === 'daily' && MSN.active(S)){
-    if (t.id === 'd3' && t.k !== 'tap') return MSN.slot3(S).p;
-    if (t.id === 'd4') return MSN.slot4(S).coins;
-  }
-  if (g === 'weekly' && t.k === 'days') return MSN.weekProgress(S);
-  if (g === 'weekly' && MSN.week5(S) && t.id === 'w4' && t.k === 'fam') return MSN.wslot4(S).p;
   if (g === 'ach'){
     if (t.k==='level') return S.lv;
     if (t.k==='discover') return coreSeen();
     if (t.k==='deco') return SALON.STUDIO_IDS.filter(id => S.owned[id]).length;   // the achievement means the original eight Studio props, not every owned id
   }
-  const c = g==='daily' ? S.cnt.day : S.cnt.week;
-  return t.k==='deco' && g==='weekly' ? (c.deco||0) : (c[t.k]||0);
+  if ((g === 'daily' && MSN.active(S)) || (g === 'weekly' && MSN.weekActive(S)) || (g === 'month' && MSN.monthActive(S)))
+    return MSN.progress(S, g, t);
+  const c = g==='daily' ? S.cnt.day : g==='month' ? (S.cnt.month || {}) : S.cnt.week;
+  return c[t.k]||0;
 }
-const claimKey = (g, t) => g==='daily' ? t.id+S.cnt.day.k : g==='weekly' ? t.id+S.cnt.week.k : t.id;
+const claimKey = (g, t) => g==='daily' ? t.id+S.cnt.day.k : g==='weekly' ? t.id+S.cnt.week.k : g==='month' ? t.id+(S.cnt.month && S.cnt.month.k || '') : t.id;
 const isClaimed = (g, t) => !!S.claimed[claimKey(g, t)];
-function taskDone(g, t){                    // ONE completion rule for badges, rows and claims (the slot-4 objective is an OR of two routes)
-  if (g === 'daily' && MSN.active(S) && t.id === 'd4') return MSN.slot4(S).done;
+function taskDone(g, t){                    // ONE completion rule for badges, rows and claims (coins may be an OR of two routes)
+  if ((g === 'daily' && MSN.active(S)) || (g === 'weekly' && MSN.weekActive(S)) || (g === 'month' && MSN.monthActive(S)))
+    return MSN.slotDone(S, g, t);
   return taskProgress(g, t) >= t.n;
 }
 let taskTab = 'daily', taskOpenKey = '';      // taskOpenKey: the ONE expanded details section (tab|period key|task id|kind), kept across routine re-renders
@@ -926,39 +933,41 @@ function eventsHtml(){
 }
 function openTasks(opts){
   const auto = !!(opts && opts.auto) && !tasksOpen;       // opening from the nav while the panel is closed: jump to a tab that has something to claim
-  const icons = {merge:'gift', order:'tasks', tap:'gift', coins:'coin', deco:'salon', level:'star', discover:'book', fam:'gift', mix:'tasks', atl:'tasks', days:'star'};
+  const icons = {merge:'gift', order:'tasks', tap:'gift', coins:'coin', deco:'salon', level:'star', discover:'book', fam:'gift', mix:'tasks', atl:'tasks', days:'star', bonus:'star'};
   const hasEv = !!(EV && EV.view().length), counts = taskCounts();
   if (taskTab === 'events' && !hasEv) taskTab = 'daily';
   if (auto && !counts[taskTab]){ const t = TAB_ORDER.find(k => counts[k] > 0 && (k !== 'events' || hasEv)); if (t) taskTab = t; }
   const prevScroll = (!auto && tasksOpen && $('modal').querySelector('.mbody')) ? $('modal').querySelector('.mbody').scrollTop : 0;
-  const tabs = [['daily',L.daily],['weekly',L.weekly],['ach',L.achieve]].concat(hasEv ? [['events', L.eventsTab]] : []);
-  const pk = taskTab === 'daily' ? S.cnt.day.k : taskTab === 'weekly' ? S.cnt.week.k : '';
+  const tabs = [['daily',L.daily],['weekly',L.weekly],['month',L.monthly],['ach',L.achieve]].concat(hasEv ? [['events', L.eventsTab]] : []);
+  const pk = taskTab === 'daily' ? S.cnt.day.k : taskTab === 'weekly' ? S.cnt.week.k : taskTab === 'month' ? (S.cnt.month && S.cnt.month.k || '') : '';
   const dkey = t => taskTab + '|' + pk + '|' + t.id + '|' + t.k;             // details state is scoped by tab, period key and task: after a rollover it can never attach to a different objective
   const tasksNow = taskTab === 'events' ? [] : tasksFor(taskTab);
   if (taskOpenKey && taskOpenKey.split('|')[0] === taskTab && !tasksNow.some(t => dkey(t) === taskOpenKey)) taskOpenKey = '';     // stale (rollover / contract change): forget it
   const bdi = s => `<bdi dir="ltr">${s}</bdi>`;
   const famRowHtml = (r, need) => `<div class="taskSub famRow${r.ok ? ' ok' : ''}">${L.task.famLine(L.chains[r.c], r.have, need)}${r.ok ? ' ✓' : ''}</div>`;
   const taskDetail = t => {                                              // inline details, built from the CURRENT saved contract; '' = simple objective (no info control)
-    const D = L.task.det, mis = taskTab === 'daily' && MSN.active(S), w5 = taskTab === 'weekly' && MSN.week5(S);
-    if ((mis || w5) && t.k === 'fam') return `<p>${D.fam(t.per, w5)}</p>` + (w5 ? MSN.wfamRows(S) : MSN.famRows(S)).map(r => famRowHtml(r, t.per)).join('');
-    if (mis && t.id === 'd4'){ const s4 = MSN.slot4(S); return `<p>${t.alt ? D.or(t.n) : D.coins(t.n, false)}</p>` + (t.alt ? `<div class="taskSub">${L.task.coinsRoute(s4.coins, s4.n)}</div><div class="taskSub">${L.task.atlRoute(s4.atl, 1)}</div>` : ''); }
-    if (mis && t.k === 'mix') return `<p>${D.mix}</p>`;
-    if (w5 && t.k === 'mix') return `<p>${D.mix}</p>`;
-    if (w5 && t.k === 'atl') return `<p>${D.atl(t.n)}</p>`;
-    if (w5 && t.k === 'coins') return `<p>${D.coins(t.n, true)}</p>`;
-    if (taskTab === 'weekly' && t.k === 'days') return `<p>${D.days(t.n)}</p>`;
+    const D = L.task.det, period = taskTab === 'month' ? 'month' : taskTab === 'weekly' ? 'week' : 'day';
+    const live = (taskTab === 'daily' && MSN.active(S)) || (taskTab === 'weekly' && MSN.weekActive(S)) || (taskTab === 'month' && MSN.monthActive(S));
+    if (live && t.k === 'fam') return `<p>${D.fam(t.per, period)}</p>` + MSN.famRowsFor(S, t, taskTab === 'daily' ? 'daily' : taskTab === 'month' ? 'month' : 'weekly').map(r => famRowHtml(r, t.per)).join('');
+    if (live && t.a && t.k === 'coins'){ const s4 = MSN.altProgress(S, taskTab === 'daily' ? 'daily' : 'weekly', t); return `<p>${D.or(t.n)}</p><div class="taskSub">${L.task.coinsRoute(s4.coins, s4.n)}</div><div class="taskSub">${L.task.atlRoute(s4.atl, 1)}</div>`; }
+    if (live && t.k === 'mix') return `<p>${D.mix}</p>`;
+    if (live && t.k === 'atl') return `<p>${D.atl(t.n)}</p>`;
+    if (live && t.k === 'coins') return `<p>${D.coins(t.n, period)}</p>`;
+    if (t.k === 'days') return `<p>${period === 'month' ? D.daysMonth(t.n) : D.days(t.n)}</p>`;
+    if (t.k === 'bonus') return `<p>${D.bonus}</p>`;
     return '';
   };
   const list = taskTab === 'events' ? eventsHtml() : tasksNow.map(t => {
     const done = taskDone(taskTab, t), p = done ? t.n : Math.min(t.n, taskProgress(taskTab, t)), cl = isClaimed(taskTab, t), state = cl ? 'claimed' : done ? 'ready' : 'progress';
-    const mis = taskTab === 'daily' && MSN.active(S) && (t.id === 'd3' || t.id === 'd4'), w5 = taskTab === 'weekly' && MSN.week5(S) && t.id === 'w4' && t.k === 'fam';
+    const liveFam = t.k === 'fam' && ((taskTab === 'daily' && MSN.active(S)) || (taskTab === 'weekly' && MSN.weekActive(S)) || (taskTab === 'month' && MSN.monthActive(S)));
     let sub = '';
-    if (mis && t.k === 'fam' || w5){                                    // compact summary: the two leading families (full list in the details)
-      const rows = (w5 ? MSN.wfamRows(S) : MSN.famRows(S)).map((r, i) => ({r, i})).sort((x, y) => y.r.have - x.r.have || x.i - y.i).slice(0, 2).map(x => x.r);
+    if (liveFam){                                    // compact summary: the two leading families (full list in the details)
+      const grp = taskTab === 'daily' ? 'daily' : taskTab === 'month' ? 'month' : 'weekly';
+      const rows = MSN.famRowsFor(S, t, grp).map((r, i) => ({r, i})).sort((x, y) => y.r.have - x.r.have || x.i - y.i).slice(0, 2).map(x => x.r);
       sub = `<div class="taskSub famSum">` + rows.map(r => `<span class="famChip${r.ok ? ' ok' : ''}">${L.task.famLine(L.chains[r.c], r.have, t.per)}${r.ok ? ' ✓' : ''}</span>`).join(' · ') + `</div>`;
     }
-    if (mis && t.id === 'd4' && t.alt){ const s4 = MSN.slot4(S); sub = `<div class="taskSub orSub"><span>${L.task.coinsRoute(s4.coins, s4.n)}</span> <span class="orWord">${L.task.orWord}</span> <span>${L.task.atlRoute(s4.atl, 1)}</span></div>`; }
-    const text = t.id === 'd4' && t.alt && mis ? L.task.coinsAlt(t.n) : t.k === 'fam' ? L.task.fam(t.per) : L.task[t.k](t.n);
+    if (t.a && t.k === 'coins'){ const s4 = MSN.altProgress(S, taskTab === 'daily' ? 'daily' : 'weekly', t); sub = `<div class="taskSub orSub"><span>${L.task.coinsRoute(s4.coins, s4.n)}</span> <span class="orWord">${L.task.orWord}</span> <span>${L.task.atlRoute(s4.atl, 1)}</span></div>`; }
+    const text = t.a && t.k === 'coins' ? L.task.coinsAlt(t.n) : t.k === 'fam' ? L.task.fam(t.per) : (t.k === 'days' && taskTab === 'month' ? L.task.daysMonth(t.n) : L.task[t.k](t.n));
     const det = taskDetail(t), key = dkey(t), open = !!det && taskOpenKey === key, did = 'td-' + taskTab + '-' + t.id;
     const title = det ? `<button type="button" class="taskTitle infoBtn" data-info="${esc(key)}" aria-expanded="${open}" aria-controls="${did}"><span class="ttxt">${text}</span><i class="infoDot" aria-hidden="true">i</i></button>` : `<div class="taskTitle">${text}</div>`;
     const rew = `<div class="tcRew">${state === 'claimed' ? `<span class="stlab claimed"><span class="ck">${A.icon('check')}</span> ${L.claimed}</span>` : state === 'ready' ? `<div class="stlab ready">${L.taskReady}</div>` : ''}<div class="tcChips">${rwHtml(t.r)}</div></div>`;
@@ -967,7 +976,7 @@ function openTasks(opts){
       <div class="tcFoot"><div class="bar"><i style="width:${p/t.n*100}%"></i><b>${p}/${t.n}</b></div><div class="tcAct">${rew}${btn}</div></div>
       ${det ? `<div class="tcDet" id="${did}" role="region"${open ? '' : ' hidden'}>${det}</div>` : ''}</div>`;
   }).join('');
-  modal(L.tasksTitle, `<div class="tabs">${tabs.map(([k,n]) => `<button data-tab="${k}" class="${taskTab===k?'on':''}">${n}${counts[k] ? `<span class="tabdot" aria-label="${counts[k]}">${counts[k]}</span>` : ''}</button>`).join('')}</div>${list}`);
+  modal(L.tasksTitle, `<div class="tabs${tabs.length>=4?' many':''}">${tabs.map(([k,n]) => `<button data-tab="${k}" class="${taskTab===k?'on':''}">${n}${counts[k] ? `<span class="tabdot" aria-label="${counts[k]}">${counts[k]}</span>` : ''}</button>`).join('')}</div>${list}`);
   tasksOpen = true;
   const mb = $('modal').querySelector('.mbody');
   if (auto){ const first = $('modal').querySelector('.row.is-ready'); if (first) first.scrollIntoView({block: 'nearest'}); } else if (prevScroll && mb) mb.scrollTop = prevScroll;
@@ -1127,33 +1136,72 @@ function openAtelier(reward){          // reward (optional) is passed ONLY by th
 let energyOpen = false;
 function energyInfoHtml(){
   const t = energyTimes(Date.now()), full = S.energy >= ENERGY_CAP;
+  const timers = full
+    ? `<div class="row"><div class="grow" id="enFullNow">${L.energyFullNow}</div></div>`
+    : `<div class="row"><div class="grow">${L.energyNextIn}</div><b class="ltr" id="enNext">${fmtDur(t.next)}</b></div>
+    <div class="row"><div class="grow">${L.energyFullIn}</div><b class="ltr" id="enFull">${fmtDur(t.full)}</b></div>`;
   return `<div class="enInfo" id="enInfo"><div class="enBig ltr">${S.energy}<small>/${ENERGY_CAP}</small></div>
     <div class="row"><div class="grow">${L.energyInterval(ENERGY_MS/1000)}</div></div>
-    <div class="row"><div class="grow">${L.energyNextIn}</div><b class="ltr" id="enNext">${full ? L.energyFull : fmtDur(t.next)}</b></div>
-    <div class="row"><div class="grow">${L.energyFullIn}</div><b class="ltr" id="enFull">${full ? L.energyFull : fmtDur(t.full)}</b></div>
+    ${timers}
     <div class="muted center" id="enNote" style="font-size:12px;margin:2px 0 6px">${S.energy > ENERGY_CAP ? L.energyAbove(ENERGY_CAP) : L.energyKept}</div></div>`;
 }
 function refreshEnergyInfo(){                // display only: recomputed from S.energy/S.et every second while the panel is open
   if (!energyOpen || !$('enInfo')) return; const t = energyTimes(Date.now()), full = S.energy >= ENERGY_CAP;
-  $('enNext').textContent = full ? L.energyFull : fmtDur(t.next); $('enFull').textContent = full ? L.energyFull : fmtDur(t.full);
+  const next = $('enNext'), fullEl = $('enFull');
+  if (next) next.textContent = fmtDur(t.next);
+  if (fullEl) fullEl.textContent = fmtDur(t.full);
+  // crossing the cap (or dropping below it) changes the row structure: rebuild once
+  if (!!full !== !$('enFullNow') && !!full !== !!(next || fullEl)) { openShop('energy'); return; }
+  if (full && !$('enFullNow')) { openShop('energy'); return; }
+  if (!full && $('enFullNow')) { openShop('energy'); return; }
   $('enInfo').querySelector('.enBig').firstChild.textContent = S.energy; $('enNote').textContent = S.energy > ENERGY_CAP ? L.energyAbove(ENERGY_CAP) : L.energyKept;
+}
+function eshopState(){
+  const k = dayKey();
+  if (!S.eshop || S.eshop.v !== 1 || S.eshop.k !== k) S.eshop = {v:1, k, n20:0, n50:0};
+  return S.eshop;
+}
+function energyOffer(pack){                 // pack is 20 or 50; price of the NEXT purchase today (resets at local midnight)
+  const P = ENERGY_PACKS[pack], st = eshopState(), n = pack === 20 ? st.n20 : st.n50;
+  if (n >= P.cap) return { sold: true, n, cap: P.cap, amt: P.amt };
+  return { sold: false, price: P.ladder[Math.min(n, P.ladder.length - 1)], n, cap: P.cap, left: P.cap - n, amt: P.amt };
+}
+function buyEnergy(pack){
+  return txn(() => {
+    const off = energyOffer(pack);
+    if (off.sold) return {ok: false, reason: 'sold'};
+    if (S.coins < off.price) return {ok: false, reason: 'coins'};
+    S.coins -= off.price; S.energy += off.amt;
+    if (pack === 20) S.eshop.n20 = (S.eshop.n20 || 0) + 1; else S.eshop.n50 = (S.eshop.n50 || 0) + 1;
+    return {ok: true, price: off.price, amt: off.amt, next: energyOffer(pack)};
+  });
+}
+function packRow(pack){
+  const off = energyOffer(pack), label = '+' + pack + ' ' + L.energy;
+  if (off.sold) return `<div class="row" id="shE${pack}row"><div class="art">${A.icon('bolt')}</div><div class="grow">${label}<div class="muted" style="font-size:12px">${L.shopSoldOut}</div></div>
+      <button class="btn pink" id="shE${pack}" disabled>${L.tomorrow}</button></div>`;
+  return `<div class="row" id="shE${pack}row"><div class="art">${A.icon('bolt')}</div><div class="grow">${label}<div class="muted" style="font-size:12px">${L.shopLeft(off.left)}</div></div>
+      <button class="btn pink" id="shE${pack}" ${S.coins < off.price ? 'disabled' : ''}><span class="rw"><i>${A.icon('coin')}</i>${off.price}</span></button></div>`;
 }
 function openEnergy(){ openShop('energy'); }
 function openShop(mode){
   if (typeof mode !== 'string') mode = '';
   const ready = S.gift !== dayKey();
+  eshopState();
   modal(mode === 'energy' ? L.energyTitle : L.shopTitle, (mode === 'energy' ? energyInfoHtml() : '') + `
     <div class="row"><div class="art">${A.icon('heart')}</div><div class="grow">${L.dailyGift}<br>${rwHtml({energy:30, coins:30})}</div>
       <button class="btn" id="shGift" ${ready?'':'disabled'}>${ready ? L.take : L.tomorrow}</button></div>
-    <div class="row"><div class="art">${A.icon('bolt')}</div><div class="grow">+20 ${L.energy}</div>
-      <button class="btn pink" id="shE20"><span class="rw"><i>${A.icon('coin')}</i>60</span></button></div>
-    <div class="row"><div class="art">${A.icon('bolt')}</div><div class="grow">+50 ${L.energy}</div>
-      <button class="btn pink" id="shE50"><span class="rw"><i>${A.icon('coin')}</i>140</span></button></div>${supplyHtml()}`);
+    ${packRow(20)}${packRow(50)}
+    <div class="muted center" style="font-size:12px;margin:2px 0 8px">${L.shopLadderNote}</div>${supplyHtml()}`);
   energyOpen = mode === 'energy'; wireSupply(() => openShop(mode));
   $('shGift').onclick = () => { if (S.gift===dayKey()) return; S.gift = dayKey(); give({energy:30, coins:30}); SFX.coin(); save(); renderTop(); openShop(mode); };
-  const buyE = (e, c) => { if (S.coins < c){ toast(L.noCoins); SFX.no(); return; } S.coins -= c; S.energy += e; SFX.coin(); save(); renderTop(); openShop(mode); };
-  $('shE20').onclick = () => buyE(20, 60);
-  $('shE50').onclick = () => buyE(50, 140);
+  const onBuy = pack => {
+    const r = buyEnergy(pack);
+    if (!r.ok){ SFX.no(); toast(r.reason === 'coins' ? L.noCoins : L.shopSoldOut); openShop(mode); return; }
+    SFX.coin(); renderTop(); openShop(mode);
+  };
+  $('shE20').onclick = () => onBuy(20);
+  $('shE50').onclick = () => onBuy(50);
 }
 
 function openSettings(){
@@ -1504,5 +1552,5 @@ setInterval(save, 5000);
 document.addEventListener('visibilitychange', () => { if (document.hidden) save(true); else { tick(); renderAll(); refreshContent(false).catch(() => {}); } });
 
 // سىناق ئۈچۈن
-window.__game = { atelier: {open: () => openAtelier(), env: atelierEnv, notes: atelierNotes}, ALL_CHAINS, buyProp, buyColour, equipColour, salonInp, taskCounts, openTasks, get EV(){ return EV; }, energyTimes, ENERGY_CAP, tick, applyLang, buyProducer, placeQueued, producerPrice, equivOf, grantMilestones, claimEvent, newOrder, accessibleChains, deliver: oi => deliver(oi), save: () => save(), get contentInfo(){ return contentInfo; }, refreshContent, get S(){ return S; }, get gate(){ return saveGate; }, get recovery(){ return recovery; }, renderAll };
+window.__game = { atelier: {open: () => openAtelier(), env: atelierEnv, notes: atelierNotes}, ALL_CHAINS, buyProp, buyColour, equipColour, salonInp, taskCounts, openTasks, tasksFor, get EV(){ return EV; }, energyTimes, ENERGY_CAP, ENERGY_PACKS, energyOffer, buyEnergy, eshopState, dayKey, weekKey, monthKey, tick, applyLang, buyProducer, placeQueued, producerPrice, equivOf, grantMilestones, claimEvent, newOrder, accessibleChains, deliver: oi => deliver(oi), save: () => save(), get contentInfo(){ return contentInfo; }, refreshContent, get S(){ return S; }, get gate(){ return saveGate; }, get recovery(){ return recovery; }, renderAll, openShop, MSN, MSN_CFG };
 })();

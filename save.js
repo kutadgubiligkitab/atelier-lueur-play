@@ -58,7 +58,7 @@
     if (!CFG) throw new Error('SAVE.configure() was not called');
     const bad = code => ({ ok: false, code });
     if (!isObj(s)) return bad('not-object');
-    const allowed = ['v', 'board', 'energy', 'et', 'coins', 'stars', 'lv', 'orders', 'seen', 'owned', 'road', 'album', 'cnt', 'claimed', 'gift', 'set', 'secretSeen', 'ev', 'queue', 'qid', 'pg', 'pbuy', 'ecap', 'vo', 've', 'atl', 'msn'];
+    const allowed = ['v', 'board', 'energy', 'et', 'coins', 'stars', 'lv', 'orders', 'seen', 'owned', 'road', 'album', 'cnt', 'claimed', 'gift', 'set', 'secretSeen', 'ev', 'queue', 'qid', 'pg', 'pbuy', 'ecap', 'vo', 've', 'atl', 'msn', 'eshop'];
     for (const k of Object.keys(s)) if (allowed.indexOf(k) < 0) return bad('unknown-field:' + k);
     if (s.v !== 2) return bad('version');
 
@@ -117,7 +117,9 @@
 
     if (!isObj(s.cnt)) return bad('cnt');
     const day = counters(s.cnt.day), week = counters(s.cnt.week);
-    if (!day || !week || Object.keys(s.cnt).some(k => k !== 'day' && k !== 'week')) return bad('cnt');
+    const month = s.cnt.month === undefined ? null : counters(s.cnt.month);
+    if (!day || !week || Object.keys(s.cnt).some(k => k !== 'day' && k !== 'week' && k !== 'month')) return bad('cnt');
+    if (s.cnt.month !== undefined && !month) return bad('cnt');
 
     const gift = s.gift === undefined ? '' : s.gift;
     if (typeof gift !== 'string' || gift.length > 20) return bad('gift');
@@ -171,42 +173,52 @@
 
     if (atl !== undefined && s.lv < 25) return bad('atl-level');   // an unlocked Atelier needs level >= 25 (UNLOCK_LEVEL in atelier.js): no Atelier state/copies on a lower-level save
 
-    // daily/weekly mission variety (optional): today's assignment snapshot + this week's completed daily instances. Structure only; rules live in missions.js.
+    // daily/weekly/monthly missions (optional). Structure only; rules live in missions.js. v:1 snapshots stay valid so older saves can be imported; the game migrates them to v:2 on load.
     let msn;
     if (s.msn !== undefined) {
-      const m = s.msn, TPL = ['tap', 'fam', 'mix'], rew = r => isObj(r) && Object.keys(r).length >= 1 && Object.keys(r).length <= 3 && Object.keys(r).every(k => ['coins', 'energy', 'stars'].indexOf(k) >= 0 && isInt(r[k], 0, 1e6));
-      if (!isObj(m) || m.v !== 1 || Object.keys(m).some(k => ['v', 'last', 'lw', 'day', 'week'].indexOf(k) < 0) || (m.last !== undefined && TPL.indexOf(m.last) < 0)) return bad('msn');
-      msn = { v: 1 }; if (m.last !== undefined) msn.last = m.last;
-      const T4 = ['tap', 'fam'], T5 = ['coin', 'mix', 'atl'];
-      if (m.lw !== undefined){ if (!isObj(m.lw) || Object.keys(m.lw).some(k => k !== 'a' && k !== 'b') || T4.indexOf(m.lw.a) < 0 || T5.indexOf(m.lw.b) < 0) return bad('msn'); msn.lw = { a: m.lw.a, b: m.lw.b }; }
-      if (m.day !== undefined) {
-        const d = m.day;
-        if (!isObj(d) || Object.keys(d).some(k => ['k', 't', 'n', 'f', 'a', 'r3', 'r4', 'n4'].indexOf(k) < 0) || typeof d.k !== 'string' || d.k.length > 20 || TPL.indexOf(d.t) < 0 || !isInt(d.n, 1, 1000) || (d.a !== 0 && d.a !== 1) || !rew(d.r3) || !rew(d.r4) || !isInt(d.n4, 1, 100000)) return bad('msn');
-        const nd = { k: d.k, t: d.t, n: d.n, a: d.a, r3: Object.assign({}, d.r3), r4: Object.assign({}, d.r4), n4: d.n4 };
-        if (d.f !== undefined) { if (!Array.isArray(d.f) || d.f.length > 8 || d.f.some(c => CFG.CHAINS.indexOf(c) < 0)) return bad('msn'); nd.f = d.f.slice(); }
-        if (d.t === 'fam' && !(nd.f && nd.f.length >= 1)) return bad('msn');
-        msn.day = nd;
-      }
-      if (m.week !== undefined) {
-        const w = m.week;
-        if (!isObj(w) || Object.keys(w).some(k => k !== 'k' && k !== 'done' && k !== 's') || typeof w.k !== 'string' || w.k.length > 20 || !Array.isArray(w.done) || w.done.length > 40 || w.done.some(x => typeof x !== 'string' || !/^\d{4}-\d{1,2}-\d{1,2}:[1-4]$/.test(x)) || new Set(w.done).size !== w.done.length) return bad('msn');
-        msn.week = { k: w.k, done: w.done.slice() };
-        if (w.s !== undefined){                          // FIVE-objective week snapshot (frozen at the weekly reset)
-          const t = w.s;
-          if (!isObj(t) || Object.keys(t).some(k => ['a', 'b', 'n4', 'n5', 'r4', 'r5', 'f'].indexOf(k) < 0) || T4.indexOf(t.a) < 0 || T5.indexOf(t.b) < 0 || !isInt(t.n4, 1, 100000) || !isInt(t.n5, 1, 100000) || !rew(t.r4) || !rew(t.r5)) return bad('msn');
-          const nt = { a: t.a, b: t.b, n4: t.n4, n5: t.n5, r4: Object.assign({}, t.r4), r5: Object.assign({}, t.r5) };
-          if (t.f !== undefined){ if (!Array.isArray(t.f) || t.f.length > 8 || t.f.some(c => CFG.CHAINS.indexOf(c) < 0)) return bad('msn'); nt.f = t.f.slice(); }
-          if (t.a === 'fam' && !(nt.f && nt.f.length >= 2)) return bad('msn');
-          msn.week.s = nt;
+      const ext = (typeof window !== 'undefined' && window.MISSIONS && window.MISSIONS.sanitizeMsn) ? window.MISSIONS.sanitizeMsn(s.msn, CFG.CHAINS) : null;
+      if (ext) msn = ext;
+      else {
+        const m = s.msn, TPL = ['tap', 'fam', 'mix'], rew = r => isObj(r) && Object.keys(r).length >= 1 && Object.keys(r).length <= 3 && Object.keys(r).every(k => ['coins', 'energy', 'stars'].indexOf(k) >= 0 && isInt(r[k], 0, 1e6));
+        if (!isObj(m) || m.v !== 1 || Object.keys(m).some(k => ['v', 'last', 'lw', 'day', 'week'].indexOf(k) < 0) || (m.last !== undefined && TPL.indexOf(m.last) < 0)) return bad('msn');
+        msn = { v: 1 }; if (m.last !== undefined) msn.last = m.last;
+        const T4 = ['tap', 'fam'], T5 = ['coin', 'mix', 'atl'];
+        if (m.lw !== undefined){ if (!isObj(m.lw) || Object.keys(m.lw).some(k => k !== 'a' && k !== 'b') || T4.indexOf(m.lw.a) < 0 || T5.indexOf(m.lw.b) < 0) return bad('msn'); msn.lw = { a: m.lw.a, b: m.lw.b }; }
+        if (m.day !== undefined) {
+          const d = m.day;
+          if (!isObj(d) || Object.keys(d).some(k => ['k', 't', 'n', 'f', 'a', 'r3', 'r4', 'n4'].indexOf(k) < 0) || typeof d.k !== 'string' || d.k.length > 20 || TPL.indexOf(d.t) < 0 || !isInt(d.n, 1, 1000) || (d.a !== 0 && d.a !== 1) || !rew(d.r3) || !rew(d.r4) || !isInt(d.n4, 1, 100000)) return bad('msn');
+          const nd = { k: d.k, t: d.t, n: d.n, a: d.a, r3: Object.assign({}, d.r3), r4: Object.assign({}, d.r4), n4: d.n4 };
+          if (d.f !== undefined) { if (!Array.isArray(d.f) || d.f.length > 8 || d.f.some(c => CFG.CHAINS.indexOf(c) < 0)) return bad('msn'); nd.f = d.f.slice(); }
+          if (d.t === 'fam' && !(nd.f && nd.f.length >= 1)) return bad('msn');
+          msn.day = nd;
+        }
+        if (m.week !== undefined) {
+          const w = m.week;
+          if (!isObj(w) || Object.keys(w).some(k => k !== 'k' && k !== 'done' && k !== 's') || typeof w.k !== 'string' || w.k.length > 20 || !Array.isArray(w.done) || w.done.length > 40 || w.done.some(x => typeof x !== 'string' || !/^\d{4}-\d{1,2}-\d{1,2}:[1-4]$/.test(x)) || new Set(w.done).size !== w.done.length) return bad('msn');
+          msn.week = { k: w.k, done: w.done.slice() };
+          if (w.s !== undefined){
+            const t = w.s;
+            if (!isObj(t) || Object.keys(t).some(k => ['a', 'b', 'n4', 'n5', 'r4', 'r5', 'f'].indexOf(k) < 0) || T4.indexOf(t.a) < 0 || T5.indexOf(t.b) < 0 || !isInt(t.n4, 1, 100000) || !isInt(t.n5, 1, 100000) || !rew(t.r4) || !rew(t.r5)) return bad('msn');
+            const nt = { a: t.a, b: t.b, n4: t.n4, n5: t.n5, r4: Object.assign({}, t.r4), r5: Object.assign({}, t.r5) };
+            if (t.f !== undefined){ if (!Array.isArray(t.f) || t.f.length > 8 || t.f.some(c => CFG.CHAINS.indexOf(c) < 0)) return bad('msn'); nt.f = t.f.slice(); }
+            if (t.a === 'fam' && !(nt.f && nt.f.length >= 2)) return bad('msn');
+            msn.week.s = nt;
+          }
         }
       }
+    }
+    let eshop;
+    if (s.eshop !== undefined) {
+      const e = s.eshop;
+      if (!isObj(e) || e.v !== 1 || Object.keys(e).some(k => ['v', 'k', 'n20', 'n50'].indexOf(k) < 0) || typeof e.k !== 'string' || e.k.length > 20 || !isInt(e.n20, 0, 100) || !isInt(e.n50, 0, 100)) return bad('eshop');
+      eshop = { v: 1, k: e.k, n20: e.n20, n50: e.n50 };
     }
 
     let ecap; if (s.ecap !== undefined) { if (!isInt(s.ecap, 1, 100000)) return bad('ecap'); ecap = s.ecap; }   // energy-cap version of this save (absent = written under the old cap)
 
     const out = { ok: true, state: {
       v: 2, board, energy: s.energy, et, coins: s.coins, stars: s.stars, lv: s.lv, orders, seen, owned, road, album,
-      cnt: { day, week }, claimed, gift, set: { sound: s.set.sound, vib: s.set.vib, lang: s.set.lang }, secretSeen,
+      cnt: month ? { day, week, month } : { day, week }, claimed, gift, set: { sound: s.set.sound, vib: s.set.vib, lang: s.set.lang }, secretSeen,
     } };
     if (ev !== undefined) out.state.ev = ev;
     if (ecap !== undefined) out.state.ecap = ecap;
@@ -218,6 +230,7 @@
     if (pbuy !== undefined) out.state.pbuy = pbuy;
     if (atl !== undefined) out.state.atl = atl;
     if (msn !== undefined) out.state.msn = msn;
+    if (eshop !== undefined) out.state.eshop = eshop;
     return out;
   }
 

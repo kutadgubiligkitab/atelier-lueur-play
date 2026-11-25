@@ -376,6 +376,7 @@ button,.btn,.plus,.roundbtn,.nav,.nav *,.pill,.lvbadge,.cust,.ordersRow,.side,.i
 /* four task tabs (Events appears only when an event exists): allow the labels to shrink inside the modal instead of overflowing */
 .tabs button{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-left:1px;padding-right:1px}
 @media (max-width:340px){.tabs{gap:2px;padding:3px}.tabs button{font-size:11.5px}}
+.tabs.many button{font-size:12px;padding:6px 1px}
 
 /* mixed-family order card: two compact needs stacked in the need column (each: small art + have/need) */
 .order .need.mixedNeed{gap:1px}

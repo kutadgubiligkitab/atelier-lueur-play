@@ -420,14 +420,35 @@ function placeInv(i){
   if (r.ok){ selected = r.j; SFX.tap(); renderAll(); } else { SFX.no(); toast(r.reason==='board' ? L.boardFull : L.supplyFail); }
   return r;
 }
-function expandInv(){
-  const r = txn(() => {
+let invExpandBusy = false, lastExpandAt = 0;
+function commitExpandInv(){
+  const now = Date.now();
+  if (now - lastExpandAt < 800) return {ok:false, reason:'busy'};
+  lastExpandAt = now;
+  return txn(() => {
     const inv = invState(), n = INV_CAPS[INV_CAPS.indexOf(inv.cap) + 1]; if (!n) return {ok:false, reason:'max'};
     const price = INV_EXPAND[n]; if (S.coins < price) return {ok:false, reason:'coins'};
     S.coins -= price; inv.cap = n; return {ok:true, cap:n};
   });
-  if (r.ok){ SFX.shop(); toast(L.invExpanded(r.cap)); renderAll(); } else { SFX.no(); toast(r.reason==='coins' ? L.noCoins : L.supplyFail); }
-  return r;
+}
+function expandInv(){                                 // confirm first; a double tap cannot buy twice
+  if (invExpandBusy) return {ok:false, reason:'busy'};
+  const inv = invState(), n = INV_CAPS[INV_CAPS.indexOf(inv.cap) + 1]; if (!n) return {ok:false, reason:'max'};
+  const price = INV_EXPAND[n];
+  if (S.coins < price){ SFX.no(); toast(L.noCoins); return {ok:false, reason:'coins'}; }
+  invExpandBusy = true;
+  modal(L.invExpandTitle, `<p class="center">${L.invExpandAsk(price, n)}</p><div style="display:flex;gap:8px"><button type="button" class="btn pink wide" id="invExY">${L.yes}</button><button type="button" class="btn wide" data-close>${L.no}</button></div>`);
+  const yes = $('invExY');
+  if (yes) yes.onclick = ev => {
+    ev.preventDefault(); ev.stopPropagation();
+    if (yes.dataset.used) return;
+    yes.dataset.used = '1'; yes.disabled = true;
+    const r = commitExpandInv();
+    closeModal();
+    if (r.ok){ SFX.shop(); toast(L.invExpanded(r.cap)); renderAll(); }
+    else if (r.reason !== 'busy'){ SFX.no(); toast(r.reason==='coins' ? L.noCoins : L.supplyFail); }
+  };
+  return {ok:true, reason:'confirm'};
 }
 const INV_MARK = `<svg viewBox="0 0 100 100" aria-hidden="true"><rect x="14" y="40" width="72" height="48" rx="8" fill="#fff6fa" stroke="#d24b84" stroke-width="5"/><path d="M14 54H86" stroke="#f5c84c" stroke-width="6"/><path d="M50 40V88" stroke="#f5b5d2" stroke-width="4"/><path d="M22 40L50 18L78 40" fill="#ffe6f1" stroke="#d24b84" stroke-width="5" stroke-linejoin="round"/></svg>`;
 function invPanelHtml(){
@@ -462,7 +483,9 @@ function renderUndo(){
   if (!undoSale || left <= 0){ el.hidden = true; el.innerHTML = ''; if (undoSale && left <= 0) undoSale = null; return; }
   el.hidden = false;
   el.innerHTML = `<button type="button" class="btn pink" id="bUndo">${L.undo} · ${L.undoLeft(left)}</button>`;
-  $('bUndo').onclick = undoLastSale;
+  const bUndo = $('bUndo');
+  if (bUndo && el.clientWidth && bUndo.scrollWidth > el.clientWidth - 8) bUndo.textContent = L.undo + ' · ' + left;  // ug "سېكۇنت" may not fit: keep the chip readable with the number only
+  bUndo.onclick = undoLastSale;
 }
 function undoLastSale(){
   if (!undoSale || Date.now() >= undoSale.until){ clearUndo(); return; }
@@ -1050,7 +1073,7 @@ function modal(title, body){
 }
 function closeModal(){
   const was = $('overlay').classList.contains('on');
-  tasksOpen = false; taskOpenKey = ''; energyOpen = false;
+  tasksOpen = false; taskOpenKey = ''; energyOpen = false; invExpandBusy = false;
   $('overlay').classList.remove('on');
   $('modal').classList.remove('genUp');
   if (was) SFX.close();
@@ -1136,7 +1159,10 @@ function eventsHtml(){
         `${o.done ? `<div class="stlab ready">${L.taskReady}</div>` : ''}<div style="font-size:12px">${rwHtml(o.reward)}</div><button class="btn" data-evclaim="${esc(ev.id)}|${esc(o.id)}" ${o.done?'':'disabled'}>${L.claim}</button>`}</div></div>`).join('');
     const bonus = ev.completion ? `<div class="row is-${ev.completion.claimed ? 'claimed' : ev.completion.ready ? 'ready' : 'progress'}"><div class="art">${A.icon('star')}</div><div class="grow">${L.eventBonus}</div><div class="center" style="min-width:70px">${ev.completion.claimed ? `<span class="stlab claimed"><span style="width:20px;display:inline-block;vertical-align:middle">${A.icon('check')}</span> ${L.claimed}</span>` :
       `${ev.completion.ready ? `<div class="stlab ready">${L.taskReady}</div>` : ''}<div style="font-size:12px">${rwHtml(ev.completion.reward)}</div><button class="btn" data-evclaim="${esc(ev.id)}|*" ${ev.completion.ready?'':'disabled'}>${L.claim}</button>`}</div></div>` : '';
-    return `<div class="evCard"><div style="font-weight:800;font-size:17px">${esc(evCopy(ev.title))}</div><div style="font-size:13px;opacity:.85">${esc(evCopy(ev.desc))}</div><div style="font-size:12px;margin:4px 0 6px;color:var(--pink-dark)">${esc(when)}</div>${rows}${bonus}</div>`;
+    const ekey = 'events|' + ev.id, eopen = taskOpenKey === ekey, eid = 'td-events-' + ev.id;
+    const title = `<button type="button" class="evTitle infoBtn" data-info="${esc(ekey)}" aria-expanded="${eopen}" aria-controls="${eid}"><span class="ttxt">${esc(evCopy(ev.title))}</span><i class="infoDot" aria-hidden="true">i</i></button>`;
+    const det = evCopy(ev.desc) ? `<div class="tcDet" id="${eid}" role="region"${eopen ? '' : ' hidden'}><p>${esc(evCopy(ev.desc))}</p></div>` : '';
+    return `<div class="evCard">${title}<div class="evWhen">${esc(when)}</div>${det}${rows}${bonus}</div>`;
   }).join('');
 }
 function openTasks(opts){

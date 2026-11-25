@@ -375,6 +375,11 @@ button,.btn,.plus,.roundbtn,.nav,.nav *,.pill,.lvbadge,.cust,.ordersRow,.side,.i
 }
 
 .evCard{border:2px solid var(--gold);border-radius:14px;padding:8px;margin-bottom:8px;background:linear-gradient(#fffaf2,#ffeef5)}
+.evCard .evTitle{display:block;width:100%;margin:0;padding:0;border:0;background:none;font:inherit;font-weight:800;font-size:17px;line-height:1.35;text-align:start;color:inherit;cursor:pointer;min-height:44px}
+.evCard .evTitle .ttxt{display:inline}
+.evCard .evTitle[aria-expanded=true] .infoDot{background:#b4577f;border-color:#b4577f;color:#fff}
+.evCard .evTitle:focus-visible{outline:3px solid #ff5fa2;outline-offset:2px;border-radius:8px}
+.evWhen{font-size:12px;margin:4px 0 6px;color:var(--pink-dark)}
 /* four task tabs (Events appears only when an event exists): allow the labels to shrink inside the modal instead of overflowing */
 .tabs button{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-left:1px;padding-right:1px}
 @media (max-width:340px){.tabs{gap:2px;padding:3px}.tabs button{font-size:11.5px}}

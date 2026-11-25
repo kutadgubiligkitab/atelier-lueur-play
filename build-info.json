@@ -1,8 +1,8 @@
 {
- "sourceCommit": "a2d1a12a7f4d4879c2da17e01fd73ce69009aebf",
+ "sourceCommit": "ba23ec50a19e1d7bc8717fc8b8be67075289a972",
  "sourceHasUncommittedChanges": false,
- "fileCount": 407,
- "totalBytes": 86066515,
+ "fileCount": 401,
+ "totalBytes": 84445051,
  "files": [
   {
    "path": "art.js",
@@ -250,39 +250,9 @@
    "sha256": "4403749bd2c76283e00694b16559dc3f5f3128ebce741f04149a939079f8cf44"
   },
   {
-   "path": "assets/audio/CREDITS.txt",
-   "bytes": 2366,
-   "sha256": "14c2f8bf57b16b1e76bfd210c0b085d1d4fa5ee49d93da325d338c40b8f1ec90"
-  },
-  {
    "path": "assets/audio/README.txt",
-   "bytes": 265,
-   "sha256": "82cbd2b88355185eb9e9d0db81a3ec140f5888a24445e0f78d3bc087ec892894"
-  },
-  {
-   "path": "assets/audio/cafe-loop.m4a",
-   "bytes": 756282,
-   "sha256": "62f476f18a19e0ccfc202d8ce47ffa3b3deb8def679d598f56d8b64f5cd20773"
-  },
-  {
-   "path": "assets/audio/cafe-loop.mp3",
-   "bytes": 720448,
-   "sha256": "d7918151c01d14f5a6d0fca4412416e0fe82358b0383cacd0c864685a5e1bc97"
-  },
-  {
-   "path": "assets/audio/sfx-bank.json",
-   "bytes": 1047,
-   "sha256": "ac8aa1e10442d3efe5549aeae4dde9a2a7ed4eb13ed15381c39e480681adf2fe"
-  },
-  {
-   "path": "assets/audio/sfx-bank.m4a",
-   "bytes": 68590,
-   "sha256": "47911ddfa6735def4c2831cf1e3e4b454dafaa10cf92ed01cb86562dcd2c5931"
-  },
-  {
-   "path": "assets/audio/sfx-bank.mp3",
-   "bytes": 64617,
-   "sha256": "241ef746c9e188c9eb7d2520d6d75b4a9c7e95111757f3aedf8e425a2b348a77"
+   "bytes": 279,
+   "sha256": "5ef3d36ff824a517ae8381fc92155263a37ccbfd682d25aec8f43e40552f049e"
   },
   {
    "path": "assets/characters/customer-amina-blink.png",
@@ -1971,8 +1941,8 @@
   },
   {
    "path": "audio.js",
-   "bytes": 12665,
-   "sha256": "9b6840211dfed2e421d28c406f8c4b82da7da781eaa075e59271862fe65ec33e"
+   "bytes": 4537,
+   "sha256": "9018843dd11c96c9fcfa0d606bd9e814ab6df44d6598e3f7dfd8831afc0e31ae"
   },
   {
    "path": "config.js",

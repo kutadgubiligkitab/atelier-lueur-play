@@ -506,7 +506,7 @@ button,.btn,.plus,.roundbtn,.nav,.nav *,.pill,.lvbadge,.cust,.ordersRow,.side,.i
 .taskCard .taskTitle{flex:1;min-width:0;font-weight:800;font-size:14px;line-height:1.5;text-align:start;color:inherit;padding-top:6px;padding-bottom:3px}
 button.taskTitle{display:block;min-height:44px;margin:0;padding-bottom:0;padding-inline:0;border:0;background:none;font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 .taskTitle .ttxt{display:inline}
-.infoDot{display:inline-block;vertical-align:middle;margin-inline-start:6px;width:20px;height:20px;border-radius:50%;border:1.5px solid #c98aa9;color:#b4577f;font:800 12px/17px Nunito,sans-serif;font-style:normal;text-align:center;direction:ltr;margin-top:-2px}
+.infoDot{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;box-sizing:border-box;width:20px;height:20px;margin-inline-start:8px;border-radius:50%;border:1.5px solid #c98aa9;color:#b4577f;font:800 12px/1 Nunito,sans-serif;font-style:normal;text-align:center;flex:none;unicode-bidi:isolate}
 button.taskTitle[aria-expanded=true] .infoDot{background:#b4577f;border-color:#b4577f;color:#fff}
 button.taskTitle:focus-visible{outline:3px solid #ff5fa2;outline-offset:2px;border-radius:8px}
 .taskCard .taskSub{margin-top:2px;line-height:1.5}

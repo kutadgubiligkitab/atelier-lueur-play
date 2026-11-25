@@ -251,8 +251,11 @@ function sprite(id){
    They are not saved slots. Props keep their natural aspect ratio (object-fit: contain), never stretched.
    The single-file build defines window.SALON_INLINE (data URIs: base + the @2x prop files). The old vector room is kept as roomSvg. */
 const SALON_DIR = 'assets/salon-v1/';
-const SALON_LAYOUT = {rug:[40,190,280,75,0], curtain:[215,0,140,190,1], shelf:[2,32,78,185,2], mirror:[84,13,108,132,3],
-  table:[73,143,152,75,4], lamp:[315,54,42,157,5], chair:[120,134,110,115,6], flowers:[177,106,40,49,7]};
+/* Studio slots remeasured to each prop's natural aspect ratio and to painted contact points
+   (window rod/sill, vanity under the mirror, vase foot on the tabletop, floor feet). Boxes fill
+   the sprite exactly, so object-fit:contain no longer letterboxes and “drops” props in mid-air. */
+const SALON_LAYOUT = {rug:[79.56,189.94,200.88,75.08,0], curtain:[195.57,0.24,158.85,169.66,1], shelf:[3.98,32.07,74.09,184.97,2], mirror:[84.03,14.92,107.9,128.04,3],
+  table:[82,121.25,150,96.75,4], lamp:[315,66.63,42.02,131.77,5], chair:[100,134.01,100.44,115.11,6], flowers:[188.28,88.03,40.03,45.25,7]};
 /* Reception (Reception Art v1): own empty-room image + nine props. Measured layout from assets/reception/layout.json (natural aspect ratios; verify/salon-areas.js
    checks these numbers equal that file). The single-file build embeds the base + @2x props in window.SALON_INLINE under the same ids. */
 const RECEPTION_DIR = 'assets/reception/';

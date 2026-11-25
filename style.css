@@ -139,7 +139,14 @@ button{font:inherit;color:inherit}
 .roomScene{position:relative;width:100%;height:100%}
 .roomScene img{position:absolute;display:block;pointer-events:none;user-select:none;-webkit-user-drag:none}
 .roomScene .roomBase{left:0;top:0;width:100%;height:100%;object-fit:fill}
-.roomScene .prop{object-fit:contain}
+.roomScene .prop{object-fit:contain;object-position:center center}
+.roomScene[data-area="studio"] .prop-rug,
+.roomScene[data-area="studio"] .prop-shelf,
+.roomScene[data-area="studio"] .prop-table,
+.roomScene[data-area="studio"] .prop-lamp,
+.roomScene[data-area="studio"] .prop-chair{object-position:center bottom}
+.roomScene[data-area="studio"] .prop-curtain{object-position:center top}
+.roomScene[data-area="studio"] .prop-flowers{object-position:center bottom}
 .multi#pageSalon{overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
 .multi#pageSalon .roomBox{flex:0 0 auto}
 .multi#pageSalon .room{max-height:none;width:100%}

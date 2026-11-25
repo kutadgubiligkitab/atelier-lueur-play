@@ -1,8 +1,8 @@
 {
- "sourceCommit": "57a997804e38db0eeb8b24010e84ffd1c0898c09",
+ "sourceCommit": "a2d1a12a7f4d4879c2da17e01fd73ce69009aebf",
  "sourceHasUncommittedChanges": false,
- "fileCount": 405,
- "totalBytes": 85579728,
+ "fileCount": 407,
+ "totalBytes": 86066515,
  "files": [
   {
    "path": "art.js",
@@ -565,6 +565,11 @@
    "sha256": "63111b5b2e074dd48cc67692e0a2726d86ee94c1c37fe8598257b7b4e87e869e"
   },
   {
+   "path": "assets/fonts/NotoSansSC-Subset.ttf",
+   "bytes": 337352,
+   "sha256": "57128f594d961222c35e4080b8017ab9d6f681d3dc601f1241a17ddcfb17724a"
+  },
+  {
    "path": "assets/fonts/Nunito-Variable.ttf",
    "bytes": 276932,
    "sha256": "bb55a5ca5c2042335b3991af27c4d0705d0ef41cac6164ac737fd8f2a1e85207"
@@ -578,6 +583,11 @@
    "path": "assets/fonts/OFL-NotoSansArabic.txt",
    "bytes": 4382,
    "sha256": "07fc70bfeb985cc1a87a8587d0a0c80bab11c86c9dc3fd95b6f0cb332f983e96"
+  },
+  {
+   "path": "assets/fonts/OFL-NotoSansSC.txt",
+   "bytes": 4388,
+   "sha256": "1c05c68c34f9708415aada51f17e1b0092d2cea709bf4a94cd38114f9e73d7d9"
   },
   {
    "path": "assets/fonts/OFL-Nunito.txt",
@@ -1976,18 +1986,18 @@
   },
   {
    "path": "fonts.css",
-   "bytes": 619,
-   "sha256": "2be2f8b25354c29dc6bb0e5b6569cde9d6b59d15752cd5974417b475db501dfc"
+   "bytes": 780,
+   "sha256": "e9df5caa41c0e57e299d7f0cadeafe3f05412a0490d4ac9a86f7ae4cd3efc549"
   },
   {
    "path": "game.js",
-   "bytes": 125079,
-   "sha256": "3c6e7b32b3834e7ec6d3a503674b297d8c790b59110079b6f3e47b72d2d739c7"
+   "bytes": 125484,
+   "sha256": "6c3d066ee8fe66a4680c2cd8f8ef96b0680b6bc046365330fcaa28678a541012"
   },
   {
    "path": "i18n.js",
-   "bytes": 41060,
-   "sha256": "74d62428bcd1a57da9f6577874bd3315f2855755a51ac5bd13e0a85222bef677"
+   "bytes": 183958,
+   "sha256": "62edf017e507fbe86fabb6fcd9092d51689f5e0eea93a2e66f6b09e74dbf2664"
   },
   {
    "path": "icon.png",
@@ -1996,8 +2006,8 @@
   },
   {
    "path": "index.html",
-   "bytes": 7125,
-   "sha256": "f7fa607bbd887bffd09bf3fdb99166b86c73463508d7bc6b50c41174198e5fca"
+   "bytes": 8097,
+   "sha256": "9a9d4e935cc11b017f312f796322e6aaf7c7baba963f91d460d6b6c1ee56cb91"
   },
   {
    "path": "manifest.json",
@@ -2026,8 +2036,8 @@
   },
   {
    "path": "style.css",
-   "bytes": 45673,
-   "sha256": "4e01f5ac136e19be783d8c7e11fea7dd00145d6102ec6dbfb9d523ea05ba56cf"
+   "bytes": 46284,
+   "sha256": "a738d5e6333f5e106e90de4d784543bb46ae3297e23231e01db9291b30dea9e5"
   }
  ]
 }

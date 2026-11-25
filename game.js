@@ -66,7 +66,7 @@ function newGame(){
     seen:{}, owned:{}, road:{}, album:{},
     cnt:{day:{k:dayKey()}, week:{k:weekKey()}, month:{k:monthKey()}}, claimed:{}, gift:'',
     eshop:{v:1, k:dayKey(), n20:0, n50:0},
-    set:{sound:true, music:true, soundVol:0.85, musicVol:0.40, vib:true, lang:'ug'}, secretSeen:false};
+    set:{sound:true, music:true, soundVol:0.85, musicVol:0.40, vib:true, lang:(typeof pickBestLang==='function' ? pickBestLang(typeof navigator!=='undefined' && (navigator.language || (navigator.languages && navigator.languages[0]) || ''), Object.keys(LANGS)) : 'ug')}, secretSeen:false};
   b.forEach(it => { if (it && it.c) s.seen[it.c+it.l] = 1; });
   MSN.startMonth(s, monthKey(), MSN_CFG); MSN.startWeek(s, weekKey(), MSN_CFG); MSN.assignDay(s, MSN_CFG, dayKey());
   return s;
@@ -238,9 +238,9 @@ function announceLevelUps(ups, inline){          // inline: the caller shows the
     SFX.level(); confetti(); buzz([30,40,30]);
     if (inline) return;
     modal(L.levelUp, `<div class="bigart">${A.icon('star')}</div>
-      <div class="center" style="font-size:30px;font-weight:900">${L.level(lv)}</div>
+      <div class="center" style="font-size:30px;font-weight:800">${L.level(lv)}</div>
       <div class="center" style="margin:10px 0;font-size:18px">${rwHtml(r)}</div>
-      ${C.giftMode && lv === C.secretLevel ? `<div class="center" style="font-weight:900;color:var(--pink-dark)">${L.secretOpened}</div>` : ''}
+      ${C.giftMode && lv === C.secretLevel ? `<div class="center" style="font-weight:800;color:var(--pink-dark)">${L.secretOpened}</div>` : ''}
       <button class="btn wide" data-close>${L.thanks}</button>`);
   }, 350));
 }
@@ -857,11 +857,11 @@ function openOrder(oi){
   const o = S.orders[oi]; if (!o) return;
   const rq = needs(o).map(q => ({q, have: Math.min(q.n, haveCount(q.c, q.l))})), ok = rq.every(x => x.have >= x.q.n);
   const mixed = rq.length > 1;
-  modal(L.orderTitle, (mixed ? `<div class="center muted" style="font-weight:900">${L.mixedOrder}</div>` : '') +
+  modal(L.orderTitle, (mixed ? `<div class="center muted" style="font-weight:800">${L.mixedOrder}</div>` : '') +
     rq.map(x => `<div class="${mixed ? 'ordReq' : ''}"><div class="bigart">${A.item(x.q.c, x.q.l)}</div>
-    <div class="center" style="font-weight:900">${L.items[x.q.c][x.q.l-1]} (${L.level(x.q.l)})</div>
-    <div class="center ltr" style="font-size:22px;font-weight:900;color:${x.have>=x.q.n?'var(--green-dark)':'var(--pink-dark)'}">${x.have}/${x.q.n}</div></div>`).join('') +
-    `<div class="center" style="font-weight:900;margin-top:8px">${L.reward}</div>
+    <div class="center" style="font-weight:800">${L.items[x.q.c][x.q.l-1]} (${L.level(x.q.l)})</div>
+    <div class="center ltr" style="font-size:22px;font-weight:800;color:${x.have>=x.q.n?'var(--green-dark)':'var(--pink-dark)'}">${x.have}/${x.q.n}</div></div>`).join('') +
+    `<div class="center" style="font-weight:800;margin-top:8px">${L.reward}</div>
     <div class="center" style="font-size:18px;margin:4px 0">${rwHtml({coins:o.coins, stars:o.stars})}</div>
     <button class="btn wide" id="mDeliver" ${ok?'':'disabled'}>${L.deliver}</button>
     ${ok ? '' : `<div class="center muted" style="margin-top:6px">${L.notReady}</div>`}`);
@@ -915,8 +915,12 @@ function claimEvent(eid, oid){
   } catch(e){ S = real; return {ok: false, reason: 'error'}; }
   finally { evSuppress = false; }
 }
+function evCopy(map){                 // event title/desc: current language if the catalog has it, else English, else Uyghur
+  if (!map) return '';
+  return map[S.set.lang] || map.en || map.ug || '';
+}
 function eventsHtml(){
-  const lang = S.set.lang === 'en' ? 'en' : 'ug', now = EV.nowMs();
+  const now = EV.nowMs();
   return EV.view().map(ev => {
     const left = Math.ceil((ev.end - now) / 864e5);
     const when = ev.status === 'ended' ? L.eventEnded : left <= 0 ? L.eventEndsToday : L.eventEnds(left);
@@ -926,7 +930,7 @@ function eventsHtml(){
         `${o.done ? `<div class="stlab ready">${L.taskReady}</div>` : ''}<div style="font-size:12px">${rwHtml(o.reward)}</div><button class="btn" data-evclaim="${esc(ev.id)}|${esc(o.id)}" ${o.done?'':'disabled'}>${L.claim}</button>`}</div></div>`).join('');
     const bonus = ev.completion ? `<div class="row is-${ev.completion.claimed ? 'claimed' : ev.completion.ready ? 'ready' : 'progress'}"><div class="art">${A.icon('star')}</div><div class="grow">${L.eventBonus}</div><div class="center" style="min-width:70px">${ev.completion.claimed ? `<span class="stlab claimed"><span style="width:20px;display:inline-block;vertical-align:middle">${A.icon('check')}</span> ${L.claimed}</span>` :
       `${ev.completion.ready ? `<div class="stlab ready">${L.taskReady}</div>` : ''}<div style="font-size:12px">${rwHtml(ev.completion.reward)}</div><button class="btn" data-evclaim="${esc(ev.id)}|*" ${ev.completion.ready?'':'disabled'}>${L.claim}</button>`}</div></div>` : '';
-    return `<div class="evCard"><div style="font-weight:900;font-size:17px">${esc(ev.title[lang])}</div><div style="font-size:13px;opacity:.85">${esc(ev.desc[lang])}</div><div style="font-size:12px;margin:4px 0 6px;color:var(--pink-dark)">${esc(when)}</div>${rows}${bonus}</div>`;
+    return `<div class="evCard"><div style="font-weight:800;font-size:17px">${esc(evCopy(ev.title))}</div><div style="font-size:13px;opacity:.85">${esc(evCopy(ev.desc))}</div><div style="font-size:12px;margin:4px 0 6px;color:var(--pink-dark)">${esc(when)}</div>${rows}${bonus}</div>`;
   }).join('');
 }
 function openTasks(opts){
@@ -974,7 +978,7 @@ function openTasks(opts){
       <div class="tcFoot"><div class="bar"><i style="width:${p/t.n*100}%"></i><b>${p}/${t.n}</b></div><div class="tcAct">${rew}${btn}</div></div>
       ${det ? `<div class="tcDet" id="${did}" role="region"${open ? '' : ' hidden'}>${det}</div>` : ''}</div>`;
   }).join('');
-  modal(L.tasksTitle, `<div class="tabs${tabs.length>=4?' many':''}">${tabs.map(([k,n]) => `<button data-tab="${k}" class="${taskTab===k?'on':''}">${n}${counts[k] ? `<span class="tabdot" aria-label="${counts[k]}">${counts[k]}</span>` : ''}</button>`).join('')}</div>${list}`);
+  modal(L.tasksTitle, `<div class="tabs${tabs.length>=4?' many':''}">${tabs.map(([k,n]) => `<button data-tab="${k}" class="${taskTab===k?'on':''}"><span class="tabLab">${n}</span>${counts[k] ? `<span class="tabdot" aria-label="${counts[k]}">${counts[k]}</span>` : ''}</button>`).join('')}</div>${list}`);
   tasksOpen = true;
   const mb = $('modal').querySelector('.mbody');
   if (auto){ const first = $('modal').querySelector('.row.is-ready'); if (first) first.scrollIntoView({block: 'nearest'}); } else if (prevScroll && mb) mb.scrollTop = prevScroll;
@@ -1395,7 +1399,7 @@ function openRestore(back){
 }
 function showRecovery(view){
   const r = recovery; if (!r) return;
-  const langTabs = `<div class="tabs">${Object.keys(LANGS).map(k => `<button data-rl="${k}" class="${S.set.lang === k ? 'on' : ''}">${LANGS[k].label}</button>`).join('')}</div>`;
+  const langTabs = `<div class="tabs">${Object.keys(LANGS).map(k => `<button data-rl="${k}" class="${S.set.lang === k ? 'on' : ''}"><span class="tabLab">${LANGS[k].label}</span></button>`).join('')}</div>`;
   let title, body;
   if (view === 'new'){
     title = L.recNewTitle;
@@ -1436,7 +1440,7 @@ document.getElementById('saveWarn').onclick = () => { if ($('game').classList.co
 let secretTab = 'letter', letterOpen = false;
 function openSecret(){
   if (S.lv < C.secretLevel){
-    modal(L.secret, `<div class="bigart">${A.icon('lock')}</div><p class="center" style="font-weight:900">${L.lockedAt(C.secretLevel)}</p>`); return;
+    modal(L.secret, `<div class="bigart">${A.icon('lock')}</div><p class="center" style="font-weight:800">${L.lockedAt(C.secretLevel)}</p>`); return;
   }
   if (!S.secretSeen){ S.secretSeen = true; save(); renderSide(); }
   const tabs = `<div class="tabs"><button data-st="letter" class="${secretTab==='letter'?'on':''}">${L.letter}</button><button data-st="mem" class="${secretTab==='mem'?'on':''}">${L.memories}</button></div>`;

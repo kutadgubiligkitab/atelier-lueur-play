@@ -14,6 +14,7 @@
 <title>Atelier Lueur</title>
 <link rel="preload" href="assets/fonts/NotoSansArabic-Variable.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/fonts/Nunito-Variable.ttf" as="font" type="font/ttf" crossorigin>
+<link rel="preload" href="assets/fonts/NotoSansSC-Subset.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/fonts/GreatVibes-Regular.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="stylesheet" href="fonts.css">
 <link rel="stylesheet" href="style.css">
@@ -71,9 +72,25 @@
     en: {dir: 'ltr', title: 'The game could not start', body: 'Something went wrong while starting. Your saved progress was not deleted or changed. Tap Retry.', retry: 'Retry', tech: 'Technical details'}
   };
   var detail = '', box = document.getElementById('startupError');
+  var LANG_KEYS = ['ug','en','tr','ar','zh-Hans','ru','fr','de','es','pt-BR'];
+  function pickBest(nav) {
+    var map = {}, i, raw, low, parts, primary;
+    for (i = 0; i < LANG_KEYS.length; i++) map[LANG_KEYS[i].toLowerCase()] = LANG_KEYS[i];
+    raw = String(nav || '').replace(/_/g, '-').trim();
+    if (!raw) return 'en';
+    low = raw.toLowerCase();
+    if (map[low]) return map[low];
+    parts = low.split('-'); primary = parts[0];
+    if (primary === 'zh') {
+      if (/\b(hant|tw|hk|mo)\b/.test(low)) return 'en';
+      return map['zh-hans'] || 'en';
+    }
+    if (primary === 'pt') return map['pt-br'] || 'en';
+    return map[primary] || 'en';
+  }
   function lang() {
-    try { var m = /"lang"\s*:\s*"(ug|en)"/.exec(localStorage.getItem('atelierLueur.v2') || ''); if (m) return m[1]; } catch (e) {}
-    return /^en/i.test(navigator.language || '') ? 'en' : 'ug';
+    try { var m = /"lang"\s*:\s*"([^"]+)"/.exec(localStorage.getItem('atelierLueur.v2') || ''); if (m && LANG_KEYS.indexOf(m[1]) >= 0) return m[1]; } catch (e) {}
+    return pickBest((navigator.language || (navigator.languages && navigator.languages[0]) || ''));
   }
   function retry() {
     var u = ['index.html', 'style.css', 'fonts.css', 'config.js', 'i18n.js', 'art.js', 'save.js', 'progression.js', 'salon-data.js', 'atelier.js', 'missions.js', 'content.js', 'audio.js', 'game.js'], done = false;
@@ -83,7 +100,7 @@
   }
   function show() {
     if (window.__atelierBooted || !box) return;
-    var t = T[lang()];
+    var code = lang(); var t = T[code] || T.en; t = {dir: (code === 'ug' || code === 'ar') ? 'rtl' : 'ltr', title: t.title, body: t.body, retry: t.retry, tech: t.tech};
     box.style.cssText = 'position:fixed;left:0;top:0;right:0;bottom:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;text-align:center;background:#ffd9ea;color:#6a2350;font:16px/1.6 system-ui,-apple-system,"Geeza Pro",sans-serif;direction:' + t.dir;
     box.innerHTML = '';
     var h = document.createElement('div'); h.style.cssText = 'font-size:22px;font-weight:800;margin-bottom:10px'; h.textContent = t.title; box.appendChild(h);

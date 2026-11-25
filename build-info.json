@@ -1,13 +1,13 @@
 {
- "sourceCommit": "404682555cf030a718b456b64296bef7380998ab",
+ "sourceCommit": "b2d46511862df81b6f131e2dc1b3c07faf4f8382",
  "sourceHasUncommittedChanges": false,
- "fileCount": 397,
- "totalBytes": 83949979,
+ "fileCount": 401,
+ "totalBytes": 85269591,
  "files": [
   {
    "path": "art.js",
-   "bytes": 38447,
-   "sha256": "f4639ce8924d8067603016e31cbbd19b7b5035a09d290694af1cbe988086453a"
+   "bytes": 38758,
+   "sha256": "31d2aab7a9cd977b13650a9e47bf7dadf6435262097b6cdafd56e45797f0820b"
   },
   {
    "path": "assets/atelier-v1/generators/gen_atl_1.png",
@@ -248,6 +248,21 @@
    "path": "assets/atelier-v1/station/atelier-station@3x.png",
    "bytes": 616878,
    "sha256": "4403749bd2c76283e00694b16559dc3f5f3128ebce741f04149a939079f8cf44"
+  },
+  {
+   "path": "assets/audio/README.txt",
+   "bytes": 336,
+   "sha256": "69c7d1cce1c9715ffdf99522819a2c2b740dba6aec76693bce362ee49098f33a"
+  },
+  {
+   "path": "assets/audio/salon-loop.m4a",
+   "bytes": 661299,
+   "sha256": "9b8d653d3e04330e96fe8233efb8e20c5674df11b1f0ea4396a09b2a557140fe"
+  },
+  {
+   "path": "assets/audio/salon-loop.mp3",
+   "bytes": 640513,
+   "sha256": "a49d7e08acaf90af5483d46d3deb8a736d2d95298afac507ae9a48f191fcd14c"
   },
   {
    "path": "assets/characters/customer-amina-blink.png",
@@ -1925,6 +1940,11 @@
    "sha256": "11748074a3a486de0ffd5e499c6576588a4fcc4df008e6300f1123380539b9b2"
   },
   {
+   "path": "audio.js",
+   "bytes": 14137,
+   "sha256": "c8a094c6e6540e1848b3c148c2e90abb9fe46ca1eb83206b130f4c3d5aac7985"
+  },
+  {
    "path": "config.js",
    "bytes": 559,
    "sha256": "40e7d945319f73b1db158a6ff497d89cafea634b06ed6b40261cc03c851998a0"
@@ -1941,13 +1961,13 @@
   },
   {
    "path": "game.js",
-   "bytes": 123642,
-   "sha256": "c8722fbc97440881ad4b53c5b869e98508f50686270a54fa3aaedd94ef387a7d"
+   "bytes": 124937,
+   "sha256": "e3f73d49969097811197236c6a538c33945f0b99829e05688eed2f75f24c3050"
   },
   {
    "path": "i18n.js",
-   "bytes": 40897,
-   "sha256": "a2aff70c819b447543f3305994c05644dafe1f440b8bf47955a47166a0d971b2"
+   "bytes": 41060,
+   "sha256": "74d62428bcd1a57da9f6577874bd3315f2855755a51ac5bd13e0a85222bef677"
   },
   {
    "path": "icon.png",
@@ -1956,8 +1976,8 @@
   },
   {
    "path": "index.html",
-   "bytes": 7080,
-   "sha256": "2784adb715e370bac4bbdb5263a62b313f4916ad0915ea24483d8f10c688e59b"
+   "bytes": 7125,
+   "sha256": "f7fa607bbd887bffd09bf3fdb99166b86c73463508d7bc6b50c41174198e5fca"
   },
   {
    "path": "manifest.json",
@@ -1981,13 +2001,13 @@
   },
   {
    "path": "save.js",
-   "bytes": 26058,
-   "sha256": "d7cd4e63a68a53ac96a966981bf1a2f89a2463e11f826486622ac58f818084a7"
+   "bytes": 26960,
+   "sha256": "350cc0290260f11762b3047046d517f85f80b12d02bd6e9863cfe0155873f3de"
   },
   {
    "path": "style.css",
-   "bytes": 45062,
-   "sha256": "25c329907de957dd180bbd68f47106f94311888401ccb28aa9e5c81c246de7da"
+   "bytes": 45673,
+   "sha256": "4e01f5ac136e19be783d8c7e11fea7dd00145d6102ec6dbfb9d523ea05ba56cf"
   }
  ]
 }

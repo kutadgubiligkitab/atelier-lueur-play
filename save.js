@@ -49,6 +49,20 @@
     }
     return out;
   }
+  function clamp01(v, d){ return (typeof v === 'number' && isFinite(v)) ? Math.max(0, Math.min(1, v)) : d; }
+  function normalizeSet(s){
+    if (s != null && !isObj(s)) return null;
+    s = s || {};
+    if (s.lang !== undefined && typeof s.lang !== 'string') return null;
+    if (s.sound !== undefined && typeof s.sound !== 'boolean') return null;
+    if (s.vib !== undefined && typeof s.vib !== 'boolean') return null;
+    if (s.music !== undefined && typeof s.music !== 'boolean') return null;
+    if (s.soundVol !== undefined && typeof s.soundVol !== 'number') return null;
+    if (s.musicVol !== undefined && typeof s.musicVol !== 'number') return null;
+    const lang = (typeof s.lang === 'string' && CFG.LANG_KEYS.indexOf(s.lang) >= 0) ? s.lang : 'ug';
+    return { sound: s.sound !== false, music: s.music !== false, vib: s.vib !== false, lang,
+      soundVol: clamp01(s.soundVol, 0.85), musicVol: clamp01(s.musicVol, 0.35) };
+  }
 
   /**
    * Returns {ok:true, state} (a NEW clean object) or {ok:false, code}.
@@ -126,8 +140,10 @@
     const secretSeen = s.secretSeen === undefined ? false : s.secretSeen;
     if (typeof secretSeen !== 'boolean') return bad('secretSeen');
 
-    if (!isObj(s.set) || typeof s.set.sound !== 'boolean' || typeof s.set.vib !== 'boolean' || CFG.LANG_KEYS.indexOf(s.set.lang) < 0 ||
-        Object.keys(s.set).some(k => k !== 'sound' && k !== 'vib' && k !== 'lang')) return bad('settings');
+    if (s.set != null && !isObj(s.set)) return bad('settings');
+    const set = normalizeSet(s.set);
+    if (!set) return bad('settings');
+    s.set = set;
 
     // monthly-event progress + claim records live INSIDE the save so wallet and claims are one document (optional; absent for players without events)
     let ev;
@@ -218,7 +234,7 @@
 
     const out = { ok: true, state: {
       v: 2, board, energy: s.energy, et, coins: s.coins, stars: s.stars, lv: s.lv, orders, seen, owned, road, album,
-      cnt: month ? { day, week, month } : { day, week }, claimed, gift, set: { sound: s.set.sound, vib: s.set.vib, lang: s.set.lang }, secretSeen,
+      cnt: month ? { day, week, month } : { day, week }, claimed, gift, set: { sound: s.set.sound, music: s.set.music, soundVol: s.set.soundVol, musicVol: s.set.musicVol, vib: s.set.vib, lang: s.set.lang }, secretSeen,
     } };
     if (ev !== undefined) out.state.ev = ev;
     if (ecap !== undefined) out.state.ecap = ecap;
@@ -285,7 +301,7 @@
     if (!isObj(data.progress) || 'set' in data.progress) return bad('not-save');
     if (typeof data.checksum !== 'string' || data.checksum !== fnv1a(JSON.stringify(data.progress))) return bad('checksum');
     const cand = JSON.parse(JSON.stringify(data.progress));
-    cand.set = currentSet && isObj(currentSet) ? currentSet : { sound: true, vib: true, lang: 'ug' };
+    cand.set = normalizeSet(currentSet && isObj(currentSet) ? currentSet : null);
     const v = validateState(cand);
     if (!v.ok) return bad('invalid-state');
     return { ok: true, state: v.state, summary: summary(v.state), exportedAt: typeof data.exportedAt === 'string' ? data.exportedAt.slice(0, 30) : '' };

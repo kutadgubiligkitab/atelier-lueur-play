@@ -66,7 +66,7 @@ function newGame(){
     seen:{}, owned:{}, road:{}, album:{},
     cnt:{day:{k:dayKey()}, week:{k:weekKey()}, month:{k:monthKey()}}, claimed:{}, gift:'',
     eshop:{v:1, k:dayKey(), n20:0, n50:0},
-    set:{sound:true, vib:true, lang:'ug'}, secretSeen:false};
+    set:{sound:true, music:true, soundVol:0.85, musicVol:0.35, vib:true, lang:'ug'}, secretSeen:false};
   b.forEach(it => { if (it && it.c) s.seen[it.c+it.l] = 1; });
   MSN.startMonth(s, monthKey(), MSN_CFG); MSN.startWeek(s, weekKey(), MSN_CFG); MSN.assignDay(s, MSN_CFG, dayKey());
   return s;
@@ -109,23 +109,10 @@ function save(forceBackup){
 }
 
 /* ---------------- ئاۋاز ---------------- */
-let AC = null;
-function audio(){ if (!AC) { try { AC = new (window.AudioContext||window.webkitAudioContext)(); } catch(e){} } if (AC && AC.state==='suspended') AC.resume(); }
-function tone(freq, dur, when=0, type='sine', vol=.12){
-  if (!S.set.sound || !AC) return;
-  const t = AC.currentTime + when, o = AC.createOscillator(), g = AC.createGain();
-  o.type = type; o.frequency.setValueAtTime(freq, t);
-  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t+dur);
-  o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t+dur);
-}
-const SFX = {
-  tap:   () => tone(660, .08, 0, 'triangle'),
-  spawn: () => { tone(520,.08); tone(780,.1,.05); },
-  merge: () => { tone(660,.12); tone(880,.12,.08); tone(1320,.2,.16,'triangle'); },
-  coin:  () => [988,1319,1568].forEach((f,i)=>tone(f,.15,i*.07,'square',.05)),
-  level: () => [523,659,784,1047,1319].forEach((f,i)=>tone(f,.22,i*.1,'triangle',.1)),
-  no:    () => tone(220,.15,0,'sawtooth',.05),
-};
+const AUDIO = window.AUDIO;
+function audio(){ if (AUDIO) AUDIO.unlock(); }
+function applyAudio(){ if (AUDIO && S && S.set) AUDIO.applySettings(S.set); }
+const SFX = AUDIO && AUDIO.sfx ? AUDIO.sfx : { tap(){}, spawn(){}, merge(){}, coin(){}, level(){}, no(){}, drop(){}, ready(){}, deliver(){}, quest(){}, claim(){}, shop(){}, open(){}, close(){}, unlock(){}, empty(){} };
 const buzz = ms => { if (S.set.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch(e){} };
 
 /* ---------------- تىل ---------------- */
@@ -325,7 +312,7 @@ function wireSupply(reopen){
     const now = Date.now(); if (now - (lastBuy[b.dataset.pbuy] || 0) < 800) return;      // an accidental double tap is not charged twice
     lastBuy[b.dataset.pbuy] = now;
     const r = b.dataset.pbuy === ATL.PRODUCER ? ATL.buyChest(atelierEnv()) : buyProducer(b.dataset.pbuy);     // Atelier Chest copies: rule lives in atelier.js (same price curve and ownership limit)
-    if (r.ok){ SFX.coin(); renderTop(); renderBoard(); renderInfo(); toast(r.where === 'board' ? L.supplyPlaced(L.gens[b.dataset.pbuy]) : L.supplyWaiting(L.gens[b.dataset.pbuy])); }
+    if (r.ok){ SFX.shop(); renderTop(); renderBoard(); renderInfo(); toast(r.where === 'board' ? L.supplyPlaced(L.gens[b.dataset.pbuy]) : L.supplyWaiting(L.gens[b.dataset.pbuy])); }
     else { SFX.no(); toast(r.reason === 'coins' ? L.noCoins : r.reason === 'full' ? L.supplyFull : L.supplyFail); }
     reopen();
   });
@@ -359,7 +346,7 @@ function deliver(oi){
   give({coins:o.coins}); addStars(o.stars); count('order');                              // one payout, one generic order count
   if (o.m){ MSN.countMixedDelivery(S); MSN.sync(S, MSN_CFG); }                             // an ORDINARY mixed-family order (an Atelier commission is counted separately)
   const atl = ATL.onOrdinaryDelivery(S);                                                  // Atelier cadence: ordinary deliveries only (commission deliveries never come through here)
-  SFX.coin(); buzz(20);
+  SFX.deliver(); buzz(20);
   setPortrait(oi, 'happy');   // art reaction after a REAL successful delivery only
   const el = $('orders').children[oi]; if (el) el.classList.add('leave');
   lastWho[oi] = whoOf(o, oi); S.orders[oi] = null; save(); closeModal();
@@ -371,7 +358,7 @@ function deliver(oi){
 /* ---------------- تاختا ھەرىكەتلىرى ---------------- */
 function produce(i){
   const g = S.board[i];
-  if (S.energy < 1){ toast(L.noEnergy); SFX.no(); openShop(); return; }
+  if (S.energy < 1){ toast(L.noEnergy); SFX.empty(); openShop(); return; }
   const gr = Math.floor(i/COLS), gc = i%COLS;
   let best = -1, bd = 1e9;
   S.board.forEach((it,j) => { if (it) return; const d = (Math.floor(j/COLS)-gr)**2 + ((j%COLS)-gc)**2; if (d < bd){ bd = d; best = j; } });
@@ -402,10 +389,10 @@ function drop(from, to){
     S.board[to] = a.c ? {c:a.c, l:a.l+1} : {g:a.g, l:a.l+1};
     S.board[from] = null; discover(S.board[to]); count('merge'); if (a.c){ MSN.countMerge(S, a.c, MSN_CFG); MSN.sync(S, MSN_CFG); }   // per-family merge counter (ordinary families only)
     const atl = S.board[to].c && !ATL.hasChapter(S) ? atelierNotes() : [];      // lipstick/powder rank 6 may complete the unlock prerequisites
-    selected = to; SFX.merge(); buzz(15); save(); if (atl.length) announceLevelUps(atl);
+    selected = to; SFX.merge(a.l+1); buzz(15); save(); if (atl.length) announceLevelUps(atl);
     renderBoard({pop:to}); renderTop(); renderOrders(); renderInfo(); renderNav(); return;
   }
-  S.board[to] = a; S.board[from] = b; selected = to; SFX.tap(); save(); renderAll();
+  S.board[to] = a; S.board[from] = b; selected = to; SFX.drop(); save(); renderAll();
 }
 function tap(i){
   const it = S.board[i];
@@ -535,15 +522,17 @@ function stopBlinks(){ blinkTimers.forEach(clearTimeout); [0,1,2].forEach(i => {
 document.addEventListener('visibilitychange', () => { if (document.hidden){ stopBlinks(); endSalonFx(); endCustomerFx(); } else startBlinks(); });   // no backlog on return
 if (REDUCED.addEventListener) REDUCED.addEventListener('change', () => { REDUCED.matches ? stopBlinks() : startBlinks(); });
 
+const orderReadyBit = [false, false, false];
 function renderOrders(){
   const box = $('orders'); box.innerHTML = '';
   S.orders.forEach((o, oi) => {
     const d = document.createElement('div'); d.className = 'order';
-    if (!o){ d.style.visibility = 'hidden'; box.appendChild(d); return; }
+    if (!o){ d.style.visibility = 'hidden'; box.appendChild(d); orderReadyBit[oi] = false; return; }
     if (orderFx[oi] === 'arrive'){ d.classList.add('arriving'); armCustomerFx(); }   // one-shot: consumed here, never replayed
     orderFx[oi] = null;
     const rq = needs(o).map(q => ({q, have: Math.min(q.n, haveCount(q.c, q.l))})), r = rq.every(x => x.have >= x.q.n);
-    if (r) d.classList.add('ready');
+    if (r){ d.classList.add('ready'); if (!orderReadyBit[oi]){ orderReadyBit[oi] = true; SFX.ready(); } }
+    else orderReadyBit[oi] = false;
     if (rq.length > 1) d.classList.add('mixed');
     d.innerHTML = `${r ? `<span class="ok">${A.icon('check')}</span>` : ''}
       ${portraitHtml(oi)}
@@ -726,7 +715,7 @@ function openColourSheet(slot, startColour){
       const what = act.dataset.act; let r;
       if (what === 'apply'){ r = equipColour(slot, pv); if (r.ok){ toast(L.toastColourApplied); SFX.tap(); closeModal(); renderSalon(); } }
       else if (what === 'buy'){ r = buyDeco(slot, pv); if (r.ok) closeModal(); return; }
-      else { r = buyColour(slot, pv); if (r.ok){ SFX.coin(); toast(L.toastColourAdded); renderTop(); closeModal(); renderSalon(slot); renderNav(); } else if (r.reason === 'coins'){ toast(L.noCoins); SFX.no(); } }
+      else { r = buyColour(slot, pv); if (r.ok){ SFX.shop(); toast(L.toastColourAdded); renderTop(); closeModal(); renderSalon(slot); renderNav(); } else if (r.reason === 'coins'){ toast(L.noCoins); SFX.no(); } }
       if (r && !r.ok && r.reason !== 'coins'){ toast(L.errWrite); SFX.no(); draw(); }
     };
   };
@@ -840,7 +829,7 @@ function buyDeco(id, colour){            // UI wrapper: feedback only; all state
     else if (r.reason === 'storage' || r.reason === 'error'){ toast(L.errWrite); SFX.no(); renderTop(); renderSalon(); }
     return r;
   }
-  SFX.level(); confetti();
+  SFX.unlock(); confetti();
   renderTop(); renderSalon(id); renderNav(); announceLevelUps(r.ups);   // payment and save are already done; the arrival is only visual
   return r;
 }
@@ -848,11 +837,19 @@ function buyDeco(id, colour){            // UI wrapper: feedback only; all state
 /* ---------------- كۆزنەكلەر (modal) ---------------- */
 let tasksOpen = false;                 // true only while the Tasks panel itself is on screen (manual tab choice is then never overridden)
 function modal(title, body){
+  const was = $('overlay').classList.contains('on');
   tasksOpen = false; energyOpen = false;
   $('modal').innerHTML = `<button class="x" data-close>✕</button><div class="ribbon">${title}</div><div class="mbody">${body}</div>`;
   $('overlay').classList.add('on');
+  if (!was) SFX.open();
 }
-function closeModal(){ tasksOpen = false; taskOpenKey = ''; energyOpen = false; $('overlay').classList.remove('on'); if (saveGate.blocked && recovery) showRecovery(); }
+function closeModal(){
+  const was = $('overlay').classList.contains('on');
+  tasksOpen = false; taskOpenKey = ''; energyOpen = false;
+  $('overlay').classList.remove('on');
+  if (was) SFX.close();
+  if (saveGate.blocked && recovery) showRecovery();
+}
 $('overlay').addEventListener('click', e => { if (e.target.id==='overlay' || e.target.closest('[data-close]')) closeModal(); });
 
 function openOrder(oi){
@@ -991,16 +988,22 @@ function openTasks(opts){
     const t = tasksFor(taskTab).find(x => x.id===b.dataset.claim); if (!t) return;
     const r = claimTask(taskTab, t);
     if (!r.ok){ if (r.reason === 'storage' || r.reason === 'error'){ toast(L.errWrite); SFX.no(); } openTasks(); return; }
-    SFX.coin(); announceLevelUps(r.ups); renderTop(); renderNav(); openTasks();
+    SFX.claim(); announceLevelUps(r.ups); renderTop(); renderNav(); openTasks();
   });
   $('modal').querySelectorAll('[data-evclaim]').forEach(b => b.onclick = () => {
     const [eid, oid] = b.dataset.evclaim.split('|'); const r = claimEvent(eid, oid);
     if (!r.ok){ toast(L.eventClaimFail); SFX.no(); openTasks(); return; }
-    SFX.coin(); renderTop(); renderNav(); openTasks();
+    SFX.claim(); renderTop(); renderNav(); openTasks();
   });
 }
+let lastReadyTotal = null;
 function checkTaskBadges(){      // daily/weekly rollover, event expiry, content refresh: recompute from the same rule and refresh what is on screen
-  const c = taskCounts(), key = TAB_ORDER.map(k => c[k]).join(); if (key === lastTaskKey) return;
+  const c = taskCounts(), key = TAB_ORDER.map(k => c[k]).join();
+  const n = TAB_ORDER.reduce((a, k) => a + (c[k] || 0), 0);
+  if (lastReadyTotal == null) lastReadyTotal = n;
+  else if (n > lastReadyTotal) SFX.quest();
+  lastReadyTotal = n;
+  if (key === lastTaskKey) return;
   renderNav(); if (tasksOpen) openTasks();            // same tab, same scroll position
 }
 
@@ -1122,7 +1125,7 @@ function openAtelier(reward){          // reward (optional) is passed ONLY by th
     if (goBtn.disabled) return; goBtn.disabled = true;                                           // a second tap cannot start a second delivery (the rule also refuses it: no active commission)
     const r = ATL.deliverCommission(atelierEnv());
     if (r.ok){
-      SFX.coin(); buzz(20); selected = null;
+      SFX.deliver(); buzz(20); selected = null;
       announceLevelUps(r.ups.concat(r.grants.map(g => ({supply: {g: ATL.PRODUCER, where: g.where}}))), true);    // the level-up is shown inside the reward card below
       renderTop(); renderBoard(); renderOrders(); renderInfo(); renderNav(); renderSide();
       openAtelier({recipe: r.recipe, coins: r.coins, stars: r.stars, levels: r.ups.filter(u => u.lv)});       // the ACTUAL credited (frozen) values, shown only because the write committed
@@ -1194,11 +1197,11 @@ function openShop(mode){
     ${packRow(20)}${packRow(50)}
     <div class="muted center" style="font-size:12px;margin:2px 0 8px">${L.shopLadderNote}</div>${supplyHtml()}`);
   energyOpen = mode === 'energy'; wireSupply(() => openShop(mode));
-  $('shGift').onclick = () => { if (S.gift===dayKey()) return; S.gift = dayKey(); give({energy:30, coins:30}); SFX.coin(); save(); renderTop(); openShop(mode); };
+  $('shGift').onclick = () => { if (S.gift===dayKey()) return; S.gift = dayKey(); give({energy:30, coins:30}); SFX.unlock(); save(); renderTop(); openShop(mode); };
   const onBuy = pack => {
     const r = buyEnergy(pack);
     if (!r.ok){ SFX.no(); toast(r.reason === 'coins' ? L.noCoins : L.shopSoldOut); openShop(mode); return; }
-    SFX.coin(); renderTop(); openShop(mode);
+    SFX.shop(); renderTop(); openShop(mode);
   };
   $('shE20').onclick = () => onBuy(20);
   $('shE50').onclick = () => onBuy(50);
@@ -1206,8 +1209,12 @@ function openShop(mode){
 
 function openSettings(){
   const bks = persist.readBackups(), bk = {ok: bks.length > 0, savedAt: bks.length ? bks[0].savedAt : 0};
+  const sv = S.set.soundVol, mv = S.set.musicVol;
   modal(L.settings, `
-    <div class="row"><div class="art" style="width:32px;height:32px">${A.icon('sound')}</div><div class="grow">${L.sound}</div><button class="toggle ${S.set.sound?'on':''}" id="stS"></button></div>
+    <div class="row"><div class="art" style="width:32px;height:32px">${A.icon('sound')}</div><div class="grow">${L.sound}</div><button class="toggle ${S.set.sound?'on':''}" id="stS" aria-pressed="${S.set.sound?'true':'false'}"></button></div>
+    <div class="volRow"><label class="muted" for="stSV">${L.soundVol}</label><input class="vol" id="stSV" type="range" min="0" max="1" step="0.01" value="${sv}"></div>
+    <div class="row"><div class="art" style="width:32px;height:32px">${A.icon('music')}</div><div class="grow">${L.music}</div><button class="toggle ${S.set.music?'on':''}" id="stM" aria-pressed="${S.set.music?'true':'false'}"></button></div>
+    <div class="volRow"><label class="muted" for="stMV">${L.musicVol}</label><input class="vol" id="stMV" type="range" min="0" max="1" step="0.01" value="${mv}"></div>
     <div class="row"><div class="art" style="width:32px;height:32px">${A.icon('vibrate')}</div><div class="grow">${L.vibrate}</div><button class="toggle ${S.set.vib?'on':''}" id="stV"></button></div>
     <div class="row" style="margin-bottom:2px"><div class="art" style="width:32px;height:32px">${A.icon('globe')}</div><div class="grow">${L.language}</div></div>
     ${Object.keys(LANGS).map(k => `<div class="lang ${S.set.lang===k?'on':''}" data-lang="${k}"><span>${S.set.lang===k?'✓ ':''}${LANGS[k].label}</span><code>${k.toUpperCase()}</code></div>`).join('')}
@@ -1219,8 +1226,16 @@ function openSettings(){
     <div class="center muted" id="stBk" style="margin-top:4px;font-size:12px">${bk.ok ? L.backupInfo(fmtTime(bk.savedAt)) : L.noBackup}</div>
     <button class="btn pink wide" id="stReset" style="font-size:14px">${L.reset}</button>
     <div class="center muted" style="margin-top:8px">Atelier Lueur · v0.2</div>`);
-  $('stS').onclick = () => { S.set.sound = !S.set.sound; save(); openSettings(); };
-  $('stV').onclick = () => { S.set.vib = !S.set.vib; save(); openSettings(); };
+  const mark = (id, on) => { const b = $(id); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); };
+  $('stS').onclick = () => { S.set.sound = !S.set.sound; applyAudio(); save(); mark('stS', S.set.sound); if (S.set.sound) SFX.tap(); };
+  $('stM').onclick = () => { S.set.music = !S.set.music; applyAudio(); save(); mark('stM', S.set.music); };
+  const slide = (id, key) => {
+    const el = $(id);
+    el.oninput = () => { S.set[key] = +el.value; applyAudio(); };
+    el.onchange = () => { save(); if (key === 'soundVol' && S.set.sound) SFX.tap(); };
+  };
+  slide('stSV', 'soundVol'); slide('stMV', 'musicVol');
+  $('stV').onclick = () => { S.set.vib = !S.set.vib; save(); mark('stV', S.set.vib); };
   $('modal').querySelectorAll('[data-lang]').forEach(b => b.onclick = () => { S.set.lang = b.dataset.lang; save(); applyLang(); renderAll(); openSettings(); });
   $('stReset').onclick = confirmReset;
   $('stExp').onclick = () => openExport();
@@ -1262,7 +1277,7 @@ function sumTable(cols){
 function adoptState(state){                                // only after a successful, verified commit
   S = state; saveGate.blocked = false; saveGate.memoryOnly = false; recovery = null; hasSave = true;
   selected = null; [0,1,2].forEach(i => { PSTATE[i] = 'idle'; });
-  migrateEnergy(); applyLang(); tick(); fillOrders(); setSaveWarn(null); save(); migrateLegacyEvents(); migrateSupply(); if (curDef) applyContent(curDef);
+  migrateEnergy(); applyLang(); applyAudio(); tick(); fillOrders(); setSaveWarn(null); save(); migrateLegacyEvents(); migrateSupply(); if (curDef) applyContent(curDef);
   $('recovery').classList.remove('on');
   if ($('start').classList.contains('on')) showStart();
   renderAll();
@@ -1542,7 +1557,7 @@ $('btnNew').onclick = () => {
   enterGame();
 };
 
-migrateEnergy(); applyLang(); tick(); fillOrders(); save(); preloadPortraits(); preloadSprites(); showStart(); startBlinks(); if (recovery) showRecovery();
+migrateEnergy(); applyLang(); applyAudio(); tick(); fillOrders(); save(); preloadPortraits(); preloadSprites(); showStart(); startBlinks(); if (recovery) showRecovery();
 migrateLegacyEvents(); migrateSupply();
 refreshContent(true).catch(e => console.warn('[content]', e && e.message));   // async; never blocks or breaks start-up
 window.__atelierBooted = true; if (window.__atelierStartupOk) window.__atelierStartupOk();   // startup finished: hide the safety-net message if it was shown
@@ -1552,5 +1567,5 @@ setInterval(save, 5000);
 document.addEventListener('visibilitychange', () => { if (document.hidden) save(true); else { tick(); renderAll(); refreshContent(false).catch(() => {}); } });
 
 // سىناق ئۈچۈن
-window.__game = { atelier: {open: () => openAtelier(), env: atelierEnv, notes: atelierNotes}, ALL_CHAINS, buyProp, buyColour, equipColour, salonInp, taskCounts, openTasks, tasksFor, get EV(){ return EV; }, energyTimes, ENERGY_CAP, ENERGY_PACKS, energyOffer, buyEnergy, eshopState, dayKey, weekKey, monthKey, tick, applyLang, buyProducer, placeQueued, producerPrice, equivOf, grantMilestones, claimEvent, newOrder, accessibleChains, deliver: oi => deliver(oi), save: () => save(), get contentInfo(){ return contentInfo; }, refreshContent, get S(){ return S; }, get gate(){ return saveGate; }, get recovery(){ return recovery; }, renderAll, openShop, MSN, MSN_CFG };
+window.__game = { AUDIO, applyAudio, atelier: {open: () => openAtelier(), env: atelierEnv, notes: atelierNotes}, ALL_CHAINS, buyProp, buyColour, equipColour, salonInp, taskCounts, openTasks, tasksFor, get EV(){ return EV; }, energyTimes, ENERGY_CAP, ENERGY_PACKS, energyOffer, buyEnergy, eshopState, dayKey, weekKey, monthKey, tick, applyLang, buyProducer, placeQueued, producerPrice, equivOf, grantMilestones, claimEvent, newOrder, accessibleChains, deliver: oi => deliver(oi), save: () => save(), get contentInfo(){ return contentInfo; }, refreshContent, get S(){ return S; }, get gate(){ return saveGate; }, get recovery(){ return recovery; }, renderAll, openShop, MSN, MSN_CFG };
 })();

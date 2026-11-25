@@ -76,7 +76,7 @@
     return /^en/i.test(navigator.language || '') ? 'en' : 'ug';
   }
   function retry() {
-    var u = ['index.html', 'style.css', 'fonts.css', 'config.js', 'i18n.js', 'art.js', 'save.js', 'progression.js', 'salon-data.js', 'atelier.js', 'missions.js', 'content.js', 'game.js'], done = false;
+    var u = ['index.html', 'style.css', 'fonts.css', 'config.js', 'i18n.js', 'art.js', 'save.js', 'progression.js', 'salon-data.js', 'atelier.js', 'missions.js', 'content.js', 'audio.js', 'game.js'], done = false;
     function go() { if (!done) { done = true; location.reload(); } }
     try { Promise.all(u.map(function (f) { return fetch(f, {cache: 'reload', credentials: 'same-origin'}); })).then(go, go); } catch (e) { go(); }   // refresh the HTTP cache copies only
     setTimeout(go, 3000);
@@ -115,6 +115,7 @@
 <script src="atelier.js"></script>
 <script src="missions.js"></script>
 <script src="content.js"></script>
+<script src="audio.js"></script>
 <script src="game.js"></script>
 </body>
 </html>

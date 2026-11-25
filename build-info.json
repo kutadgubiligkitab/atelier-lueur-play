@@ -2,12 +2,12 @@
  "sourceCommit": "0a79101a86047e536632bfa38215cfbbed93e487",
  "sourceHasUncommittedChanges": true,
  "fileCount": 397,
- "totalBytes": 84170884,
+ "totalBytes": 83933132,
  "files": [
   {
    "path": "art.js",
-   "bytes": 38453,
-   "sha256": "3433b17b694fe7b63a40bba732b80c70fadbf1e5f427259b0cd2672293f69910"
+   "bytes": 38447,
+   "sha256": "f4639ce8924d8067603016e31cbbd19b7b5035a09d290694af1cbe988086453a"
   },
   {
    "path": "assets/atelier-v1/generators/gen_atl_1.png",
@@ -861,18 +861,18 @@
   },
   {
    "path": "assets/salon-v1/curtain.png",
-   "bytes": 54829,
-   "sha256": "dc0f2e9a1b5a710081086a4f636ccd742c9c29e920b6bd1adabd48487bf8bd5d"
+   "bytes": 36526,
+   "sha256": "1c92b59f1a42cb7c6aaeb6f7cf08d555016a79b0729f753f438013b503a067b8"
   },
   {
    "path": "assets/salon-v1/curtain@2x.png",
-   "bytes": 185414,
-   "sha256": "e9316b3474a6de840d7d3319b1b8196974ec4995a89632a79ee7b5053c387175"
+   "bytes": 119218,
+   "sha256": "0d4364671d86cd3af60b06c4762783a1a67192362188e64ab508892bd95ed774"
   },
   {
    "path": "assets/salon-v1/curtain@3x.png",
-   "bytes": 402835,
-   "sha256": "12ba441ddcb46218a6c59d0246fbbcdfb235b7897cb664a9147398dbecb87219"
+   "bytes": 249588,
+   "sha256": "6a2e8a36737b06094e742c8d53920fe45f9d2d55b15422cdd8a0d99aecb3cbae"
   },
   {
    "path": "assets/salon-v1/flowers.png",

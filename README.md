@@ -4,4 +4,4 @@ Public web build of Atelier Lueur for phone testing. This folder contains only t
 
 Play: https://kutadgubiligkitab.github.io/atelier-lueur-play/
 
-Source commit: 0a79101 plus Studio decoration placement prototype (public profile, no personal content)
+Source commit: 0a79101 plus Studio window-fitted curtain (public profile, no personal content)

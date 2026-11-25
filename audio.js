@@ -17,11 +17,50 @@
     try { ac = new C(); } catch (e) { return null; }
     return ac;
   }
-  function unlock() {
+  function unlockMedia() {               // re-unlock any HTMLAudio / video (music element if one is added later)
+    try {
+      const nodes = document.querySelectorAll('audio, video');
+      for (let i = 0; i < nodes.length; i++) {
+        const el = nodes[i];
+        try {
+          if (typeof el.load === 'function' && el.error) el.load();
+          if (typeof el.play === 'function' && !el.paused) {
+            const p = el.play(); if (p && p.catch) p.catch(function () {});
+          }
+        } catch (e) {}
+      }
+    } catch (e) {}
+  }
+  function reloadBuffers() {}            // SFX are procedural oscillators; no decoded buffers to reload today
+  function recreate() {
+    const old = ac; ac = null;
+    try { if (old && typeof old.close === 'function') old.close(); } catch (e) {}
+    const c = ctx(); reloadBuffers(); return c;
+  }
+  function ensureRunning() {             // iOS may leave the context 'suspended' or 'interrupted' after lock/background/call
     const c = ctx();
-    if (c && c.state === 'suspended') { try { c.resume(); } catch (e) {} }
-    state.unlocked = !!c;
-    return !!c;
+    if (!c) return Promise.resolve(false);
+    state.unlocked = true;
+    unlockMedia();
+    function resumeOne(x) {
+      if (!x) return Promise.resolve(null);
+      if (x.state === 'running') return Promise.resolve(x);
+      try {
+        const p = x.resume();
+        if (p && typeof p.then === 'function') return p.then(function () { return x; }).catch(function () { return x; });
+        return Promise.resolve(x);
+      } catch (e) { return Promise.resolve(x); }
+    }
+    return resumeOne(c).then(function (x) {
+      if (x && x.state === 'running') return true;
+      const fresh = recreate();
+      return resumeOne(fresh).then(function (y) { return !!(y && y.state === 'running'); });
+    });
+  }
+  function unlock() {
+    ensureRunning();
+    state.unlocked = !!ac || state.unlocked;
+    return !!ac || state.unlocked;
   }
   function applySettings(s) {
     if (!s) return;
@@ -77,17 +116,15 @@
   };
 
   function install() {
-    const wake = function () { unlock(); };
-    ['pointerdown', 'touchstart', 'click', 'keydown'].forEach(function (ev) {
+    const wake = function () { ensureRunning(); };
+    ['pointerdown', 'touchend', 'touchstart', 'click', 'keydown'].forEach(function (ev) {
       document.addEventListener(ev, wake, { passive: true, capture: true });
     });
     document.addEventListener('visibilitychange', function () {
-      const c = ctx(); if (!c) return;
-      try {
-        if (document.hidden) { if (c.state === 'running') c.suspend(); }
-        else if (c.state === 'suspended') c.resume();
-      } catch (e) {}
+      if (!document.hidden) ensureRunning();   // do not self-suspend on hide: iOS often then stays 'interrupted'
     });
+    window.addEventListener('pageshow', function () { ensureRunning(); });
+    window.addEventListener('focus', function () { ensureRunning(); });
   }
   if (typeof document !== 'undefined') {
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install);
@@ -96,6 +133,7 @@
 
   const API = {
     unlock: unlock,
+    ensureRunning: ensureRunning,
     applySettings: applySettings,
     startMusic: startMusic,
     stopMusic: stopMusic,

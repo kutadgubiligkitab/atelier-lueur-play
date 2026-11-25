@@ -76,13 +76,24 @@ function newGame(){
    Anything but "ok" blocks autosave until the player resolves it, so unrecovered data is never overwritten. */
 let S = null, hasSave = false, recovery = null;
 const saveGate = {blocked: false, memoryOnly: false, warn: null};
+const PLAYTEST_COIN_GRANT_BUILT = 60000;   // play-site public builds rewrite this to 60000; store/release stays 0
 function playtestCoinTarget(){
-  const n = C && C.playtestCoinGrant;
+  const live = (typeof window !== 'undefined' && window.CONFIG) ? window.CONFIG.playtestCoinGrant : (C && C.playtestCoinGrant);
+  const n = (typeof live === 'number' && isFinite(live) && live > 0) ? live : PLAYTEST_COIN_GRANT_BUILT;
   return (typeof n === 'number' && isFinite(n) && n > 0 && n <= 1e9) ? Math.floor(n) : 0;
 }
-function applyPlaytestCoinGrant(s){          // play-site builds only (config.playtestCoinGrant > 0); tops up once per save
+function applyPlaytestCoinGrant(s){          // play-site builds only (grant > 0); tops up once per save after load+migration
   const n = playtestCoinTarget(); if (!n || !s || s.ptcg) return false;
   if (s.coins < n) s.coins = n; s.ptcg = 1; return true;
+}
+function isEstablishedSave(s){             // mid-game progress: never re-show the first-play tutorial (ignore coins; playtest grant may raise them)
+  return !!(s && (s.lv > 1 || s.stars > 0 || (s.owned && Object.keys(s.owned).length)));
+}
+function settlePlaytestGrant(){            // after load and later migrations, and again when entering the board
+  if (!S) return false;
+  prepareCalendar(S);
+  if (applyPlaytestCoinGrant(S)) { save(); return true; }
+  return false;
 }
 function applyBoot(boot){
   hasSave = false; recovery = null; saveGate.blocked = false;
@@ -96,7 +107,7 @@ function applyBoot(boot){
 function prepareCalendar(s){
   if (!s.cnt.month) s.cnt.month = {k: monthKey()};
   if (!s.eshop || s.eshop.k !== dayKey()) s.eshop = {v:1, k: dayKey(), n20:0, n50:0};
-  if (s.tut === undefined) s.tut = 5;                 // existing saves skip the first-play tutorial
+  if (s.tut === undefined || (s.tut < 5 && isEstablishedSave(s))) s.tut = 5;   // old saves, or mid-game saves that somehow have tut < 5, skip the first-play tutorial
   if (!s.inv) s.inv = {v:1, cap:4, items:[]};
   MSN.migrate(s, MSN_CFG, calendarKeys());
 }
@@ -1445,8 +1456,9 @@ function sumTable(cols){
 function adoptState(state){                                // only after a successful, verified commit
   S = state; saveGate.blocked = false; saveGate.memoryOnly = false; recovery = null; hasSave = true;
   selected = null; [0,1,2].forEach(i => { PSTATE[i] = 'idle'; });
-  prepareCalendar(S); applyPlaytestCoinGrant(S);
-  migrateEnergy(); applyLang(); applyAudio(); tick(); fillOrders(); setSaveWarn(null); save(); migrateLegacyEvents(); migrateSupply(); if (curDef) applyContent(curDef);
+  prepareCalendar(S);
+  migrateEnergy(); applyLang(); applyAudio(); tick(); fillOrders(); setSaveWarn(null); migrateLegacyEvents(); migrateSupply(); if (curDef) applyContent(curDef);
+  settlePlaytestGrant(); save();
   $('recovery').classList.remove('on');
   if ($('start').classList.contains('on')) showStart();
   renderAll();
@@ -1723,6 +1735,7 @@ function showStart(){
   $('start').classList.add('on');
 }
 function enterGame(){
+  settlePlaytestGrant();
   audio(); SFX.tap();
   $('start').classList.remove('on'); $('game').classList.add('on');
   renderAll(); layout();
@@ -1736,8 +1749,8 @@ $('btnNew').onclick = () => {
   enterGame();
 };
 
-migrateEnergy(); applyLang(); applyAudio(); tick(); fillOrders(); save(); preloadPortraits(); preloadSprites(); showStart(); startBlinks(); if (recovery) showRecovery();
-migrateLegacyEvents(); migrateSupply();
+migrateEnergy(); applyLang(); applyAudio(); tick(); fillOrders(); settlePlaytestGrant(); save(); preloadPortraits(); preloadSprites(); showStart(); startBlinks(); if (recovery) showRecovery();
+migrateLegacyEvents(); migrateSupply(); settlePlaytestGrant();
 refreshContent(true).catch(e => console.warn('[content]', e && e.message));   // async; never blocks or breaks start-up
 window.__atelierBooted = true; if (window.__atelierStartupOk) window.__atelierStartupOk();   // startup finished: hide the safety-net message if it was shown
 document.fonts && document.fonts.ready.then(() => { layout(); });

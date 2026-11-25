@@ -1,0 +1,50 @@
+Atelier Lueur — audio credits and licenses
+==========================================
+
+All game audio is original. Nothing was copied, sampled, or extracted
+from any commercial game (including the Food Stars reference the palette
+was only listened to, as a style guide).
+
+MUSIC
+-----
+"Cafe morning" — original 56-bar bossa / cafe loop in C major, 112 BPM,
+120 seconds, composed for Atelier Lueur as MIDI and rendered with
+FluidR3_GM (Frank Wen, MIT License). Instruments used: nylon-string
+guitar, acoustic bass, marimba, vibraphone, and GM percussion (maracas,
+woodblocks, clave). The SoundFont is not bundled with the game; only the
+rendered loop is shipped.
+
+  Fluid R3 GM: Copyright (c) 2000-2002, 2008 Frank Wen.
+  "I hereby release Fluid under the MIT license."
+  Permission is hereby granted, free of charge, to any person obtaining
+  a copy of this software and associated documentation files, to deal in
+  the Software without restriction, including without limitation the
+  rights to use, copy, modify, merge, publish, distribute, sublicense,
+  and/or sell copies of the Software.
+
+SOUND EFFECTS
+-------------
+Original physical-model syntheses written for this game (no third-party
+sample packs were used):
+
+  tap     dry plastic tick (band-limited click + short 2 kHz partials)
+  drop    muted mid wood put-down (modal bar + soft attack noise)
+  spawn   wet bubble / plop (falling-frequency sinusoid + tiny splash)
+  merge   hard hollow woodblock / mallet clack + glockenspiel sparkle;
+          one base recording, pitched per item tier by playbackRate
+          (major-third / triad staircase, capped at ~3x)
+  no      muted low wood thunk (invalid move; not harsh)
+  empty   two descending muted thunks
+  ready   two bright bells (order just became ready)
+  coin    cash-register "ka-ching" + inharmonic coin clinks + chime
+          flourish (also used for order delivered and coin rewards)
+  quest   short rising mallet chime (a quest just completed)
+  claim   mid chime for rewards that do not include coins
+  shop    short bell + one clink (a purchase)
+  open    rising filtered whoosh + hollow low thunk
+  close   dry tick + falling whoosh
+  unlock  wood body + rising sparkle
+  level   longer rising bell flourish
+
+Renderer: tools/render-cafe-audio.py (numpy / scipy, plus fluidsynth
+for the music). No bookstore name appears in these files.

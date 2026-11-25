@@ -1,5 +1,4 @@
-Atelier Lueur — original salon lounge loop
-Synthesized for this game (no third-party samples or libraries of recordings).
-Key: F major. Tempo: 72 BPM. Length: 106.67 s, seamless 32-bar loop.
-Formats: salon-loop.m4a (AAC, preferred on iOS) and salon-loop.mp3 (fallback).
-License: original composition, bundled only with Atelier Lueur.
+Atelier Lueur — original cafe-bossa loop and percussive SFX bank.
+See CREDITS.txt for composition notes and the FluidR3_GM (MIT) license.
+Key: C major. Tempo: 112 BPM. Length: 120 s, seamless 56-bar loop.
+Formats: cafe-loop.{m4a,mp3} and sfx-bank.{m4a,mp3,json}.

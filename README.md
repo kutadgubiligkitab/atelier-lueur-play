@@ -4,4 +4,4 @@ Public web build of Atelier Lueur for phone testing. This folder contains only t
 
 Play: https://kutadgubiligkitab.github.io/atelier-lueur-play/
 
-Source commit: b2d4651 (salon audio; public profile, giftMode false, no personal content)
+Source commit: 57a9978 (cafe-bossa audio; public profile, giftMode false, no personal content)

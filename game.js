@@ -66,7 +66,7 @@ function newGame(){
     seen:{}, owned:{}, road:{}, album:{},
     cnt:{day:{k:dayKey()}, week:{k:weekKey()}, month:{k:monthKey()}}, claimed:{}, gift:'',
     eshop:{v:1, k:dayKey(), n20:0, n50:0},
-    set:{sound:true, music:true, soundVol:0.85, musicVol:0.35, vib:true, lang:'ug'}, secretSeen:false};
+    set:{sound:true, music:true, soundVol:0.85, musicVol:0.40, vib:true, lang:'ug'}, secretSeen:false};
   b.forEach(it => { if (it && it.c) s.seen[it.c+it.l] = 1; });
   MSN.startMonth(s, monthKey(), MSN_CFG); MSN.startWeek(s, weekKey(), MSN_CFG); MSN.assignDay(s, MSN_CFG, dayKey());
   return s;
@@ -113,6 +113,7 @@ const AUDIO = window.AUDIO;
 function audio(){ if (AUDIO) AUDIO.unlock(); }
 function applyAudio(){ if (AUDIO && S && S.set) AUDIO.applySettings(S.set); }
 const SFX = AUDIO && AUDIO.sfx ? AUDIO.sfx : { tap(){}, spawn(){}, merge(){}, coin(){}, level(){}, no(){}, drop(){}, ready(){}, deliver(){}, quest(){}, claim(){}, shop(){}, open(){}, close(){}, unlock(){}, empty(){} };
+function sfxReward(r, alt){ if (r && r.coins) SFX.coin(); else if (typeof alt === 'function') alt(); else SFX.claim(); }
 const buzz = ms => { if (S.set.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch(e){} };
 
 /* ---------------- تىل ---------------- */
@@ -988,12 +989,12 @@ function openTasks(opts){
     const t = tasksFor(taskTab).find(x => x.id===b.dataset.claim); if (!t) return;
     const r = claimTask(taskTab, t);
     if (!r.ok){ if (r.reason === 'storage' || r.reason === 'error'){ toast(L.errWrite); SFX.no(); } openTasks(); return; }
-    SFX.claim(); announceLevelUps(r.ups); renderTop(); renderNav(); openTasks();
+    sfxReward(t.r); announceLevelUps(r.ups); renderTop(); renderNav(); openTasks();
   });
   $('modal').querySelectorAll('[data-evclaim]').forEach(b => b.onclick = () => {
     const [eid, oid] = b.dataset.evclaim.split('|'); const r = claimEvent(eid, oid);
     if (!r.ok){ toast(L.eventClaimFail); SFX.no(); openTasks(); return; }
-    SFX.claim(); renderTop(); renderNav(); openTasks();
+    sfxReward(r.reward); renderTop(); renderNav(); openTasks();
   });
 }
 let lastReadyTotal = null;
@@ -1069,8 +1070,7 @@ function openAlbum(){
     const k = b.dataset.set;
     if (ATL.FAMILIES.indexOf(k) >= 0){ const r = ATL.claimChapter(atelierEnv(), k); if (!r.ok){ SFX.no(); toast(L.atl.fail); return; } SFX.level(); confetti(); renderTop(); renderNav(); openAlbum(); return; }
     S.album[k] = 1;
-    give(k==='all' ? {coins:500, energy:50} : {coins:100, energy:20});
-    SFX.level(); confetti(); save(); renderTop(); renderNav(); openAlbum();
+    const rew = k==='all' ? {coins:500, energy:50} : {coins:100, energy:20}; give(rew); SFX.coin(); confetti(); save(); renderTop(); renderNav(); openAlbum();
   });
 }
 
@@ -1197,7 +1197,7 @@ function openShop(mode){
     ${packRow(20)}${packRow(50)}
     <div class="muted center" style="font-size:12px;margin:2px 0 8px">${L.shopLadderNote}</div>${supplyHtml()}`);
   energyOpen = mode === 'energy'; wireSupply(() => openShop(mode));
-  $('shGift').onclick = () => { if (S.gift===dayKey()) return; S.gift = dayKey(); give({energy:30, coins:30}); SFX.unlock(); save(); renderTop(); openShop(mode); };
+  $('shGift').onclick = () => { if (S.gift===dayKey()) return; S.gift = dayKey(); give({energy:30, coins:30}); SFX.coin(); save(); renderTop(); openShop(mode); };
   const onBuy = pack => {
     const r = buyEnergy(pack);
     if (!r.ok){ SFX.no(); toast(r.reason === 'coins' ? L.noCoins : L.shopSoldOut); openShop(mode); return; }

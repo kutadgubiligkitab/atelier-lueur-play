@@ -61,7 +61,7 @@
     if (s.musicVol !== undefined && typeof s.musicVol !== 'number') return null;
     const lang = (typeof s.lang === 'string' && CFG.LANG_KEYS.indexOf(s.lang) >= 0) ? s.lang : 'ug';
     return { sound: s.sound !== false, music: s.music !== false, vib: s.vib !== false, lang,
-      soundVol: clamp01(s.soundVol, 0.85), musicVol: clamp01(s.musicVol, 0.35) };
+      soundVol: clamp01(s.soundVol, 0.85), musicVol: clamp01(s.musicVol, 0.40) };
   }
 
   /**

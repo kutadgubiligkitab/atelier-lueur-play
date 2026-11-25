@@ -1,8 +1,8 @@
 {
- "sourceCommit": "b2d46511862df81b6f131e2dc1b3c07faf4f8382",
+ "sourceCommit": "57a997804e38db0eeb8b24010e84ffd1c0898c09",
  "sourceHasUncommittedChanges": false,
- "fileCount": 401,
- "totalBytes": 85269591,
+ "fileCount": 405,
+ "totalBytes": 85579728,
  "files": [
   {
    "path": "art.js",
@@ -250,19 +250,39 @@
    "sha256": "4403749bd2c76283e00694b16559dc3f5f3128ebce741f04149a939079f8cf44"
   },
   {
+   "path": "assets/audio/CREDITS.txt",
+   "bytes": 2366,
+   "sha256": "14c2f8bf57b16b1e76bfd210c0b085d1d4fa5ee49d93da325d338c40b8f1ec90"
+  },
+  {
    "path": "assets/audio/README.txt",
-   "bytes": 336,
-   "sha256": "69c7d1cce1c9715ffdf99522819a2c2b740dba6aec76693bce362ee49098f33a"
+   "bytes": 265,
+   "sha256": "82cbd2b88355185eb9e9d0db81a3ec140f5888a24445e0f78d3bc087ec892894"
   },
   {
-   "path": "assets/audio/salon-loop.m4a",
-   "bytes": 661299,
-   "sha256": "9b8d653d3e04330e96fe8233efb8e20c5674df11b1f0ea4396a09b2a557140fe"
+   "path": "assets/audio/cafe-loop.m4a",
+   "bytes": 756282,
+   "sha256": "62f476f18a19e0ccfc202d8ce47ffa3b3deb8def679d598f56d8b64f5cd20773"
   },
   {
-   "path": "assets/audio/salon-loop.mp3",
-   "bytes": 640513,
-   "sha256": "a49d7e08acaf90af5483d46d3deb8a736d2d95298afac507ae9a48f191fcd14c"
+   "path": "assets/audio/cafe-loop.mp3",
+   "bytes": 720448,
+   "sha256": "d7918151c01d14f5a6d0fca4412416e0fe82358b0383cacd0c864685a5e1bc97"
+  },
+  {
+   "path": "assets/audio/sfx-bank.json",
+   "bytes": 1047,
+   "sha256": "ac8aa1e10442d3efe5549aeae4dde9a2a7ed4eb13ed15381c39e480681adf2fe"
+  },
+  {
+   "path": "assets/audio/sfx-bank.m4a",
+   "bytes": 68590,
+   "sha256": "47911ddfa6735def4c2831cf1e3e4b454dafaa10cf92ed01cb86562dcd2c5931"
+  },
+  {
+   "path": "assets/audio/sfx-bank.mp3",
+   "bytes": 64617,
+   "sha256": "241ef746c9e188c9eb7d2520d6d75b4a9c7e95111757f3aedf8e425a2b348a77"
   },
   {
    "path": "assets/characters/customer-amina-blink.png",
@@ -1941,8 +1961,8 @@
   },
   {
    "path": "audio.js",
-   "bytes": 14137,
-   "sha256": "c8a094c6e6540e1848b3c148c2e90abb9fe46ca1eb83206b130f4c3d5aac7985"
+   "bytes": 12665,
+   "sha256": "9b6840211dfed2e421d28c406f8c4b82da7da781eaa075e59271862fe65ec33e"
   },
   {
    "path": "config.js",
@@ -1961,8 +1981,8 @@
   },
   {
    "path": "game.js",
-   "bytes": 124937,
-   "sha256": "e3f73d49969097811197236c6a538c33945f0b99829e05688eed2f75f24c3050"
+   "bytes": 125079,
+   "sha256": "3c6e7b32b3834e7ec6d3a503674b297d8c790b59110079b6f3e47b72d2d739c7"
   },
   {
    "path": "i18n.js",
@@ -2002,7 +2022,7 @@
   {
    "path": "save.js",
    "bytes": 26960,
-   "sha256": "350cc0290260f11762b3047046d517f85f80b12d02bd6e9863cfe0155873f3de"
+   "sha256": "ab3c960d3e84200bb69e0f6ced77c24f7aa90609ff38582ec1c71e295f940045"
   },
   {
    "path": "style.css",

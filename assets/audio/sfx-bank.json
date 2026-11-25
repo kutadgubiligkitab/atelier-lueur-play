@@ -1,0 +1,68 @@
+{
+  "sr": 44100,
+  "sounds": {
+    "tap": {
+      "start": 0.06,
+      "dur": 0.054989
+    },
+    "drop": {
+      "start": 0.174989,
+      "dur": 0.16
+    },
+    "spawn": {
+      "start": 0.394989,
+      "dur": 0.16
+    },
+    "merge": {
+      "start": 0.614989,
+      "dur": 0.72
+    },
+    "no": {
+      "start": 1.394989,
+      "dur": 0.18
+    },
+    "empty": {
+      "start": 1.634989,
+      "dur": 0.36
+    },
+    "ready": {
+      "start": 2.054989,
+      "dur": 0.45
+    },
+    "coin": {
+      "start": 2.564989,
+      "dur": 1.05
+    },
+    "quest": {
+      "start": 3.674989,
+      "dur": 0.55
+    },
+    "claim": {
+      "start": 4.284989,
+      "dur": 0.55
+    },
+    "shop": {
+      "start": 4.894989,
+      "dur": 0.4
+    },
+    "open": {
+      "start": 5.354989,
+      "dur": 0.38
+    },
+    "close": {
+      "start": 5.794989,
+      "dur": 0.28
+    },
+    "unlock": {
+      "start": 6.134989,
+      "dur": 0.699977
+    },
+    "level": {
+      "start": 6.894966,
+      "dur": 1.05
+    }
+  },
+  "aliases": {
+    "deliver": "coin"
+  }
+}

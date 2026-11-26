@@ -84,11 +84,11 @@ button{font:inherit;color:inherit}
 @keyframes glow{50%{transform:scale(1.03)}}
 .order .ok{position:absolute;top:-8px;inset-inline-start:-6px;width:26px;height:26px;padding:3px;border-radius:50%;background:#3ecb5e;box-shadow:0 2px 0 var(--green-dark),0 0 8px rgba(70,195,90,.7);z-index:2}
 .order .deliverCue{position:absolute;left:6px;right:6px;bottom:-7px;height:13px;line-height:13px;padding:0 6px;font-size:9px;font-weight:800;letter-spacing:.01em;text-align:center;color:#fff;background:var(--green);border-radius:8px;box-shadow:0 1px 0 var(--green-dark);pointer-events:none;z-index:2;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-.order.leave{animation:none;transform:translateY(-14px) scale(.96);opacity:0;transition:transform .36s ease-in,opacity .32s ease-in}   /* departure: after the happy frame (delay below) */
-.order.arriving{animation:custIn .48s cubic-bezier(.2,1.4,.3,1) both}   /* arrival of the replacement customer */
-.order.arriving .cust{animation:custRise .5s cubic-bezier(.2,1.4,.3,1) both}
-@keyframes custIn{from{opacity:0;transform:translateY(12px) scale(.92)}60%{opacity:1;transform:translateY(-2px) scale(1.06)}to{opacity:1;transform:none}}
-@keyframes custRise{from{transform:translateY(8px) scale(.96)}70%{transform:translateY(-1px) scale(1.04)}to{transform:none}}
+.order.leave{animation:none;transform:translateY(16px);opacity:0;transition:transform .38s ease-in,opacity .34s ease-in}   /* departure: slide down / fade after the happy frame */
+.order.arriving{animation:custIn .46s cubic-bezier(.22,.7,.28,1) both;--custInX:22px}   /* arrival from the side; RTL enters from the left */
+html[dir="rtl"] .order.arriving{--custInX:-22px}
+.order.arriving .cust{animation:none}
+@keyframes custIn{from{opacity:0;transform:translateX(var(--custInX, 22px))}to{opacity:1;transform:none}}
 .side{display:flex;flex-direction:column;gap:6px;flex:none}
 .side .roundbtn{width:40px;height:40px;background:#fff;border-radius:14px;border:2.5px solid var(--panel-edge);box-shadow:0 3px 0 var(--panel-edge);padding:5px}
 
@@ -101,19 +101,26 @@ button{font:inherit;color:inherit}
 .cell.want{background:var(--want)}
 .cell.sel::after{content:"";position:absolute;inset:1px;border:3px solid var(--gold);border-radius:8px;pointer-events:none;animation:selp 1s infinite}
 @keyframes selp{50%{opacity:.5}}
-.cell.target{box-shadow:inset 0 0 0 3px var(--pink)}
+.cell.target.mergeOk{box-shadow:inset 0 0 0 2px #fff,0 0 0 2px rgba(255,255,255,.35),0 0 12px rgba(255,255,255,.7);background-image:linear-gradient(rgba(255,255,255,.3),rgba(255,255,255,.08))}
 .cell .it{position:absolute;inset:2px}
 .cell .it.gen{background:radial-gradient(circle,#fff 30%,transparent 72%)}
 .cell .bolt{position:absolute;bottom:0;right:0;width:36%;height:36%}
 .cell .it.drag{opacity:.25}
-.cell .it.pop{animation:pop .45s cubic-bezier(.3,1.8,.5,1)}
-@keyframes pop{0%{transform:scale(.3)}60%{transform:scale(1.25)}100%{transform:scale(1)}}
-.cell .it.fly{animation:fly .35s ease-out;pointer-events:none}   /* the new item starts ON the producer and flies out: it must not catch the next rapid tap meant for the producer (verified: at 40 ms taps 3/5/7 hit the flying item, selected it and produced nothing) */
-@keyframes fly{from{transform:translate(var(--fx),var(--fy)) scale(.4)}}
-.burst{position:absolute;inset:-30%;pointer-events:none;border-radius:50%;background:radial-gradient(circle,#fff8b0 0,#ffd54a88 35%,transparent 70%);animation:burst .5s forwards;z-index:2}
-@keyframes burst{from{transform:scale(.3);opacity:1}to{transform:scale(1.4);opacity:0}}
-.burst::after{content:"";position:absolute;inset:12%;border:2px solid #fff8c8;border-radius:50%;animation:mergeRing .45s ease-out forwards}
-@keyframes mergeRing{from{transform:scale(.4);opacity:.95}to{transform:scale(1.65);opacity:0}}
+.cell .it.pop{animation:pop .38s cubic-bezier(.22,.8,.28,1)}
+@keyframes pop{0%{transform:scale(.96)}40%{transform:scale(1.1)}100%{transform:scale(1)}}
+.cell .it.genSquash{animation:genSquash .2s ease-out}
+@keyframes genSquash{0%{transform:scale(1)}35%{transform:scale(1.06,.86)}100%{transform:scale(1)}}
+.cell .it.fly{animation:fly .42s cubic-bezier(.22,.6,.28,1) both;pointer-events:none}   /* the new item starts ON the producer and flies out: it must not catch the next rapid tap meant for the producer (verified: at 40 ms taps 3/5/7 hit the flying item, selected it and produced nothing) */
+@keyframes fly{
+  0%{transform:translate(var(--fx),var(--fy)) scale(.55)}
+  48%{transform:translate(var(--mx),var(--my)) scale(.92)}
+  78%{transform:translate(0,2px) scale(1.1,.86)}
+  100%{transform:none}
+}
+.burst{position:absolute;inset:-32%;pointer-events:none;border-radius:50%;background:radial-gradient(circle,#fff 0,#fff8 30%,transparent 68%);animation:burst .32s ease-out forwards;z-index:2}
+@keyframes burst{from{transform:scale(.35);opacity:.9}to{transform:scale(1.25);opacity:0}}
+.burst::before,.burst::after{content:"";position:absolute;left:50%;top:50%;width:2px;height:70%;margin:-35% 0 0 -1px;background:linear-gradient(transparent,#fffce8,transparent);pointer-events:none}
+.burst::after{transform:rotate(90deg)}
 #ghost{position:fixed;z-index:60;pointer-events:none;width:calc(var(--cell)*1.15);height:calc(var(--cell)*1.15);transform:translate(-50%,-65%);filter:drop-shadow(0 6px 6px rgba(106,35,80,.35))}
 #fxLayer{position:fixed;inset:0;pointer-events:none;z-index:90;overflow:hidden}
 .fxBit{position:absolute;left:0;top:0;width:22px;height:22px;margin:-11px 0 0 -11px;will-change:transform,opacity;filter:drop-shadow(0 2px 2px rgba(106,35,80,.25))}
@@ -407,7 +414,7 @@ button,.btn,.plus,.roundbtn,.nav,.nav *,.pill,.lvbadge,.cust,.ordersRow,.side,.i
   .order.readyHop .cust::after,.burst::after{animation:none;opacity:0}
   .order.leave{transform:none;transition:opacity .2s linear}
   .order.arriving,.order.arriving .cust{animation:propFade .2s linear both}
-  .cell .it.pop,.cell .it.fly,.burst{animation:none}
+  .cell .it.pop,.cell .it.fly,.cell .it.genSquash,.burst{animation:none}
   .fxBit{display:none}
 }
 

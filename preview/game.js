@@ -380,73 +380,102 @@ function fxPt(el){
 let fxCoinHold = null, fxCoinRaf = 0, fxStarHold = null, fxBits = 0;
 const FX_BIT_CAP = 28;
 function fxClearBit(el){ if (!el || !el.parentNode) return; el.remove(); fxBits = Math.max(0, fxBits - 1); }
-function fxBounce(el){
+function fxBounce(el, soft){
   if (!el || fxReduce() || !el.animate) return;
   try { el.getAnimations().forEach(a => { if (a._fxBounce) a.cancel(); }); } catch(e){}
+  const peak = soft ? 1.06 : 1.1;
   const a = el.animate(
-    [{transform:'scale(1)'},{transform:'scale(1.14)'},{transform:'scale(0.96)'},{transform:'scale(1)'}],
-    {duration:280, easing:'cubic-bezier(.2,1.5,.3,1)'}
+    [{transform:'scale(1)'},{transform:'scale(' + peak + ')'},{transform:'scale(1)'}],
+    {duration: soft ? 180 : 240, easing:'cubic-bezier(.22,.8,.28,1)'}
   );
   a._fxBounce = true;
 }
-function fxCountCoins(target){
+function fxCountCoins(target, dur){
   const el = $('tCv');
   const from = fxCoinHold != null ? fxCoinHold : (el ? (parseInt(el.textContent, 10) || target) : target);
   if (fxCoinRaf) cancelAnimationFrame(fxCoinRaf);
   if (fxReduce() || !el){ fxCoinHold = null; if (el) el.textContent = String(S.coins); return; }
-  const t0 = performance.now(), dur = 380, dest = target;
+  const t0 = performance.now(), len = dur || 120, dest = target;
   fxCoinHold = from;
   const step = now => {
-    const t = Math.min(1, (now - t0) / dur);
+    const t = Math.min(1, (now - t0) / len);
     const eased = 1 - Math.pow(1 - t, 3);
     fxCoinHold = from + (dest - from) * eased;
     if ($('tCv')) $('tCv').textContent = String(Math.round(fxCoinHold));
     if (t < 1) fxCoinRaf = requestAnimationFrame(step);
-    else { fxCoinHold = null; fxCoinRaf = 0; if ($('tCv')) $('tCv').textContent = String(S.coins); }
+    else {
+      fxCoinHold = dest === S.coins ? null : dest;
+      fxCoinRaf = 0;
+      if ($('tCv')) $('tCv').textContent = String(Math.round(dest === S.coins ? S.coins : dest));
+    }
   };
   fxCoinRaf = requestAnimationFrame(step);
 }
-function fxTweenStarBar(fromPct, toPct){
+function fxTweenStarBar(fromPct, toPct, dur){
   const bar = $('tLvB'); if (!bar) return;
   if (fxReduce()){ fxStarHold = null; bar.style.width = toPct + '%'; return; }
-  fxStarHold = fromPct;
-  const t0 = performance.now(), dur = 420;
+  const start = fromPct;
+  const t0 = performance.now(), len = dur || 160;
+  fxStarHold = start;
   const step = now => {
-    const t = Math.min(1, (now - t0) / dur);
+    const t = Math.min(1, (now - t0) / len);
     const eased = 1 - Math.pow(1 - t, 3);
-    fxStarHold = fromPct + (toPct - fromPct) * eased;
+    fxStarHold = start + (toPct - start) * eased;
     if ($('tLvB')) $('tLvB').style.width = fxStarHold + '%';
     if (t < 1) requestAnimationFrame(step);
-    else { fxStarHold = null; if ($('tLvB')) $('tLvB').style.width = (Math.min(100, S.stars / starsNeed(S.lv) * 100)) + '%'; }
+    else {
+      const done = Math.min(100, S.stars / starsNeed(S.lv) * 100);
+      fxStarHold = Math.abs(toPct - done) < 0.2 ? null : toPct;
+      if ($('tLvB')) $('tLvB').style.width = (fxStarHold == null ? done : toPct) + '%';
+    }
   };
   requestAnimationFrame(step);
 }
-function fxFlyBits(kind, from, to, n, stagger, onFirst){
+function fxBezier(p0, p1, p2, p3, t){
+  const u = 1 - t, uu = u * u, tt = t * t;
+  return {
+    x: uu * u * p0.x + 3 * uu * t * p1.x + 3 * u * tt * p2.x + tt * t * p3.x,
+    y: uu * u * p0.y + 3 * uu * t * p1.y + 3 * u * tt * p2.y + tt * t * p3.y
+  };
+}
+function fxFlyBits(kind, from, to, n, stagger, onLand){
   n = Math.max(0, Math.min(8, n | 0));
-  if (!n || fxReduce() || !from || !to) { if (onFirst) onFirst(); return; }
+  if (!n || fxReduce() || !from || !to) { if (onLand) onLand(true); return 0; }
   const layer = fxLayer();
   const html = kind === 'star' ? A.icon('star') : A.icon('coin');
-  let started = false, done = 0;
+  const dur = 760, gap = 36;
+  const ang = Math.atan2(to.y - from.y, to.x - from.x);
+  const perp = ang + Math.PI / 2;
+  let spawned = 0;
   for (let i = 0; i < n; i++){
-    if (fxBits >= FX_BIT_CAP) { if (!started && onFirst){ started = true; onFirst(); } done++; continue; }
-    const d = document.createElement('div');
+    let d = null;
+    const last = i === n - 1;
+    const finish = () => { if (onLand) onLand(last); if (d) fxClearBit(d); };
+    if (fxBits >= FX_BIT_CAP) { finish(); continue; }
+    d = document.createElement('div');
     d.className = 'fxBit fx' + (kind === 'star' ? 'Star' : 'Coin');
     d.innerHTML = html;
-    layer.appendChild(d); fxBits++;
-    const midX = from.x + (to.x - from.x) * 0.4 + (i % 2 ? 1 : -1) * (18 + (i * 11) % 36);
-    const midY = Math.min(from.y, to.y) - (36 + (i * 9) % 40);
-    const dur = 520 + i * 45;
-    const delay = (stagger || 0) + i * 28;
-    const anim = d.animate([
-      {transform:'translate(' + from.x + 'px,' + from.y + 'px) scale(.35)', opacity:0},
-      {transform:'translate(' + midX + 'px,' + midY + 'px) scale(1.05)', opacity:1, offset:0.38},
-      {transform:'translate(' + to.x + 'px,' + to.y + 'px) scale(.55)', opacity:1, offset:0.88},
-      {transform:'translate(' + to.x + 'px,' + to.y + 'px) scale(.2)', opacity:0}
-    ], {duration:dur, delay:delay, easing:'cubic-bezier(.2,.7,.15,1)', fill:'forwards'});
-    const finish = () => { if (!started){ started = true; if (onFirst) onFirst(); } fxClearBit(d); };
+    layer.appendChild(d); fxBits++; spawned++;
+    const fan = n === 1 ? 0 : (i - (n - 1) / 2) / ((n - 1) / 2);           // -1..1
+    const fanAng = ang + Math.PI * 0.72 + fan * 0.95;                     // burst outward, then curve in
+    const fanDist = 34 + Math.abs(fan) * 20;
+    const p1 = {x: from.x + Math.cos(fanAng) * fanDist, y: from.y + Math.sin(fanAng) * fanDist};
+    const p2 = {
+      x: from.x + (to.x - from.x) * 0.55 + Math.cos(perp) * fan * 22,
+      y: Math.min(from.y, to.y) - (26 + Math.abs(fan) * 16)
+    };
+    const frames = [0, 0.14, 0.3, 0.5, 0.7, 0.88, 1].map(t => {
+      const p = fxBezier(from, p1, p2, to, t);
+      const sc = t < 0.14 ? 0.4 + t * 3 : t > 0.88 ? 0.5 : 1;
+      const op = t === 0 ? 0 : (t > 0.94 ? 0 : 1);
+      return {transform:'translate(' + p.x + 'px,' + p.y + 'px) scale(' + sc + ')', opacity:op, offset:t};
+    });
+    const delay = (stagger || 0) + i * gap;
+    const anim = d.animate(frames, {duration:dur, delay:delay, easing:'cubic-bezier(.22,.6,.2,1)', fill:'forwards'});
     if (anim && anim.finished) anim.finished.then(finish).catch(finish); else setTimeout(finish, delay + dur + 40);
     setTimeout(() => fxClearBit(d), delay + dur + 200);
   }
+  return spawned;
 }
 function fxRewardFlight(opts){
   const fromEl = opts && opts.from, coins = (opts && opts.coins) || 0, stars = (opts && opts.stars) || 0;
@@ -462,20 +491,35 @@ function fxRewardFlight(opts){
     fxStarHold = null; if ($('tLvB')) $('tLvB').style.width = toPct + '%';
     return;
   }
-  let landed = false;
-  const land = () => {
-    if (landed) return; landed = true;
-    if (coins){ fxBounce($('tCv') && $('tCv').closest('.pill')); fxCountCoins(toCoins); }
-    if (stars){ fxBounce($('tLv')); if (fromPct != null) fxTweenStarBar(fromPct, toPct); }
-  };
+  // Hold the displayed wallet at the pre-payout value until pieces start to land (renderTop would otherwise jump)
+  if (coins && fxCoinHold == null){ fxCoinHold = fromCoins; if ($('tCv')) $('tCv').textContent = String(Math.round(fromCoins)); }
   const nCoin = coins ? Math.min(8, Math.max(5, Math.round(Math.min(8, 4 + coins / 20)))) : 0;
   const nStar = stars ? Math.min(6, Math.max(4, Math.round(Math.min(6, 3 + stars / 15)))) : 0;
-  if (!nCoin && !nStar){ land(); return; }
-  if (nCoin) fxFlyBits('coin', src, coinTo, nCoin, 0, land);
-  if (nStar) fxFlyBits('star', src, starTo, nStar, 40, nCoin ? null : land);
-  setTimeout(land, 900);   // always land even if a flight is skipped by the cap
-  // Hold the displayed wallet at the pre-payout value until the first icon arrives (renderTop would otherwise jump)
-  if (coins && fxCoinHold == null){ fxCoinHold = fromCoins; if ($('tCv')) $('tCv').textContent = String(Math.round(fromCoins)); }
+  let coinLanded = 0, starLanded = 0, coinsDone = !nCoin, starsDone = !nStar;
+  const coinPill = $('tCv') && $('tCv').closest('.pill');
+  const onCoinLand = last => {
+    if (coinsDone) return;
+    coinLanded++;
+    const shown = (last || coinLanded >= nCoin) ? toCoins : fromCoins + Math.round((toCoins - fromCoins) * (coinLanded / nCoin));
+    if (last || coinLanded >= nCoin) coinsDone = true;
+    fxBounce(coinPill, true);
+    fxCountCoins(shown, last ? 140 : 100);
+  };
+  const onStarLand = last => {
+    if (starsDone) return;
+    starLanded++;
+    const pct = (last || starLanded >= nStar || fromPct == null) ? toPct : fromPct + (toPct - fromPct) * (starLanded / nStar);
+    if (last || starLanded >= nStar) starsDone = true;
+    fxBounce($('tLv'), true);
+    if (fromPct != null) fxTweenStarBar(fxStarHold != null ? fxStarHold : fromPct, pct, last ? 180 : 120);
+  };
+  if (!nCoin && !nStar){ if (coins) fxCountCoins(toCoins, 80); return; }
+  if (nCoin) fxFlyBits('coin', src, coinTo, nCoin, 0, onCoinLand);
+  if (nStar) fxFlyBits('star', src, starTo, nStar, 50, onStarLand);
+  setTimeout(() => {                                        // never leave the counter short if a flight was capped
+    if (coins && !coinsDone){ coinsDone = true; fxCountCoins(toCoins, 120); }
+    if (stars && !starsDone && fromPct != null){ starsDone = true; fxTweenStarBar(fxStarHold != null ? fxStarHold : fromPct, toPct, 160); }
+  }, 1100);
 }
 
 function deliver(oi){
@@ -915,10 +959,18 @@ function renderBoard(fx={}){
     }
     const el = c.firstElementChild; if (!el) return;
     el.classList.toggle('drag', !!(drag && drag.moved && drag.i === i));
-    if (fx.pop === i){ el.classList.add('pop'); c.insertAdjacentHTML('beforeend', '<div class="burst"></div>'); setTimeout(()=>c.querySelector('.burst')?.remove(), 600); }
+    if (fx.pop === i){ el.classList.add('pop'); c.insertAdjacentHTML('beforeend', '<div class="burst"></div>'); setTimeout(()=>c.querySelector('.burst')?.remove(), 500); }
+    if (fx.fly && fx.fly.from === i){
+      el.classList.remove('genSquash'); void el.offsetWidth; el.classList.add('genSquash');
+      setTimeout(() => el.classList.remove('genSquash'), 240);
+    }
     if (fx.fly && fx.fly.to === i){
       const a = bd.children[fx.fly.from].getBoundingClientRect(), b = c.getBoundingClientRect();
-      el.style.setProperty('--fx', (a.left-b.left)+'px'); el.style.setProperty('--fy', (a.top-b.top)+'px'); el.classList.add('fly');
+      const dx = a.left-b.left, dy = a.top-b.top;
+      el.style.setProperty('--fx', dx+'px'); el.style.setProperty('--fy', dy+'px');
+      el.style.setProperty('--mx', (dx*0.5)+'px'); el.style.setProperty('--my', (dy*0.5-16)+'px');
+      el.classList.add('fly');
+      setTimeout(() => el.classList.remove('fly'), 450);   // drop pointer-events:none after the landing squash
     }
   });
   refreshAtelierBadge();
@@ -1916,8 +1968,11 @@ bd.addEventListener('pointermove', e => {
     const c = document.elementFromPoint(e.clientX, e.clientY)?.closest('.cell');
     const t = c ? +c.dataset.i : null;
     if (t !== drag.target){
-      if (drag.target != null) bd.children[drag.target].classList.remove('target');
-      if (t != null && t !== drag.i) bd.children[t].classList.add('target');
+      if (drag.target != null) bd.children[drag.target].classList.remove('target', 'mergeOk');
+      if (t != null && t !== drag.i){
+        bd.children[t].classList.add('target');
+        if (canMerge(S.board[drag.i], S.board[t])) bd.children[t].classList.add('mergeOk');
+      }
       drag.target = t;
     }
   }
@@ -1926,7 +1981,7 @@ function endDrag(cancel){
   if (!drag) return;
   const d = drag; drag = null;
   $('ghost')?.remove();
-  if (d.target != null) bd.children[d.target].classList.remove('target');
+  if (d.target != null) bd.children[d.target].classList.remove('target', 'mergeOk');
   if (cancel){ renderBoard(); return; }
   if (!d.moved) tap(d.i); else drop(d.i, d.target);
 }

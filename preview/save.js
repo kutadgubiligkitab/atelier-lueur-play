@@ -72,7 +72,7 @@
     if (!CFG) throw new Error('SAVE.configure() was not called');
     const bad = code => ({ ok: false, code });
     if (!isObj(s)) return bad('not-object');
-    const allowed = ['v', 'board', 'energy', 'et', 'coins', 'stars', 'gems', 'lv', 'orders', 'seen', 'owned', 'road', 'album', 'cnt', 'claimed', 'gift', 'set', 'secretSeen', 'ev', 'queue', 'qid', 'pg', 'pbuy', 'ecap', 'vo', 've', 'atl', 'msn', 'eshop', 'ptcg', 'ptgg', 'tut', 'inv', 'gst', 'ghs', 'ghp', 'gwt', 'gww', 'gwn'];
+    const allowed = ['v', 'board', 'energy', 'et', 'coins', 'stars', 'gems', 'lv', 'orders', 'seen', 'owned', 'road', 'album', 'cnt', 'claimed', 'gift', 'set', 'secretSeen', 'ev', 'queue', 'qid', 'pg', 'pbuy', 'ecap', 'vo', 've', 'atl', 'msn', 'eshop', 'ptcg', 'ptgg', 'tut', 'inv', 'gst', 'ghs', 'ghp', 'gwt', 'gww', 'gwn', 'gwx', 'gbt'];
     for (const k of Object.keys(s)) if (allowed.indexOf(k) < 0) return bad('unknown-field:' + k);
     if (s.v !== 2) return bad('version');
 
@@ -298,7 +298,10 @@
     let ghs; if (s.ghs !== undefined) { if (!isInt(s.ghs, 0, 3)) return bad('ghs'); ghs = s.ghs; }   // times the long-press hint was shown (0–3)
     let ghp; if (s.ghp !== undefined) { if (s.ghp !== 0 && s.ghp !== 1) return bad('ghp'); ghp = s.ghp; }   // 1 = the player has long-pressed a generator once
     let gwt; if (s.gwt !== undefined) { if (s.gwt !== 0 && s.gwt !== 1) return bad('gwt'); gwt = s.gwt; }   // 1 = wrapping table unlocked / owned
-    let gwn; if (s.gwn !== undefined) { if (!isInt(s.gwn, 0, 20)) return bad('gwn'); gwn = s.gwn; }         // ordinary orders since the last gift order (0–4)
+    let gwn; if (s.gwn !== undefined) { if (!isInt(s.gwn, 0, 20)) return bad('gwn'); gwn = s.gwn; }         // ordinary orders since the last gift order
+    let gwx; if (s.gwx !== undefined) { if (s.gwx !== 8 && s.gwx !== 9 && s.gwx !== 10) return bad('gwx'); gwx = s.gwx; }   // next gift after 8–10 regular orders
+    let gbt; if (s.gbt !== undefined) { if (!isNum(s.gbt, 0, 1e15)) return bad('gbt'); gbt = s.gbt; }         // wall-clock time of the last board chest
+
     let gww;
     if (s.gww !== undefined) {
       const w = s.gww;
@@ -337,6 +340,8 @@
     if (ghp !== undefined) out.state.ghp = ghp;
     if (gwt !== undefined) out.state.gwt = gwt;
     if (gwn !== undefined) out.state.gwn = gwn;
+    if (gwx !== undefined) out.state.gwx = gwx;
+    if (gbt !== undefined) out.state.gbt = gbt;
     if (gww !== undefined) out.state.gww = gww;
     return out;
   }

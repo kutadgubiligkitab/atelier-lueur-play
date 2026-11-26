@@ -112,7 +112,9 @@
     ready: silent,
     quest: silent,
     open: silent,
-    close: silent
+    close: silent,
+    wrap: function () { tone(392, 0.14, 0, 'sine', 0.045); tone(523, 0.16, 0.12, 'triangle', 0.035); tone(349, 0.2, 0.28, 'sine', 0.03); },
+    wrapDone: function () { tone(659, 0.14, 0, 'triangle', 0.05); tone(880, 0.2, 0.1, 'sine', 0.045); }
   };
 
   function install() {

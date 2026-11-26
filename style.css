@@ -740,3 +740,33 @@ button.taskTitle:focus-visible{outline:3px solid #ff5fa2;outline-offset:2px;bord
 #genPeek .gpTile svg,#genPeek .gpTile img{width:24px;height:24px;display:block}
 #genPeek .gpTile.lock{background:#f4e6ee;color:var(--ink-soft);font:800 14px/1 Nunito,sans-serif}
 .info .hint .peekHint{color:var(--pink-dark);font-weight:800}
+
+/* Gift-wrap table, gift-order badge, and the 10s wrap motion (CSS only). */
+.ordersRow,#orders{overflow:visible}
+.order.gift{overflow:visible;z-index:2}
+.order .giftBadge{position:absolute;top:3px;inset-inline-end:3px;z-index:4;display:inline-flex;align-items:center;gap:3px;width:max-content;max-width:calc(100% - 8px);height:auto;padding:3px 7px 4px 6px;border-radius:9px;background:linear-gradient(#f4c14a,#e09a2e);color:#6a3a00;font-size:9px;font-weight:800;line-height:1.45;box-shadow:0 1px 0 #c4841d;pointer-events:none;white-space:nowrap;overflow:visible;box-sizing:border-box}
+.order .giftBadge i{width:8px;height:8px;flex:none;border-radius:50%;background:radial-gradient(circle at 30% 30%,#fff6,#fff0),#e85a7a;box-shadow:5px 0 0 #e85a7a;position:relative}
+.order .rw .x2{color:#c4841d;font-size:9px;font-weight:800;margin-inline-start:1px}
+.it.tbl,.it.wrap{position:relative;overflow:hidden}
+.it.tbl .wrapFx{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:2}
+.it.tbl .wrapRing{position:absolute;inset:3%;width:94%;height:94%}
+.it.tbl .wrapRing circle{fill:none;stroke:#e8c56a;stroke-width:3.2;stroke-linecap:round;transform:rotate(-90deg);transform-origin:50% 50%;stroke-dasharray:113;stroke-dashoffset:113}
+.it.tbl .wrapPaper,.it.tbl .wrapRib,.it.tbl .wrapBow{display:none}
+.it.tbl .wrapStaged{position:absolute;left:10%;right:10%;top:14%;display:flex;justify-content:center;gap:2px;pointer-events:none}
+.it.tbl .wrapStaged i{width:24%;aspect-ratio:1;display:block;filter:drop-shadow(0 1px 1px rgba(80,30,40,.3))}
+.it.tbl .wrapStaged i .sprite{width:100%;height:100%}
+.it.tbl .wrapTime{position:absolute;left:8%;right:8%;bottom:8%;text-align:center;font-size:9px;font-weight:800;color:#fff6f8;text-shadow:0 1px 2px #c46a86,0 0 5px #fff8;pointer-events:none;direction:ltr;line-height:1.15;letter-spacing:.02em}
+.it.tbl.wrapping .sprite{animation:wrapWobble .7s ease-in-out infinite;transform-origin:50% 70%}
+.it.tbl .wrapSpark{position:absolute;width:5px;height:5px;border-radius:50%;background:radial-gradient(circle,#fff8e0 0 35%,#e8c56a 60%,transparent 70%);opacity:0;pointer-events:none}
+.it.tbl.wrapping .wrapSpark{animation:wrapSpark 1.1s ease-in-out infinite}
+.it.tbl.wrapping .wrapSpark:nth-child(2){animation-delay:.2s}
+.it.tbl.wrapping .wrapSpark:nth-child(3){animation-delay:.45s}
+.it.tbl.wrapping .wrapSpark:nth-child(4){animation-delay:.7s}
+.burst.gold{background:radial-gradient(circle,#fff6d0 0,#e8c56a88 32%,transparent 68%)}
+.burst.gold::before,.burst.gold::after{background:linear-gradient(transparent,#f4d27a,transparent)}
+@keyframes wrapWobble{0%,100%{transform:rotate(-1.6deg)}50%{transform:rotate(1.6deg)}}
+@keyframes wrapSpark{0%,100%{opacity:0;transform:translate(0,4px) scale(.6)}40%{opacity:1;transform:translate(var(--sx,0),var(--sy,-8px)) scale(1)}80%{opacity:.2}}
+@media (prefers-reduced-motion: reduce){
+  .it.tbl.wrapping .sprite,.it.tbl.wrapping .wrapSpark{animation:none}
+  .burst.gold{animation:none;opacity:0}
+}

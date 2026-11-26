@@ -72,7 +72,7 @@
     if (!CFG) throw new Error('SAVE.configure() was not called');
     const bad = code => ({ ok: false, code });
     if (!isObj(s)) return bad('not-object');
-    const allowed = ['v', 'board', 'energy', 'et', 'coins', 'stars', 'gems', 'lv', 'orders', 'seen', 'owned', 'road', 'album', 'cnt', 'claimed', 'gift', 'set', 'secretSeen', 'ev', 'queue', 'qid', 'pg', 'pbuy', 'ecap', 'vo', 've', 'atl', 'msn', 'eshop', 'ptcg', 'ptgg', 'tut', 'inv', 'gst', 'ghs', 'ghp'];
+    const allowed = ['v', 'board', 'energy', 'et', 'coins', 'stars', 'gems', 'lv', 'orders', 'seen', 'owned', 'road', 'album', 'cnt', 'claimed', 'gift', 'set', 'secretSeen', 'ev', 'queue', 'qid', 'pg', 'pbuy', 'ecap', 'vo', 've', 'atl', 'msn', 'eshop', 'ptcg', 'ptgg', 'tut', 'inv', 'gst', 'ghs', 'ghp', 'gwt', 'gww', 'gwn', 'gwx', 'gbt'];
     for (const k of Object.keys(s)) if (allowed.indexOf(k) < 0) return bad('unknown-field:' + k);
     if (s.v !== 2) return bad('version');
 
@@ -102,6 +102,12 @@
       } else if (it.gem !== undefined) {
         if (!isInt(it.gem, 1, 20) || keys.some(k => k !== 'gem')) return bad('gem-item');
         board.push({ gem: it.gem });
+      } else if (it.tbl === 1 && it.wrap === undefined && it.box === undefined && it.g === undefined && it.c === undefined && it.gem === undefined) {
+        if (keys.some(k => k !== 'tbl')) return bad('table-field');
+        board.push({ tbl: 1 });
+      } else if (it.wrap === 1 && it.tbl === undefined && it.box === undefined && it.g === undefined && it.c === undefined && it.gem === undefined) {
+        if (keys.some(k => k !== 'wrap')) return bad('wrap-field');
+        board.push({ wrap: 1 });
       } else return bad('cell');
     }
 
@@ -119,7 +125,7 @@
     for (const o of s.orders) {
       if (o === null) { orders.push(null); continue; }
       if (!isObj(o)) return bad('order');
-      if (Object.keys(o).some(k => ['c', 'l', 'n', 'coins', 'stars', 'isNew', 'm', 'who'].indexOf(k) < 0)) return bad('order-field');
+      if (Object.keys(o).some(k => ['c', 'l', 'n', 'coins', 'stars', 'isNew', 'm', 'm2', 'who', 'gift'].indexOf(k) < 0)) return bad('order-field');
       if (CFG.CHAINS.indexOf(o.c) < 0 || !isInt(o.l, 1, CFG.MAXLV) || !isInt(o.n, 1, 99) || !isNum(o.coins, 0, 1e9) || !isNum(o.stars, 0, 1e9)) return bad('order');
       if (o.isNew !== undefined && typeof o.isNew !== 'boolean') return bad('order');
       const c = { c: o.c, l: o.l, n: o.n, coins: o.coins, stars: o.stars };
@@ -128,6 +134,11 @@
       if (o.m !== undefined) {                                         // mixed-family order: a second requirement of a DIFFERENT family
         if (!isObj(o.m) || Object.keys(o.m).some(k => ['c', 'l', 'n'].indexOf(k) < 0) || CFG.CHAINS.indexOf(o.m.c) < 0 || o.m.c === o.c || !isInt(o.m.l, 1, CFG.MAXLV) || !isInt(o.m.n, 1, 99)) return bad('order-mixed');
         c.m = { c: o.m.c, l: o.m.l, n: o.m.n };
+      }
+      if (o.gift !== undefined) { if (o.gift !== 1) return bad('order-gift'); c.gift = 1; }
+      if (o.m2 !== undefined) {
+        if (c.gift !== 1 || !isObj(o.m2) || Object.keys(o.m2).some(k => ['c', 'l', 'n'].indexOf(k) < 0) || CFG.CHAINS.indexOf(o.m2.c) < 0 || o.m2.c === o.c || (c.m && o.m2.c === c.m.c) || !isInt(o.m2.l, 1, CFG.MAXLV) || !isInt(o.m2.n, 1, 99)) return bad('order-gift-part');
+        c.m2 = { c: o.m2.c, l: o.m2.l, n: o.m2.n };
       }
       orders.push(c);
     }
@@ -269,6 +280,12 @@
         } else if (it.gem !== undefined) {
           if (!isInt(it.gem, 1, 20) || keys.some(k => k !== 'gem')) return bad('inv');
           items.push({ gem: it.gem });
+        } else if (it.tbl === 1 && it.wrap === undefined && it.box === undefined && it.g === undefined && it.c === undefined && it.gem === undefined) {
+          if (keys.some(k => k !== 'tbl')) return bad('inv');
+          items.push({ tbl: 1 });
+        } else if (it.wrap === 1 && it.tbl === undefined && it.box === undefined && it.g === undefined && it.c === undefined && it.gem === undefined) {
+          if (keys.some(k => k !== 'wrap')) return bad('inv');
+          items.push({ wrap: 1 });
         } else return bad('inv');
       }
       inv = { v: 1, cap: v.cap, items };
@@ -280,6 +297,24 @@
     }
     let ghs; if (s.ghs !== undefined) { if (!isInt(s.ghs, 0, 3)) return bad('ghs'); ghs = s.ghs; }   // times the long-press hint was shown (0–3)
     let ghp; if (s.ghp !== undefined) { if (s.ghp !== 0 && s.ghp !== 1) return bad('ghp'); ghp = s.ghp; }   // 1 = the player has long-pressed a generator once
+    let gwt; if (s.gwt !== undefined) { if (s.gwt !== 0 && s.gwt !== 1) return bad('gwt'); gwt = s.gwt; }   // 1 = wrapping table unlocked / owned
+    let gwn; if (s.gwn !== undefined) { if (!isInt(s.gwn, 0, 20)) return bad('gwn'); gwn = s.gwn; }         // ordinary orders since the last gift order
+    let gwx; if (s.gwx !== undefined) { if (s.gwx !== 8 && s.gwx !== 9 && s.gwx !== 10) return bad('gwx'); gwx = s.gwx; }   // next gift after 8–10 regular orders
+    let gbt; if (s.gbt !== undefined) { if (!isNum(s.gbt, 0, 1e15)) return bad('gbt'); gbt = s.gbt; }         // wall-clock time of the last board chest
+
+    let gww;
+    if (s.gww !== undefined) {
+      const w = s.gww;
+      if (!isObj(w) || Object.keys(w).some(k => k !== 'st' && k !== 'have' && k !== 't') || ['load', 'wrap', 'done'].indexOf(w.st) < 0 || !Array.isArray(w.have) || w.have.length > 3) return bad('gww');
+      const have = [];
+      for (const it of w.have) {
+        if (!isObj(it) || Object.keys(it).some(k => k !== 'c' && k !== 'l') || CFG.CHAINS.indexOf(it.c) < 0 || !isInt(it.l, 1, CFG.MAXLV)) return bad('gww');
+        have.push({ c: it.c, l: it.l });
+      }
+      gww = { st: w.st, have };
+      if (w.t !== undefined) { if (!isNum(w.t, 0, 1e15)) return bad('gww'); gww.t = w.t; }
+      if (w.st === 'wrap' && gww.t === undefined) return bad('gww');
+    }
 
     const out = { ok: true, state: {
       v: 2, board, energy: s.energy, et, coins: s.coins, stars: s.stars, gems, lv: s.lv, orders, seen, owned, road, album,
@@ -303,6 +338,11 @@
     if (gst !== undefined) out.state.gst = gst;
     if (ghs !== undefined) out.state.ghs = ghs;
     if (ghp !== undefined) out.state.ghp = ghp;
+    if (gwt !== undefined) out.state.gwt = gwt;
+    if (gwn !== undefined) out.state.gwn = gwn;
+    if (gwx !== undefined) out.state.gwx = gwx;
+    if (gbt !== undefined) out.state.gbt = gbt;
+    if (gww !== undefined) out.state.gww = gww;
     return out;
   }
 

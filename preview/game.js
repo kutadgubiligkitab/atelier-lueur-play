@@ -11,6 +11,8 @@ const INITIAL_ENERGY = 50;                    // a new game still starts with 50
 const LEGACY_ENERGY_CAP = 50;                 // the cap before the 100 cap (used only to settle old saves exactly once)
 const MAXLV = 6, GEN_MAXLV = 3, GEN_STOCK = 20, GEN_REST_MS = 180000;   // 20 productions, then a 3-minute rest; leftover time counts while away
 const WRAP_LEVEL = 5, WRAP_MS = 10000;   // wrapping table unlocks at level 5 (preview grants it early so it can be tried)
+const GIFT_ORDER_MIN = 8, GIFT_ORDER_MAX = 10;   // one gift order every 8–10 regular orders
+const CHEST_GAP_MS = 90 * 60 * 1000;             // at most one board chest per 90 minutes (wall clock)
 const CORE_CHAINS = ['lip','per','cmp','nail'];            // the original four families (album 'all', discover counts and early-game orders use these)
 const CHAINS = CORE_CHAINS.concat(['skn']);                  // + Skincare (unlocked at level 15 by its first Spa Hamper)
 /* Makeup Atelier (atelier.js = the only rule implementation). Brush/bag are COMMISSION-ONLY: they are NOT in CHAINS, so accessibleChains()/order generation never see them.
@@ -389,10 +391,10 @@ function wireSupply(reopen){
 /* ---------------- زاكازلار ---------------- */
 function newOrder(slot){          // data-driven (progression.js, profile v1 = the original rules; verify/progression.js proves parity)
   let o;
-  if (shouldGiftOrder(slot)){ o = makeGiftOrder(); S.gwn = 0; }
+  if (shouldGiftOrder(slot)){ o = makeGiftOrder(); S.gwn = 0; S.gwx = GIFT_ORDER_MIN + Math.floor(Math.random() * (GIFT_ORDER_MAX - GIFT_ORDER_MIN + 1)); }
   else {
     o = window.PROGRESSION.makeOrder(S.lv, S.orders, Math.random, accessibleChains(), MAXLV, C.progressionProfile);
-    if (tableUnlocked()) S.gwn = Math.min(4, (S.gwn || 0) + 1);
+    if (tableUnlocked()) S.gwn = Math.min(GIFT_ORDER_MAX, (S.gwn || 0) + 1);
   }
   o.who = pickCustomer(slot);                 // customer identity is independent of the order (separate randomness; order generation is unchanged)
   return o;
@@ -429,39 +431,55 @@ function canStage(it){
 function ensureWrapTable(){
   if (!S || !tableUnlocked()) return;
   if (S.gwt !== 1) S.gwt = 1;
-  if (PREVIEW && !giftOrder() && (S.gwn == null || S.gwn < 4)) S.gwn = 4;
   if (findTable() >= 0) return;
   if (S.inv && S.inv.items && S.inv.items.some(isTable)) return;
   const i = emptyCell();
   if (i >= 0) S.board[i] = {tbl: 1};
   else if (invFree() > 0) invState().items.push({tbl: 1});
 }
+function chestReady(now){
+  now = now || Date.now();
+  if (!S || S.gbt == null) return true;
+  return (now - S.gbt) >= CHEST_GAP_MS;
+}
+function giftTarget(){
+  if (S.gwx !== 8 && S.gwx !== 9 && S.gwx !== 10)
+    S.gwx = GIFT_ORDER_MIN + Math.floor(Math.random() * (GIFT_ORDER_MAX - GIFT_ORDER_MIN + 1));
+  return S.gwx;
+}
 function shouldGiftOrder(slot){
   if (!tableUnlocked()) return false;
   if (giftOrder()) return false;
   if (S.tut != null && S.tut < 5) return false;
-  return (S.gwn || 0) >= 4;
+  return (S.gwn || 0) >= giftTarget();
 }
 function makeGiftOrder(){
-  const chains = accessibleChains();
   const P = (window.PROGRESSION.PROFILES[(C && C.progressionProfile) || 'v1'] || window.PROGRESSION.PROFILES.v1);
   const payC = l => l * l * P.payout.coinsA + P.payout.coinsB;
   const payS = l => l * P.payout.starsA + P.payout.starsB;
-  let parts = [];
-  if (S.lv <= 5 && chains.indexOf('lip') >= 0 && chains.indexOf('per') >= 0)
-    parts = [{c:'lip', l:1, n:1}, {c:'per', l:1, n:1}];
-  else {
-    const maxL = Math.min(MAXLV, window.PROGRESSION.bandFor(P, S.lv).maxItemLevel);
-    const lo = Math.max(1, maxL - 3), hi = Math.max(lo, maxL - 2);
-    const nParts = (chains.length >= 3 && Math.random() < 0.5) ? 3 : Math.min(2, Math.max(2, chains.length));
-    const pool = chains.slice();
-    for (let k = 0; k < nParts && pool.length; k++){
-      const c = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
-      const l = lo + Math.floor(Math.random() * (hi - lo + 1));
-      parts.push({c, l, n:1});
-    }
+  const fams = [];
+  ALL_CHAINS.forEach(c => {
+    let max = 0;
+    for (let l = 1; l <= MAXLV; l++) if (S.seen && S.seen[c + l]) max = l;
+    if (max) fams.push({c, max});
+  });
+  if (fams.length < 2){
+    accessibleChains().forEach(c => { if (!fams.some(f => f.c === c)) fams.push({c, max: 1}); });
   }
-  if (parts.length < 2) parts = [{c: chains[0] || 'lip', l:1, n:1}, {c: chains[1] || chains[0] || 'per', l:1, n:1}];
+  const nParts = (fams.length >= 3 && Math.random() < 0.5) ? 3 : Math.min(2, Math.max(2, fams.length));
+  const pool = fams.slice();
+  const parts = [];
+  const pickLv = max => {
+    if (max <= 1) return 1;
+    if (Math.random() < 0.35) return max;                         // often ask for the highest unlocked rank, including max
+    const lo = Math.max(1, Math.ceil(max / 2));
+    return lo + Math.floor(Math.random() * (max - lo + 1));
+  };
+  for (let k = 0; k < nParts && pool.length; k++){
+    const f = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
+    parts.push({c: f.c, l: pickLv(f.max), n: 1});
+  }
+  if (parts.length < 2) parts.push({c: (accessibleChains()[0] || 'lip'), l: 1, n: 1}, {c: (accessibleChains()[1] || 'per'), l: 1, n: 1});
   const coins = 2 * parts.reduce((s, p) => s + p.n * payC(p.l), 0);
   const stars = parts.reduce((s, p) => s + p.n * payS(p.l), 0);
   const o = {c: parts[0].c, l: parts[0].l, n: parts[0].n, coins, stars, gift: 1, m: {c: parts[1].c, l: parts[1].l, n: parts[1].n}};
@@ -490,7 +508,7 @@ function finishWrap(){
     S.gww.st = 'done'; save(); return;
   }
   S.board[i] = {wrap: 1}; S.gww = undefined; toast(L.wrapDoneToast); SFX.wrapDone(); save();
-  renderBoard({pop: i}); renderOrders(); renderInfo(); renderTop(); renderInv();
+  renderBoard({pop: i, wrapPop: i}); renderOrders(); renderInfo(); renderTop(); renderInv();
 }
 function tickWrap(now){
   if (!S) return;
@@ -523,8 +541,9 @@ function wrapFxHtml(){
   const ring = S.gww.st === 'wrap' ? Math.max(0, Math.min(1, 1 - left / WRAP_MS)) : (S.gww.st === 'done' ? 1 : 0);
   const offset = (113 * (1 - ring)).toFixed(1);
   const staged = (S.gww.have || []).map(it => `<i>${A.item(it.c, it.l)}</i>`).join('');
-  const time = S.gww.st === 'wrap' ? `<b class="wrapTime">${fmtDur(left/1000)}</b>` : (S.gww.st === 'done' ? `<b class="wrapTime">${L.wrapReady}</b>` : '');
-  return `<span class="wrapFx"><svg class="wrapRing" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18" style="stroke-dashoffset:${offset}"></circle></svg><span class="wrapPaper"></span><span class="wrapRib"></span><span class="wrapBow"></span><span class="wrapStaged">${staged}</span>${time}</span>`;
+  const time = S.gww.st === 'wrap' ? `<b class="wrapTime">${fmtDur(left/1000)}</b>` : '';
+  const sparks = S.gww.st === 'wrap' ? [[18,22], [70,16], [78,58], [28,68]].map((p, i) => `<span class="wrapSpark" style="left:${p[0]}%;top:${p[1]}%;--sx:${(i%2?1:-1)*3}px;--sy:${-6-i}px"></span>`).join('') : '';
+  return `<span class="wrapFx"><svg class="wrapRing" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18" style="stroke-dashoffset:${offset}"></circle></svg>${sparks}<span class="wrapStaged">${staged}</span>${time}</span>`;
 }
 
 /* ---------------- Reward / feedback motion (CSS + Web Animations; state commits first) ---------------- */
@@ -815,7 +834,7 @@ function deliver(oi){
 /* ---------------- ئامبار، قايتۇرۇش، تەبرىك ۋە قىسقا ئۆگىتىش ---------------- */
 const INV_CAPS = [4, 8, 12, 16], INV_EXPAND = {8: 300, 12: 800}, INV_EXPAND_GEMS = {16: 20}, UNDO_MS = 8000;
 const GEM_ENERGY = {amt: 100, price: 10};
-const GIFT_BOX_RATE = 0.10, GEM_BOX_OF_GIFTS = 0.10;
+const GIFT_BOX_RATE = 0.10, GEM_BOX_OF_GIFTS = 0.03;   // after the 90-minute chest cooldown; gem chests are ~3% of chests
 function invCapFit(n, used){                         // only 4 / 8 / 12; never auto-upgrade because the player has many coins
   const need = Math.max(used || 0, INV_CAPS[0]);
   let cap = INV_CAPS[0];
@@ -1065,8 +1084,9 @@ function produce(i){
   g.n--;
   if (g.n <= 0){ g.n = 0; g.rt = Date.now() + GEN_REST_MS; }
   let it;
-  if (S.tut >= 5 && Math.random() < GIFT_BOX_RATE){
+  if (S.tut >= 5 && chestReady() && Math.random() < GIFT_BOX_RATE){
     it = {box: Math.random() < GEM_BOX_OF_GIFTS ? 'gem' : 'gift'};
+    S.gbt = Date.now();
   } else {
     const r = Math.random(), l = g.l===3 ? (r<.1?3:r<.4?2:1) : g.l===2 ? (r<.25?2:1) : (r<.1?2:1);
     it = {c: pick(GEN_CHAINS[g.g]), l};
@@ -1081,7 +1101,7 @@ function openBoardBox(i){
   const it = S.board[i]; if (!it || !it.box) return;
   const fromEl = $('board') && $('board').children[i];
   if (it.box === 'gift'){
-    const rew = {coins: 20 + Math.floor(Math.random() * 21), energy: 5 + Math.floor(Math.random() * 6)};
+    const rew = {coins: 10 + Math.floor(Math.random() * 11), energy: 2 + Math.floor(Math.random() * 3)};
     const snap = fxWalletSnap();
     S.board[i] = null; if (selected === i) selected = null;
     give(rew); SFX.coin(); save();
@@ -1090,7 +1110,7 @@ function openBoardBox(i){
     return;
   }
   // gem box: 5–10 loose gems hop onto empty cells; leftovers go to storage, then fly to the pill
-  const n = 5 + Math.floor(Math.random() * 6);
+  const n = 1 + Math.floor(Math.random() * 3);   // gem chest: 1–3 loose gems
   S.board[i] = null; if (selected === i) selected = null;
   const cells = [];
   for (let k = 0; k < n; k++){
@@ -1403,7 +1423,7 @@ function renderBoard(fx={}){
     }
     const el = c.firstElementChild; if (!el) return;
     el.classList.toggle('drag', !!(drag && drag.moved && drag.i === i));
-    if (fx.pop === i){ el.classList.add('pop'); c.insertAdjacentHTML('beforeend', '<div class="burst"></div>'); setTimeout(()=>c.querySelector('.burst')?.remove(), 500); }
+    if (fx.pop === i){ el.classList.add('pop'); c.insertAdjacentHTML('beforeend', `<div class="burst${fx.wrapPop===i?' gold':''}"></div>`); setTimeout(()=>c.querySelector('.burst')?.remove(), 700); }
     if (flyFrom){
       el.classList.remove('genSquash'); void el.offsetWidth; el.classList.add('genSquash');
       setTimeout(() => el.classList.remove('genSquash'), 240);
@@ -1965,6 +1985,7 @@ function roadMilestones(lv){
     out.push({t: L.roadAtelier, also: miss});
   }
   for (const gdef of ATL.GUARANTEED) if (gdef.level === lv && lv !== ATL.UNLOCK_LEVEL) out.push({t: L.roadChest(L.gens[ATL.PRODUCER])});
+  if (lv === WRAP_LEVEL) out.push({t: L.roadWrap});
   const prof = window.PROGRESSION.PROFILES[C.progressionProfile]; if (prof && prof.mixed && prof.mixed.fromLevel === lv) out.push({t: L.roadMixed});
   return out;
 }
@@ -2729,5 +2750,5 @@ setInterval(save, 5000);
 document.addEventListener('visibilitychange', () => { if (document.hidden) save(true); else { tick(); renderAll(); refreshContent(false).catch(() => {}); } });
 
 // سىناق ئۈچۈن
-window.__game = { AUDIO, applyAudio, atelier: {open: () => openAtelier(), env: atelierEnv, notes: atelierNotes}, ALL_CHAINS, buyProp, buyColour, equipColour, salonInp, taskCounts, openTasks, tasksFor, get EV(){ return EV; }, energyTimes, ENERGY_CAP, ENERGY_MS, ENERGY_PACKS, GEM_ENERGY, energyOffer, buyEnergy, buyEnergyGems, eshopState, dayKey, weekKey, monthKey, tick, applyLang, buyProducer, placeQueued, producerPrice, equivOf, grantMilestones, claimEvent, newOrder, accessibleChains, deliver: oi => deliver(oi), save: () => save(), get contentInfo(){ return contentInfo; }, refreshContent, get S(){ return S; }, get gate(){ return saveGate; }, get recovery(){ return recovery; }, renderAll, openShop, MSN, MSN_CFG, select: i => { selected = i; renderBoard(); renderInfo(); }, storeSelected, placeInv, expandInv, undoLastSale, get undoSale(){ return undoSale; }, openGenUpgrade, genDropTable, claimDailyGift, giftStreakNext, giftReward, skipTut, tutAdvance, INV_CAPS, INV_EXPAND, INV_EXPAND_GEMS, get fxCoinHold(){ return fxCoinHold; }, get fxEnergyHold(){ return fxEnergyHold; }, get fxGemHold(){ return fxGemHold; }, get fxBits(){ return fxBits; }, fxWalletSnap, fxAfterGive, fxRewardFlight, fxGrantFromCell, drop, sell, produce, give, openBoardBox, collectGem, roadReward, addStarsCore, openRoad, openOrder, GEN_STOCK, GEN_REST_MS, settleAllGens, settleGen, genRestLeft, genStockOf, freshGen, CUSTOMERS, pickCustomer, custLine, custName, whoOf };
+window.__game = { AUDIO, applyAudio, atelier: {open: () => openAtelier(), env: atelierEnv, notes: atelierNotes}, ALL_CHAINS, buyProp, buyColour, equipColour, salonInp, taskCounts, openTasks, tasksFor, get EV(){ return EV; }, energyTimes, ENERGY_CAP, ENERGY_MS, ENERGY_PACKS, GEM_ENERGY, energyOffer, buyEnergy, buyEnergyGems, eshopState, dayKey, weekKey, monthKey, tick, applyLang, buyProducer, placeQueued, producerPrice, equivOf, grantMilestones, claimEvent, newOrder, accessibleChains, deliver: oi => deliver(oi), save: () => save(), get contentInfo(){ return contentInfo; }, refreshContent, get S(){ return S; }, get gate(){ return saveGate; }, get recovery(){ return recovery; }, renderAll, openShop, MSN, MSN_CFG, select: i => { selected = i; renderBoard(); renderInfo(); }, storeSelected, placeInv, expandInv, undoLastSale, get undoSale(){ return undoSale; }, openGenUpgrade, genDropTable, claimDailyGift, giftStreakNext, giftReward, skipTut, tutAdvance, INV_CAPS, INV_EXPAND, INV_EXPAND_GEMS, get fxCoinHold(){ return fxCoinHold; }, get fxEnergyHold(){ return fxEnergyHold; }, get fxGemHold(){ return fxGemHold; }, get fxBits(){ return fxBits; }, fxWalletSnap, fxAfterGive, fxRewardFlight, fxGrantFromCell, drop, sell, produce, give, openBoardBox, collectGem, roadReward, addStarsCore, openRoad, openOrder, GEN_STOCK, GEN_REST_MS, shouldGiftOrder, makeGiftOrder, giftTarget, chestReady, CHEST_GAP_MS, GIFT_BOX_RATE, GEM_BOX_OF_GIFTS, GIFT_ORDER_MIN, GIFT_ORDER_MAX, WRAP_LEVEL, WRAP_MS, settleAllGens, settleGen, genRestLeft, genStockOf, freshGen, CUSTOMERS, pickCustomer, custLine, custName, whoOf };
 })();

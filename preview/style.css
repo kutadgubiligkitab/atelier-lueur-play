@@ -469,6 +469,16 @@ button,.btn,.plus,.roundbtn,.nav,.nav *,.pill,.lvbadge,.cust,.ordersRow,.side,.i
 .pill .sub{position:static;display:block;font-size:10.5px;line-height:11px;font-weight:800;direction:ltr;font-variant-numeric:tabular-nums;min-width:5.4ch;text-align:center;white-space:nowrap;letter-spacing:0}
 .pill .sub.full{color:var(--green-dark)}
 .pill#tEp{cursor:pointer}
+.pill .gemMini{display:flex;align-items:center;flex:none;gap:0;height:22px;padding:0 1px 0 5px;margin-inline-start:1px;border-inline-start:1.5px solid var(--panel-edge)}
+.pill .gemMini .ic{width:16px;height:16px;margin:0}
+.pill .gemMini .val{flex:none;font-size:12px;font-weight:800;padding:0 2px;font-variant-numeric:tabular-nums}
+.cell .cd{position:absolute;inset:auto 2px 2px 2px;height:16px;border-radius:8px;background:rgba(42,28,40,.72);color:#fff;font-size:10px;font-weight:800;line-height:16px;text-align:center;pointer-events:none;direction:ltr;font-variant-numeric:tabular-nums}
+.gdots{display:inline-flex;gap:3px;margin-inline-start:4px;vertical-align:middle}
+.gdots i{width:7px;height:7px;border-radius:50%;background:#e8d0dc;display:inline-block}
+.gdots i.on{background:var(--pink-dark)}
+.gdots i.gem{box-shadow:0 0 0 1px #7ed0ea}
+.gdots i.gem.on{background:#3a8eaa}
+.it.box,.it.looseGem{background:none}
 .enInfo .enBig{font-size:34px;font-weight:800;text-align:center;line-height:1.1;color:var(--pink-dark)}
 .enInfo .enBig small{font-size:18px;opacity:.7}
 .enInfo .row b{font-size:16px}

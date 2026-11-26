@@ -63,7 +63,7 @@ function newGame(){
   b[2] = {g:'pink', l:1}; b[4] = {g:'lav', l:1};
   b[16] = {c:'lip', l:1}; b[17] = {c:'lip', l:1};
   b[19] = {c:'per', l:1};
-  const s = {v:2, board:b, energy:INITIAL_ENERGY, et:Date.now(), ecap:ENERGY_CAP, coins:60, stars:0, lv:1, orders:[],
+  const s = {v:2, board:b, energy:INITIAL_ENERGY, et:Date.now(), ecap:ENERGY_CAP, coins:60, gems:0, stars:0, lv:1, orders:[],
     seen:{}, owned:{}, road:{}, album:{},
     cnt:{day:{k:dayKey()}, week:{k:weekKey()}, month:{k:monthKey()}}, claimed:{}, gift:'',
     eshop:{v:1, k:dayKey(), n20:0, n50:0},
@@ -78,6 +78,7 @@ function newGame(){
 let S = null, hasSave = false, recovery = null;
 const saveGate = {blocked: false, memoryOnly: false, warn: null};
 const PLAYTEST_COIN_GRANT_BUILT = 60000;   // play-site public builds rewrite this to 60000; store/release stays 0
+const PLAYTEST_GEM_GRANT_BUILT = 50;    // play-site public builds rewrite this to 50; store/release stays 0
 function playtestCoinTarget(){
   const live = (typeof window !== 'undefined' && window.CONFIG) ? window.CONFIG.playtestCoinGrant : (C && C.playtestCoinGrant);
   const n = (typeof live === 'number' && isFinite(live) && live > 0) ? live : PLAYTEST_COIN_GRANT_BUILT;
@@ -87,19 +88,29 @@ function applyPlaytestCoinGrant(s){          // play-site builds only (grant > 0
   const n = playtestCoinTarget(); if (!n || !s || s.ptcg) return false;
   if (s.coins < n) s.coins = n; s.ptcg = 1; return true;
 }
+function playtestGemTarget(){
+  const live = (typeof window !== 'undefined' && window.CONFIG) ? window.CONFIG.playtestGemGrant : (C && C.playtestGemGrant);
+  const n = (typeof live === 'number' && isFinite(live) && live > 0) ? live : PLAYTEST_GEM_GRANT_BUILT;
+  return (typeof n === 'number' && isFinite(n) && n > 0 && n <= 1e9) ? Math.floor(n) : 0;
+}
+function applyPlaytestGemGrant(s){           // silent on load, once per save, separate flag from the coin top-up
+  const n = playtestGemTarget(); if (!n || !s || s.ptgg) return false;
+  if ((s.gems || 0) < n) s.gems = n; s.ptgg = 1; return true;
+}
 function isEstablishedSave(s){             // mid-game progress: never re-show the first-play tutorial (ignore coins; playtest grant may raise them)
   return !!(s && (s.lv > 1 || s.stars > 0 || (s.owned && Object.keys(s.owned).length)));
 }
 function settlePlaytestGrant(){            // after load and later migrations, and again when entering the board
   if (!S) return false;
   prepareCalendar(S);
-  if (applyPlaytestCoinGrant(S)) { save(); return true; }
+  const a = applyPlaytestCoinGrant(S), b = applyPlaytestGemGrant(S);
+  if (a || b) { save(); return true; }
   return false;
 }
 function applyBoot(boot){
   hasSave = false; recovery = null; saveGate.blocked = false;
-  if (boot.status === 'ok'){ S = boot.state; hasSave = true; prepareCalendar(S); applyPlaytestCoinGrant(S); return; }
-  S = newGame(); applyPlaytestCoinGrant(S);
+  if (boot.status === 'ok'){ S = boot.state; hasSave = true; prepareCalendar(S); applyPlaytestCoinGrant(S); applyPlaytestGemGrant(S); return; }
+  S = newGame(); applyPlaytestCoinGrant(S); applyPlaytestGemGrant(S);
   if (boot.status === 'fresh') return;
   recovery = boot; saveGate.blocked = true;
   if (boot.status === 'corrupt') recovery.preserved = persist.preserveCorrupt(boot.raw);   // original bytes kept before anything else happens
@@ -145,8 +156,15 @@ function applyLang(){
   document.documentElement.dir = L.dir; document.documentElement.lang = S.set.lang;
   document.querySelectorAll('[data-t]').forEach(el => el.textContent = L[el.dataset.t]);
 }
-const itemName = it => it.g ? L.gens[it.g] : L.items[it.c][it.l-1];
-const itemArt  = it => it.g ? A.gen(it.g, it.l) : A.item(it.c, it.l);
+const itemName = it => it.g ? L.gens[it.g] : it.box === 'gem' ? L.gemBox : it.box ? L.giftBox : it.gem ? L.gemItem : L.items[it.c][it.l-1];
+const itemArt  = it => it.g ? A.gen(it.g, it.l) : it.box === 'gem' ? A.icon('gemBox') : it.box ? A.icon('gift') : it.gem ? A.icon('gem') : A.item(it.c, it.l);
+function cloneItem(it){
+  if (!it) return null;
+  if (it.g){ const o = {g:it.g, l:it.l}; if (it.ch != null) o.ch = it.ch; if (it.t) o.t = it.t; return o; }
+  if (it.box) return {box: it.box};
+  if (it.gem) return {gem: it.gem};
+  return {c:it.c, l:it.l};
+}
 
 /* ---------------- ئېنېرگىيە ---------------- */
 /* Energy rules (all derived from the persisted S.energy + S.et timestamp; timers only REFRESH the display):
@@ -210,6 +228,13 @@ try { EV = window.CONTENT.createEvents({
 }); } catch(e){ EV = null; }
 // One-time move of event state from the earlier separate key (build 90ce0fc) into the save. The old bytes are kept under ".migrated"
 // (never deleted) and the old key is retired so a later import cannot resurrect stale state.
+function migrateEventGems(){               // already-activated Week of Light keeps claims; unclaimed completion gains +10 gems
+  const ev = S && S.ev && S.ev.events && S.ev.events['week-of-light-2026'];
+  if (!ev || !ev.completionReward || (ev.claims && ev.claims['*']) || ev.completionReward.gems) return false;
+  ev.completionReward = Object.assign({}, ev.completionReward, {gems: 10});
+  ev.rev = Math.max(ev.rev || 1, 2);
+  return true;
+}
 function migrateLegacyEvents(){
   try {
     if (PREVIEW) return false;                     // never touch the main event-migration key from a preview session
@@ -221,7 +246,7 @@ function migrateLegacyEvents(){
   } catch(e){ return false; }
 }
 function loadCachedDef(){ try { const raw = window.localStorage.getItem(CONTENT_CACHE_KEY); if (!raw) return null; const v = window.CONTENT.validateDefinition(JSON.parse(raw)); return v.ok ? v.def : null; } catch(e){ return null; } }
-function applyContent(def){ try { curDef = def; if (EV && (EV.sync(def, S.lv) | EV.prune())) { save(); if ($('nav').children.length) renderNav(); } } catch(e){} }
+function applyContent(def){ try { curDef = def; let ch = false; if (EV) { try { if (EV.sync(def, S.lv) | EV.prune()) ch = true; } catch(e){} } if (migrateEventGems()) ch = true; if (ch) { save(); if ($('nav').children.length) renderNav(); } } catch(e){} }
 async function refreshContent(force){
   if (!EV || !window.CONTENT) return;
   const url = C.contentUrl, t = Date.now();
@@ -240,18 +265,20 @@ async function refreshContent(force){
 function give(r, ups){            // ups (optional): collect level-ups instead of announcing them (used by the atomic event-claim transaction)
   if (r.coins){ S.coins += r.coins; count('coins', r.coins); }
   if (r.energy) S.energy += r.energy;
+  if (r.gems) S.gems = (S.gems || 0) + r.gems;
   if (r.stars){ if (ups) ups.push(...addStarsCore(r.stars)); else addStars(r.stars); }
 }
 const rwHtml = r => [r.coins && `<span class="rw"><i>${A.icon('coin')}</i>${r.coins}</span>`,
   r.energy && `<span class="rw"><i>${A.icon('bolt')}</i>${r.energy}</span>`,
+  r.gems && `<span class="rw"><i>${A.icon('gem')}</i>${r.gems}</span>`,
   r.stars && `<span class="rw"><i>${A.icon('star')}</i>${r.stars}</span>`].filter(Boolean).join(' ');
 function addStarsCore(n){          // state change only; returns the level-ups so the caller can announce them AFTER the state is safely saved
   const ups = []; S.stars += n;
   while (S.stars >= starsNeed(S.lv)){
     S.stars -= starsNeed(S.lv); S.lv++;
     if (curDef && EV) { try { EV.sync(curDef, S.lv); } catch(e){} }   // level-gated events may become eligible
-    const r = roadReward(S.lv); S.road[S.lv] = 1; give(r);
-    ups.push({lv: S.lv, r}); ups.push(...grantMilestones());      // producer milestone copies (once per save, recorded in S.pg)
+    const r = roadReward(S.lv); S.road[S.lv] = 1; give(r); give({gems: 5});
+    ups.push({lv: S.lv, r: Object.assign({}, r, {gems: (r.gems || 0) + 5})}); ups.push(...grantMilestones());      // producer milestone copies (once per save, recorded in S.pg)
   }
   return ups;
 }
@@ -377,10 +404,10 @@ function fxPt(el){
   const r = el.getBoundingClientRect();
   return {x: r.left + r.width / 2, y: r.top + r.height / 2};
 }
-let fxCoinHold = null, fxCoinRaf = 0, fxStarHold = null, fxEnergyHold = null, fxEnergyRaf = 0, fxGemHold = null, fxGemRaf = 0, fxBits = 0;
+let fxCoinHold = null, fxCoinRaf = 0, fxStarHold = null, fxEnergyHold = null, fxEnergyRaf = 0, fxGemHold = null, fxGemRaf = 0, fxBits = 0, fxFlightN = 0;
 const FX_BIT_CAP = 28, FX_BURST_CAP = 8;   // concurrent leftover cap, and a soft cap per grant burst
 const FX_GEM_SVG = '<svg viewBox="0 0 100 100" aria-hidden="true"><path d="M50 6L90 38L50 96L10 38Z" fill="#7ec8e8" stroke="#2a6d88" stroke-width="5"/><path d="M50 6L66 38H34Z" fill="#d4f3ff" opacity=".75"/></svg>';
-function fxIcon(kind){ return kind === 'star' ? A.icon('star') : kind === 'energy' ? A.icon('bolt') : kind === 'gem' ? FX_GEM_SVG : A.icon('coin'); }
+function fxIcon(kind){ return kind === 'star' ? A.icon('star') : kind === 'energy' ? A.icon('bolt') : kind === 'gem' ? A.icon('gem') : A.icon('coin'); }
 function fxTargetEl(kind){
   if (kind === 'star') return $('tLv');
   if (kind === 'energy') return $('tEp');
@@ -461,7 +488,7 @@ function fxCountGems(target, dur){
     fxGemHold = from + (dest - from) * (1 - Math.pow(1 - t, 3));
     if ($('tGv')) $('tGv').textContent = String(Math.round(fxGemHold));
     if (t < 1) fxGemRaf = requestAnimationFrame(step);
-    else { const g = live(); fxGemHold = dest === g ? null : dest; fxGemRaf = 0; if ($('tGv')) $('tGv').textContent = String(Math.round(dest === g ? g : dest)); }
+    else { const g = live(); const done = Math.round(dest) === g || Math.abs(dest - g) <= 0.5; fxGemHold = done ? null : dest; fxGemRaf = 0; if ($('tGv')) $('tGv').textContent = String(Math.round(done ? g : dest)); }
   };
   fxGemRaf = requestAnimationFrame(step);
 }
@@ -554,6 +581,7 @@ function fxRewardFlight(opts){
     return;
   }
   // Hold displayed wallets at the pre-payout values until pieces land (renderTop would otherwise jump)
+  const flight = ++fxFlightN;
   if (coins && fxCoinHold == null){ fxCoinHold = fromCoins; if ($('tCv')) $('tCv').textContent = String(Math.round(fromCoins)); }
   if (energy && fxEnergyHold == null){ fxEnergyHold = fromEnergy; if ($('tEv')) $('tEv').textContent = Math.round(fromEnergy) + '/' + ENERGY_CAP; }
   if (gems && fxTargetEl('gem') && fxGemHold == null){ fxGemHold = fromGems; if ($('tGv')) $('tGv').textContent = String(Math.round(fromGems)); }
@@ -570,6 +598,7 @@ function fxRewardFlight(opts){
   });
   const done = {};
   const land = (p, last) => {
+    if (flight !== fxFlightN) return;
     if (done[p.kind]) return;
     p.landed = (p.landed || 0) + 1;
     const fin = last || p.landed >= p.n;
@@ -584,12 +613,16 @@ function fxRewardFlight(opts){
   if (!parts.length){ if (coins) fxCountCoins(toCoins, 80); if (energy) fxCountEnergy(toEnergy, 80); return; }
   parts.forEach((p, i) => fxFlyBits(p.kind, src, fxPt(fxTargetEl(p.kind)), p.n, i * 40, last => land(p, last)));
   setTimeout(() => {
-    parts.forEach(p => { if (done[p.kind]) return; done[p.kind] = true;
-      if (p.kind === 'coin') fxCountCoins(p.to, 120);
-      else if (p.kind === 'energy') fxCountEnergy(p.to, 120);
-      else if (p.kind === 'gem') fxCountGems(p.to, 120);
-      else if (p.kind === 'star' && fromPct != null) fxTweenStarBar(fxStarHold != null ? fxStarHold : fromPct, toPct, 160);
-    });
+    if (flight !== fxFlightN) return;
+    parts.forEach(p => { done[p.kind] = true; });
+    if (fxCoinRaf) cancelAnimationFrame(fxCoinRaf);
+    if (fxEnergyRaf) cancelAnimationFrame(fxEnergyRaf);
+    if (fxGemRaf) cancelAnimationFrame(fxGemRaf);
+    fxCoinRaf = fxEnergyRaf = fxGemRaf = 0;
+    if (coins){ fxCoinHold = null; if ($('tCv')) $('tCv').textContent = String(S.coins); }
+    if (energy){ fxEnergyHold = null; if ($('tEv')) $('tEv').textContent = S.energy + '/' + ENERGY_CAP; }
+    if (gems){ fxGemHold = null; if ($('tGv')) $('tGv').textContent = String((S && S.gems) || 0); }
+    if (stars && fromPct != null){ fxStarHold = null; if ($('tLvB')) $('tLvB').style.width = (Math.min(100, S.stars / starsNeed(S.lv) * 100)) + '%'; }
   }, 1100);
 }
 function fxAfterGive(from, snap, extra){     // wallet already committed; fly the visible delta (spends are ignored)
@@ -635,7 +668,10 @@ function deliver(oi){
 
 
 /* ---------------- ئامبار، قايتۇرۇش، تەبرىك ۋە قىسقا ئۆگىتىش ---------------- */
-const INV_CAPS = [4, 8, 12], INV_EXPAND = {8: 300, 12: 800}, UNDO_MS = 8000;
+const INV_CAPS = [4, 8, 12, 16], INV_EXPAND = {8: 300, 12: 800}, INV_EXPAND_GEMS = {16: 20}, UNDO_MS = 8000;
+const GEM_ENERGY = {amt: 100, price: 10};
+const GEN_CD_MS = [0, 5000, 8000, 12000];   // short per-tap wait so skipping is optional; the game stays playable by waiting
+const GIFT_BOX_RATE = 0.10, GEM_BOX_OF_GIFTS = 0.10;
 function invCapFit(n, used){                         // only 4 / 8 / 12; never auto-upgrade because the player has many coins
   const need = Math.max(used || 0, INV_CAPS[0]);
   let cap = INV_CAPS[0];
@@ -660,7 +696,7 @@ function storeSelected(){
   const r = txn(() => {
     const inv = invState(); if (inv.items.length >= inv.cap) return {ok:false, reason:'full'};
     const cur = S.board[cell]; if (!cur) return {ok:false, reason:'none'};
-    inv.items.push(cur.g ? {g:cur.g, l:cur.l} : {c:cur.c, l:cur.l}); S.board[cell] = null; return {ok:true};
+    inv.items.push(cloneItem(cur)); S.board[cell] = null; return {ok:true};
   });
   if (r.ok){ selected = null; SFX.drop(); renderAll(); } else { SFX.no(); toast(r.reason==='full' ? L.invFull : L.supplyFail); }
   return r;
@@ -669,29 +705,34 @@ function placeInv(i){
   const r = txn(() => {
     const inv = invState(), it = inv.items[i]; if (!it) return {ok:false, reason:'none'};
     const j = emptyCell(); if (j < 0) return {ok:false, reason:'board'};
-    S.board[j] = it.g ? {g:it.g, l:it.l} : {c:it.c, l:it.l}; inv.items.splice(i, 1); return {ok:true, j};
+    S.board[j] = cloneItem(it); inv.items.splice(i, 1); return {ok:true, j};
   });
   if (r.ok){ selected = r.j; SFX.tap(); renderAll(); } else { SFX.no(); toast(r.reason==='board' ? L.boardFull : L.supplyFail); }
   return r;
 }
 let invExpandBusy = false, lastExpandAt = 0;
+function expandPrice(n){ return INV_EXPAND_GEMS[n] ? {gems: INV_EXPAND_GEMS[n]} : {coins: INV_EXPAND[n]}; }
 function commitExpandInv(){
   const now = Date.now();
   if (now - lastExpandAt < 800) return {ok:false, reason:'busy'};
   lastExpandAt = now;
   return txn(() => {
     const inv = invState(), n = INV_CAPS[INV_CAPS.indexOf(inv.cap) + 1]; if (!n) return {ok:false, reason:'max'};
-    const price = INV_EXPAND[n]; if (S.coins < price) return {ok:false, reason:'coins'};
-    S.coins -= price; inv.cap = n; return {ok:true, cap:n};
+    const pr = expandPrice(n);
+    if (pr.gems){ if ((S.gems || 0) < pr.gems) return {ok:false, reason:'gems'}; S.gems -= pr.gems; }
+    else { if (S.coins < pr.coins) return {ok:false, reason:'coins'}; S.coins -= pr.coins; }
+    inv.cap = n; return {ok:true, cap:n};
   });
 }
 function expandInv(){                                 // confirm first; a double tap cannot buy twice
   if (invExpandBusy) return {ok:false, reason:'busy'};
   const inv = invState(), n = INV_CAPS[INV_CAPS.indexOf(inv.cap) + 1]; if (!n) return {ok:false, reason:'max'};
-  const price = INV_EXPAND[n];
-  if (S.coins < price){ SFX.no(); toast(L.noCoins); return {ok:false, reason:'coins'}; }
+  const pr = expandPrice(n);
+  if (pr.gems && (S.gems || 0) < pr.gems){ SFX.no(); toast(L.noGems); return {ok:false, reason:'gems'}; }
+  if (pr.coins && S.coins < pr.coins){ SFX.no(); toast(L.noCoins); return {ok:false, reason:'coins'}; }
   invExpandBusy = true;
-  modal(L.invExpandTitle, `<p class="center">${L.invExpandAsk(price, n)}</p><div style="display:flex;gap:8px"><button type="button" class="btn pink wide" id="invExY">${L.yes}</button><button type="button" class="btn wide" data-close>${L.no}</button></div>`);
+  const ask = pr.gems ? L.invExpandAskGems(pr.gems, n) : L.invExpandAsk(pr.coins, n);
+  modal(L.invExpandTitle, `<p class="center">${ask}</p><div style="display:flex;gap:8px"><button type="button" class="btn pink wide" id="invExY">${L.yes}</button><button type="button" class="btn wide" data-close>${L.no}</button></div>`);
   const yes = $('invExY');
   if (yes) yes.onclick = ev => {
     ev.preventDefault(); ev.stopPropagation();
@@ -700,7 +741,24 @@ function expandInv(){                                 // confirm first; a double
     const r = commitExpandInv();
     closeModal();
     if (r.ok){ SFX.shop(); toast(L.invExpanded(r.cap)); renderAll(); }
-    else if (r.reason !== 'busy'){ SFX.no(); toast(r.reason==='coins' ? L.noCoins : L.supplyFail); }
+    else if (r.reason !== 'busy'){ SFX.no(); toast(r.reason==='gems' ? L.noGems : r.reason==='coins' ? L.noCoins : L.supplyFail); }
+  };
+  return {ok:true, reason:'confirm'};
+}
+function confirmGemSpend(title, body, commit, onDone){   // same confirm style as storage; debounce on the Yes button and a short lock
+  if (invExpandBusy) return {ok:false, reason:'busy'};
+  invExpandBusy = true;
+  modal(title, `<p class="center">${body}</p><div style="display:flex;gap:8px"><button type="button" class="btn pink wide" id="gemSpY">${L.yes}</button><button type="button" class="btn wide" data-close>${L.no}</button></div>`);
+  const yes = $('gemSpY');
+  if (yes) yes.onclick = ev => {
+    ev.preventDefault(); ev.stopPropagation();
+    if (yes.dataset.used) return;
+    yes.dataset.used = '1'; yes.disabled = true;
+    if (Date.now() - lastExpandAt < 800){ closeModal(); return; }
+    lastExpandAt = Date.now();
+    const r = commit();
+    closeModal();
+    if (onDone) onDone(r);
   };
   return {ok:true, reason:'confirm'};
 }
@@ -713,7 +771,10 @@ function invPanelHtml(){
     h += `<button type="button" class="invSlot${it ? ' full' : ''}" data-inv="${i}">${it ? itemArt(it) : ''}</button>`;
   }
   h += `</div>`;
-  if (next) h += `<button type="button" class="invExpand${S.coins < INV_EXPAND[next] ? ' no' : ''}" id="invExpand" aria-label="${L.invExpand(INV_EXPAND[next])}"><span class="invPlus">+</span><span class="rw"><i>${A.icon('coin')}</i>${INV_EXPAND[next]}</span></button>`;
+  if (next){
+    const pr = expandPrice(next), cost = pr.gems || pr.coins, ic = pr.gems ? 'gem' : 'coin', poor = pr.gems ? (S.gems || 0) < pr.gems : S.coins < pr.coins;
+    h += `<button type="button" class="invExpand${poor ? ' no' : ''}" id="invExpand" aria-label="${L.invExpand(cost)}"><span class="invPlus">+</span><span class="rw"><i>${A.icon(ic)}</i>${cost}</span></button>`;
+  }
   h += `</div></div>`;
   return h;
 }
@@ -779,8 +840,12 @@ function prevDayKey(k){
   const d = new Date(p[0], p[1] - 1, p[2] - 1);
   return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
 }
-function giftStreakNext(){ const dk = dayKey(); return (S.gst && S.gst.k === prevDayKey(dk)) ? Math.min(3, (S.gst.n || 1) + 1) : 1; }
-function giftReward(n){ const k = Math.max(1, Math.min(3, n)); return {energy: 20 + 10 * k, coins: 20 + 10 * k}; }
+function giftStreakNext(){ const dk = dayKey(); return (S.gst && S.gst.k === prevDayKey(dk)) ? Math.min(7, (S.gst.n || 1) + 1) : 1; }
+function giftReward(n){
+  const k = Math.max(1, Math.min(7, n));
+  const coins = 20 + 10 * Math.min(k, 6), energy = 20 + 10 * Math.min(k, 6);
+  return k === 7 ? {coins, energy, gems: 10} : {coins, energy};
+}
 function claimDailyGift(){
   const dk = dayKey(); if (S.gift === dk) return {ok:false, reason:'already'};
   const n = giftStreakNext(), rew = giftReward(n);
@@ -816,21 +881,103 @@ function renderTut(){
 }
 
 /* ---------------- تاختا ھەرىكەتلىرى ---------------- */
+function genCdLeft(it){ return (it && it.g && it.t) ? Math.max(0, it.t - Date.now()) : 0; }
+function genSkipPrice(it){ const sec = Math.ceil(genCdLeft(it) / 1000); return sec <= 0 ? 0 : Math.max(1, Math.ceil(sec / 20)); }
 function produce(i){
   const g = S.board[i];
-  if (S.energy < 1){ toast(L.noEnergy); SFX.empty(); openShop(); return; }
+  if (genCdLeft(g) > 0){ selected = i; SFX.tap(); renderBoard(); renderInfo(); return; }
+  if (S.energy < 1){ toast(L.noEnergy); SFX.empty(); openShop('energy'); return; }
   const gr = Math.floor(i/COLS), gc = i%COLS;
   let best = -1, bd = 1e9;
   S.board.forEach((it,j) => { if (it) return; const d = (Math.floor(j/COLS)-gr)**2 + ((j%COLS)-gc)**2; if (d < bd){ bd = d; best = j; } });
   if (best < 0){ toast(L.boardFull); SFX.no(); return; }
   if (S.energy >= ENERGY_CAP) S.et = Date.now();      // recovery starts when the player drops below the cap (nothing was banked while full)
   S.energy--;
-  const r = Math.random(), l = g.l===3 ? (r<.1?3:r<.4?2:1) : g.l===2 ? (r<.25?2:1) : (r<.1?2:1);
-  const it = {c: pick(GEN_CHAINS[g.g]), l};
-  S.board[best] = it; discover(it); count('tap');
+  let it;
+  if (S.tut >= 5 && Math.random() < GIFT_BOX_RATE){
+    it = {box: Math.random() < GEM_BOX_OF_GIFTS ? 'gem' : 'gift'};
+  } else {
+    const r = Math.random(), l = g.l===3 ? (r<.1?3:r<.4?2:1) : g.l===2 ? (r<.25?2:1) : (r<.1?2:1);
+    it = {c: pick(GEN_CHAINS[g.g]), l};
+    discover(it);
+  }
+  if (S.tut >= 5) g.t = Date.now() + (GEN_CD_MS[g.l] || GEN_CD_MS[1]);
+  S.board[best] = it; count('tap');
   SFX.spawn(); buzz(8); save();
   if (S.tut === 1) tutAdvance(1);
   renderBoard({fly:{to:best, from:i}}); renderTop(); renderOrders(); renderInfo(); renderNav(); renderTut();
+}
+function openBoardBox(i){
+  const it = S.board[i]; if (!it || !it.box) return;
+  const fromEl = $('board') && $('board').children[i];
+  if (it.box === 'gift'){
+    const rew = {coins: 20 + Math.floor(Math.random() * 21), energy: 5 + Math.floor(Math.random() * 6)};
+    const snap = fxWalletSnap();
+    S.board[i] = null; if (selected === i) selected = null;
+    give(rew); SFX.coin(); save();
+    fxAfterGive(fromEl, snap);
+    renderAll();
+    return;
+  }
+  // gem box: 5–10 loose gems hop onto empty cells; leftovers go to storage, then fly to the pill
+  const n = 5 + Math.floor(Math.random() * 6);
+  S.board[i] = null; if (selected === i) selected = null;
+  const cells = [];
+  for (let k = 0; k < n; k++){
+    const j = emptyCell();
+    if (j >= 0){ S.board[j] = {gem: 1}; cells.push(j); }
+    else if (invFree() > 0){ invState().items.push({gem: 1}); }
+    else {
+      const left = n - k;
+      const snap = fxWalletSnap();
+      give({gems: left}); SFX.coin(); save();
+      fxAfterGive(fromEl, snap);
+      break;
+    }
+  }
+  SFX.spawn(); save();
+  renderBoard({flies: cells.map(to => ({from: i, to}))}); renderTop(); renderInfo(); renderNav();
+}
+function collectGem(i){
+  const it = S.board[i]; if (!it || !it.gem) return;
+  const fromEl = $('board') && $('board').children[i];
+  const snap = fxWalletSnap(), amt = it.gem;
+  S.board[i] = null; if (selected === i) selected = null;
+  give({gems: amt}); SFX.coin(); save();
+  fxAfterGive(fromEl, snap);
+  renderAll();
+}
+function skipGenCd(i){
+  const it = S.board[i]; if (!it || !it.g) return {ok:false, reason:'none'};
+  const price = genSkipPrice(it); if (!price) return {ok:false, reason:'ready'};
+  if ((S.gems || 0) < price){ SFX.no(); toast(L.noGems); return {ok:false, reason:'gems'}; }
+  return confirmGemSpend(L.gemSkipTitle, L.gemSkipAsk(price, Math.ceil(genCdLeft(it)/1000)), () => txn(() => {
+    const cur = S.board[i]; if (!cur || !cur.g) return {ok:false, reason:'none'};
+    const p = genSkipPrice(cur); if (!p) return {ok:false, reason:'ready'};
+    if ((S.gems || 0) < p) return {ok:false, reason:'gems'};
+    S.gems -= p; delete cur.t; return {ok:true};
+  }), r => {
+    if (r && r.ok){ SFX.shop(); renderBoard(); renderInfo(); renderTop(); }
+    else if (r && r.reason !== 'busy'){ SFX.no(); toast(r.reason === 'gems' ? L.noGems : L.supplyFail); }
+  });
+}
+function buyEnergyGems(){
+  if ((S.gems || 0) < GEM_ENERGY.price){ SFX.no(); toast(L.noGems); return {ok:false, reason:'gems'}; }
+  const from = fxPt($('shEGem') || $('tGp') || $('tEp'));
+  return confirmGemSpend(L.gemEnergyTitle, L.gemEnergyAsk(GEM_ENERGY.price, GEM_ENERGY.amt), () => {
+    const snap = fxWalletSnap();
+    const r = txn(() => {
+      if ((S.gems || 0) < GEM_ENERGY.price) return {ok:false, reason:'gems'};
+      S.gems -= GEM_ENERGY.price; S.energy += GEM_ENERGY.amt;
+      if (S.energy >= ENERGY_CAP) S.et = Date.now();
+      return {ok:true, amt: GEM_ENERGY.amt};
+    });
+    if (r.ok) r.snap = snap;
+    return r;
+  }, r => {
+    if (r && r.ok){ SFX.shop(); fxAfterGive(from, r.snap); renderTop(); openShop('energy'); }
+    else if (r && r.reason !== 'busy'){ SFX.no(); toast(r.reason === 'gems' ? L.noGems : L.supplyFail); }
+  });
 }
 function discover(it){
   if (!it.c) return;
@@ -863,10 +1010,12 @@ function tap(i){
   const it = S.board[i];
   if (!it){ selected = null; renderBoard(); renderInfo(); return; }
   selected = i;
+  if (it.box){ openBoardBox(i); return; }
+  if (it.gem){ collectGem(i); return; }
   if (it.g) produce(i); else { SFX.tap(); renderBoard(); renderInfo(); }
 }
 function sell(){
-  const it = S.board[selected]; if (!it || it.g) return;          // generators stay unsellable
+  const it = S.board[selected]; if (!it || it.g || it.box || it.gem) return;          // generators, boxes and loose gems stay unsellable
   const cell = selected, copy = {c:it.c, l:it.l}, coins = it.l * 2;
   const fromEl = $('board') && $('board').children[cell];
   const snap = fxWalletSnap();
@@ -887,10 +1036,10 @@ function renderTop(){
     $('top').innerHTML = `
       <div class="lvbadge" id="tLv">${A.icon('star')}<b id="tLvN"></b><div class="bar"><i id="tLvB"></i></div></div>
       <div class="pill" id="tEp"><span class="ic">${A.icon('bolt')}</span><span class="val ev"><span id="tEv"></span><span class="sub" id="tEt"></span></span><button class="plus" id="tE">+</button></div>
-      <div class="pill"><span class="ic">${A.icon('coin')}</span><span class="val" id="tCv"></span><button class="plus" id="tC">+</button></div>
+      <div class="pill" id="tCp"><span class="ic">${A.icon('coin')}</span><span class="val" id="tCv"></span><span class="gemMini" id="tGp" title="${L.gems}"><span class="ic">${A.icon('gem')}</span><span class="val" id="tGv"></span></span><button class="plus" id="tC">+</button></div>
       <button class="roundbtn" id="tSet">${A.icon('gear')}</button>`;
     $('tLv').onclick = openRoad; $('tE').onclick = openShop; $('tEp').onclick = e => { if (!e.target.closest('#tE')) openEnergy(); };   // + keeps opening the Shop; the rest of the pill shows the energy details
-    $('tC').onclick = openShop; $('tSet').onclick = openSettings;
+    $('tC').onclick = openShop; $('tSet').onclick = openSettings; if ($('tGp')) $('tGp').onclick = () => openShop('energy');
   }
   $('tLvN').textContent = S.lv;
   if (fxStarHold == null) $('tLvB').style.width = pct + '%';
@@ -1047,20 +1196,23 @@ function renderBoard(fx={}){
     const it = S.board[i];
     c.classList.toggle('want', want.has(i));
     c.classList.toggle('sel', selected === i);
-    const key = it ? (it.g ? 'g'+it.g+it.l : it.c+it.l) : '';
-    if (c.dataset.k !== key || fx.pop===i || (fx.fly && fx.fly.to===i)){
+    const cd = genCdLeft(it), key = it ? (it.g ? 'g'+it.g+it.l+(cd?'cd':'') : it.box ? 'box'+it.box : it.gem ? 'gem'+it.gem : it.c+it.l) : '';
+    const flies = fx.flies || (fx.fly ? [fx.fly] : []);
+    const flyTo = flies.find(f => f.to === i), flyFrom = flies.find(f => f.from === i);
+    if (c.dataset.k !== key || fx.pop===i || flyTo){
       c.dataset.k = key;
-      c.innerHTML = it ? `<div class="it${it.g?' gen':''}">${itemArt(it)}${it.g ? `<span class="bolt">${A.icon('bolt')}</span>` : ''}</div>` : '';
+      const extra = it && it.g ? `<span class="bolt">${A.icon('bolt')}</span>${cd ? `<span class="cd">${Math.ceil(cd/1000)}</span>` : ''}` : '';
+      c.innerHTML = it ? `<div class="it${it.g?' gen':''}${it.box?' box':''}${it.gem?' looseGem':''}">${itemArt(it)}${extra}</div>` : '';
     }
     const el = c.firstElementChild; if (!el) return;
     el.classList.toggle('drag', !!(drag && drag.moved && drag.i === i));
     if (fx.pop === i){ el.classList.add('pop'); c.insertAdjacentHTML('beforeend', '<div class="burst"></div>'); setTimeout(()=>c.querySelector('.burst')?.remove(), 500); }
-    if (fx.fly && fx.fly.from === i){
+    if (flyFrom){
       el.classList.remove('genSquash'); void el.offsetWidth; el.classList.add('genSquash');
       setTimeout(() => el.classList.remove('genSquash'), 240);
     }
-    if (fx.fly && fx.fly.to === i){
-      const a = bd.children[fx.fly.from].getBoundingClientRect(), b = c.getBoundingClientRect();
+    if (flyTo){
+      const a = bd.children[flyTo.from].getBoundingClientRect(), b = c.getBoundingClientRect();
       const dx = a.left-b.left, dy = a.top-b.top;
       el.style.setProperty('--fx', dx+'px'); el.style.setProperty('--fy', dy+'px');
       el.style.setProperty('--mx', (dx*0.5)+'px'); el.style.setProperty('--my', (dy*0.5-16)+'px');
@@ -1097,13 +1249,22 @@ function renderInfoInner(){
   box.classList.remove('invMode');
   box.innerHTML = infoItemHtml(it);
   if ($('bStore')) $('bStore').onclick = storeSelected;
-  if (!it.g && $('bSell')) $('bSell').onclick = sell;
+  if (!it.g && !it.box && !it.gem && $('bSell')) $('bSell').onclick = sell;
+  if ($('bSkip')) $('bSkip').onclick = () => skipGenCd(selected);
 }
 function infoItemHtml(it){                  // markup of the selected-item panel (also used, off-screen, to measure the tallest possible content)
+  if (it.box || it.gem){
+    const store = `<button type="button" class="invStoreBtn" id="bStore"${invFree() < 1 ? ' disabled' : ''} aria-label="${L.invStore}">${INV_MARK}</button>`;
+    return `${store}<div class="art">${itemArt(it)}</div><div class="txt"><div class="ttl">${itemName(it)}</div><div class="hint">${it.box === 'gem' ? L.gemBoxHint : it.box ? L.giftBoxHint : L.gemItemHint}</div></div>`;
+  }
   const max = it.g ? GEN_MAXLV : MAXLV;
   const next = it.l < max ? (it.g ? {g:it.g, l:it.l+1} : {c:it.c, l:it.l+1}) : null;
   let hint;
-  if (it.g) hint = `${L.genHint}. ${next ? L.genMerge : L.genMax}`;
+  if (it.g){
+    const left = genCdLeft(it);
+    hint = `${L.genHint}. ${next ? L.genMerge : L.genMax}`;
+    if (left) hint += ` ${L.gemWait(Math.ceil(left/1000))} <button type="button" class="btn" id="bSkip" style="padding:2px 8px;font-size:12px;height:auto;margin-inline-start:4px">${L.gemSkip(genSkipPrice(it))}</button>`;
+  }
   else hint = next ? `${L.mergeInto} <i>${itemArt(next)}</i> ${itemName(next)}` : L.maxLevel;
   const store = `<button type="button" class="invStoreBtn" id="bStore"${invFree() < 1 ? ' disabled' : ''} aria-label="${L.invStore}">${INV_MARK}</button>`;
   const sellBtn = it.g ? '' : `<button class="btn pink" id="bSell">${L.sell} <span class="rw"><i>${A.icon('coin')}</i>${it.l*2}</span></button>`;
@@ -1192,7 +1353,8 @@ function propCard(d, st){        // d = registry prop, st = evaluated prop state
   if (st.state === 'owned' && st.variants) return `<div class="deco have var" data-var="${d.id}" role="button" tabindex="0" aria-label="${L.decos[d.id]} · ${L.colourNames[colour]}"><div class="art">${A.deco(d.id, colour)}</div><div class="nm">${L.decos[d.id]}</div>${opt}<div class="price" style="background:none;box-shadow:none;color:var(--green)">✓ ${L.colourNames[colour]}</div>${swatchDots(d.id, st.colours)}</div>`;
   if (st.state === 'owned') return `<div class="deco have"><div class="art">${A.deco(d.id)}</div><div class="nm">${L.decos[d.id]}</div>${opt}<div class="price" style="background:none;box-shadow:none;color:var(--green)">✓ ${L.owned}</div></div>`;
   if (st.state === 'locked') return `<div class="deco lock" data-lock="${d.id}"><div class="art">${A.deco(d.id, colour)}</div><div class="nm">${L.decos[d.id]}</div>${opt}<div class="lockTxt"><i>${A.icon('lock')}</i><span>${reasonText(st.reasons[0])}</span></div></div>`;
-  const btn = st.variants ? `<button class="price ${S.coins<d.price?'no':''}" data-var="${d.id}"><i>${A.icon('coin')}</i>${d.price}</button>` : `<button class="price ${S.coins<d.price?'no':''}" data-id="${d.id}"><i>${A.icon('coin')}</i>${d.price}</button>`;
+  const gemCost = d.gems || st.gems, poor = gemCost ? (S.gems || 0) < gemCost : S.coins < d.price;
+  const btn = st.variants ? `<button class="price ${S.coins<d.price?'no':''}" data-var="${d.id}"><i>${A.icon('coin')}</i>${d.price}</button>` : `<button class="price ${poor?'no':''}" data-id="${d.id}"><i>${A.icon(gemCost ? 'gem' : 'coin')}</i>${gemCost || d.price}</button>`;
   return `<div class="deco"><div class="art">${A.deco(d.id, colour)}</div><div class="nm">${L.decos[d.id]}</div>${opt}${btn}</div>`;
 }
 /* ---- colour preview / choice sheet (Spa colour slots). The previewed colour lives ONLY in this closure: Cancel, closing, switching rooms or reloading never saves it. ---- */
@@ -1316,10 +1478,12 @@ function buyProp(id, colour){            // FIRST purchase of a prop / slot. Var
   const variant = SALON.isVariantSlot(id);
   if (variant ? SALON.paletteOf(id).indexOf(colour) < 0 : colour !== undefined) return {ok: false, reason: 'colour'};
   const g = SALON.canBuy(salonInp(), id); if (!g.ok) return {ok: false, reason: g.code === 'inactive' ? 'inactive' : 'locked'};
-  if (S.coins < p.price) return {ok: false, reason: 'coins'};
+  if (p.gems){ if ((S.gems || 0) < p.gems) return {ok: false, reason: 'gems'}; }
+  else if (S.coins < p.price) return {ok: false, reason: 'coins'};
   let ups = [];
   const r = txn(() => {
-    S.coins -= p.price; S.owned[id] = 1;
+    if (p.gems) S.gems -= p.gems; else S.coins -= p.price;
+    S.owned[id] = 1;
     if (variant){ (S.vo || (S.vo = {}))[SALON.voKey(id, colour)] = 1; (S.ve || (S.ve = {}))[id] = colour; }   // chosen colour is owned and equipped
     count('deco'); ups = addStarsCore(starsFor(id));                                          // one real decoration purchase: +10 stars, counters, level-up and its rewards in the SAME write
     return {ok: true};
@@ -1341,10 +1505,25 @@ function equipColour(slot, colour){      // FREE switch between owned colours: n
   return txn(() => { (S.ve || (S.ve = {}))[slot] = colour; return {ok: true}; });
 }
 function buyDeco(id, colour){            // UI wrapper: feedback only; all state changes happened inside buyProp
+  const p = SALON.findProp(id);
+  if (p && p.gems && !S.owned[id]){
+    if ((S.gems || 0) < p.gems){ toast(L.noGems); SFX.no(); return {ok:false, reason:'gems'}; }
+    return confirmGemSpend(L.decos[id], L.gemDecoAsk(L.decos[id], p.gems), () => buyProp(id, colour), r => {
+      if (!r || !r.ok){
+        if (r && r.reason === 'locked'){ toast(L.salonLocked); SFX.no(); }
+        else if (r && r.reason === 'gems'){ toast(L.noGems); SFX.no(); }
+        else if (r && (r.reason === 'storage' || r.reason === 'error')){ toast(L.errWrite); SFX.no(); renderTop(); renderSalon(); }
+        return;
+      }
+      SFX.unlock(); confetti();
+      renderTop(); renderSalon(id); renderNav(); announceLevelUps(r.ups);
+    });
+  }
   const r = buyProp(id, colour);
   if (!r.ok){
     if (r.reason === 'locked'){ toast(L.salonLocked); SFX.no(); }
     else if (r.reason === 'coins'){ toast(L.noCoins); SFX.no(); }
+    else if (r.reason === 'gems'){ toast(L.noGems); SFX.no(); }
     else if (r.reason === 'storage' || r.reason === 'error'){ toast(L.errWrite); SFX.no(); renderTop(); renderSalon(); }
     return r;
   }
@@ -1724,13 +1903,16 @@ function openShop(mode){
   const ready = S.gift !== dayKey();
   const streak = ready ? giftStreakNext() : (S.gst && S.gst.k === dayKey() ? S.gst.n : 1);
   const grew = giftReward(ready ? streak : (S.gst && S.gst.n) || 1);
-  const dots = [1,2,3].map(i => `<i class="gdot${i <= streak ? ' on' : ''}"></i>`).join('');
+  const dots = '<span class="gdots">' + [1,2,3,4,5,6,7].map(i => `<i class="gdot${i <= streak ? ' on' : ''}${i===7?' gem':''}"></i>`).join('') + '</span>';
   eshopState();
+  const gemPoor = (S.gems || 0) < GEM_ENERGY.price;
+  const gemRow = `<div class="row" id="shEGemRow"><div class="art">${A.icon('bolt')}</div><div class="grow">${L.gemEnergyTitle}<div class="muted" style="font-size:12px">${L.gemsN(GEM_ENERGY.price)}</div></div>
+      <button class="btn pink" id="shEGem" ${gemPoor ? 'disabled' : ''}>${L.gemEnergyBuy(GEM_ENERGY.amt, GEM_ENERGY.price)}</button></div>`;
   modal(mode === 'energy' ? L.energyTitle : L.shopTitle, (mode === 'energy' ? energyInfoHtml() : '') + `
     <div class="row"><div class="art">${A.icon('heart')}</div><div class="grow">${L.dailyGift} <span class="gstreak">${L.giftStreak(streak)}</span> ${dots}<br>${rwHtml(grew)}
       <div class="muted" style="font-size:11px;margin-top:2px">${L.giftStreakHint}</div></div>
       <button class="btn" id="shGift" ${ready?'':'disabled'}>${ready ? L.take : L.tomorrow}</button></div>
-    ${packRow(20)}${packRow(50)}
+    ${packRow(20)}${packRow(50)}${gemRow}
     <div class="muted center" style="font-size:12px;margin:2px 0 8px">${L.shopLadderNote}</div>${supplyHtml()}`);
   energyOpen = mode === 'energy'; wireSupply(() => openShop(mode));
   $('shGift').onclick = () => { if (!claimDailyGift().ok) return; renderTop(); openShop(mode); };
@@ -1743,6 +1925,7 @@ function openShop(mode){
   };
   $('shE20').onclick = () => onBuy(20);
   $('shE50').onclick = () => onBuy(50);
+  if ($('shEGem')) $('shEGem').onclick = () => buyEnergyGems();
 }
 
 function openSettings(){
@@ -1836,7 +2019,7 @@ function adoptState(state){                                // only after a succe
   S = state; saveGate.blocked = false; saveGate.memoryOnly = false; recovery = null; hasSave = true;
   selected = null; [0,1,2].forEach(i => { PSTATE[i] = 'idle'; });
   prepareCalendar(S);
-  migrateEnergy(); applyLang(); applyAudio(); tick(); fillOrders(); setSaveWarn(null); migrateLegacyEvents(); migrateSupply(); if (curDef) applyContent(curDef);
+  migrateEnergy(); applyLang(); applyAudio(); tick(); fillOrders(); setSaveWarn(null); migrateLegacyEvents(); migrateEventGems(); migrateSupply(); if (curDef) applyContent(curDef);
   settlePlaytestGrant(); save();
   $('recovery').classList.remove('on');
   if ($('start').classList.contains('on')) showStart();
@@ -2140,14 +2323,24 @@ $('btnNew').onclick = () => {
 };
 
 migrateEnergy(); applyLang(); applyAudio(); tick(); fillOrders(); settlePlaytestGrant(); save(); preloadPortraits(); preloadSprites(); showStart(); startBlinks(); if (recovery) showRecovery();
-migrateLegacyEvents(); migrateSupply(); settlePlaytestGrant();
+migrateLegacyEvents(); migrateEventGems(); migrateSupply(); settlePlaytestGrant();
 refreshContent(true).catch(e => console.warn('[content]', e && e.message));   // async; never blocks or breaks start-up
 window.__atelierBooted = true; if (window.__atelierStartupOk) window.__atelierStartupOk();   // startup finished: hide the safety-net message if it was shown
 document.fonts && document.fonts.ready.then(() => { layout(); });
-setInterval(() => { tick(); if ($('game').classList.contains('on')){ renderTop(); checkTaskBadges(); refreshEnergyInfo(); } }, 1000);
+function refreshGenClocks(){
+  const bd = $('board'); if (!bd) return;
+  let dirty = false;
+  [...bd.children].forEach((c, i) => {
+    const it = S.board[i], el = c.querySelector('.cd'), left = genCdLeft(it);
+    if (left > 0){ if (el) el.textContent = String(Math.ceil(left/1000)); else dirty = true; }
+    else if (el) dirty = true;
+  });
+  if (dirty){ renderBoard(); if (selected != null && S.board[selected] && S.board[selected].g) renderInfo(); }
+}
+setInterval(() => { tick(); if ($('game').classList.contains('on')){ renderTop(); checkTaskBadges(); refreshEnergyInfo(); refreshGenClocks(); } }, 1000);
 setInterval(save, 5000);
 document.addEventListener('visibilitychange', () => { if (document.hidden) save(true); else { tick(); renderAll(); refreshContent(false).catch(() => {}); } });
 
 // سىناق ئۈچۈن
-window.__game = { AUDIO, applyAudio, atelier: {open: () => openAtelier(), env: atelierEnv, notes: atelierNotes}, ALL_CHAINS, buyProp, buyColour, equipColour, salonInp, taskCounts, openTasks, tasksFor, get EV(){ return EV; }, energyTimes, ENERGY_CAP, ENERGY_MS, ENERGY_PACKS, energyOffer, buyEnergy, eshopState, dayKey, weekKey, monthKey, tick, applyLang, buyProducer, placeQueued, producerPrice, equivOf, grantMilestones, claimEvent, newOrder, accessibleChains, deliver: oi => deliver(oi), save: () => save(), get contentInfo(){ return contentInfo; }, refreshContent, get S(){ return S; }, get gate(){ return saveGate; }, get recovery(){ return recovery; }, renderAll, openShop, MSN, MSN_CFG, select: i => { selected = i; renderBoard(); renderInfo(); }, storeSelected, placeInv, expandInv, undoLastSale, get undoSale(){ return undoSale; }, openGenUpgrade, genDropTable, claimDailyGift, giftStreakNext, giftReward, skipTut, tutAdvance, INV_CAPS, INV_EXPAND, get fxCoinHold(){ return fxCoinHold; }, get fxEnergyHold(){ return fxEnergyHold; }, get fxBits(){ return fxBits; }, fxWalletSnap, fxAfterGive, fxRewardFlight, fxGrantFromCell, drop, sell, produce, give };
+window.__game = { AUDIO, applyAudio, atelier: {open: () => openAtelier(), env: atelierEnv, notes: atelierNotes}, ALL_CHAINS, buyProp, buyColour, equipColour, salonInp, taskCounts, openTasks, tasksFor, get EV(){ return EV; }, energyTimes, ENERGY_CAP, ENERGY_MS, ENERGY_PACKS, GEM_ENERGY, energyOffer, buyEnergy, buyEnergyGems, eshopState, dayKey, weekKey, monthKey, tick, applyLang, buyProducer, placeQueued, producerPrice, equivOf, grantMilestones, claimEvent, newOrder, accessibleChains, deliver: oi => deliver(oi), save: () => save(), get contentInfo(){ return contentInfo; }, refreshContent, get S(){ return S; }, get gate(){ return saveGate; }, get recovery(){ return recovery; }, renderAll, openShop, MSN, MSN_CFG, select: i => { selected = i; renderBoard(); renderInfo(); }, storeSelected, placeInv, expandInv, undoLastSale, get undoSale(){ return undoSale; }, openGenUpgrade, genDropTable, claimDailyGift, giftStreakNext, giftReward, skipTut, tutAdvance, INV_CAPS, INV_EXPAND, INV_EXPAND_GEMS, get fxCoinHold(){ return fxCoinHold; }, get fxEnergyHold(){ return fxEnergyHold; }, get fxGemHold(){ return fxGemHold; }, get fxBits(){ return fxBits; }, fxWalletSnap, fxAfterGive, fxRewardFlight, fxGrantFromCell, drop, sell, produce, give, openBoardBox, collectGem, skipGenCd, genCdLeft, genSkipPrice };
 })();

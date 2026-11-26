@@ -51,7 +51,7 @@ const AREAS = [
       { id: 'spa3', level: 17, after: [{ stage: 'spa2', minOwned: 3 }], discovered: 0, skn: 5, props: [
         { id: 'spadrape', price: 1500, variants: true }, { id: 'spaplant', price: 1100 }, { id: 'spalamp', price: 1200 }, { id: 'spapouf', price: 700, required: false } ] },
       { id: 'spa4', level: 19, after: [{ stage: 'spa3', minOwned: 2 }], discovered: 0, skn: 5, props: [
-        { id: 'spashelf', price: 2200, skn: 6 }, { id: 'spafountain', price: 2600 }, { id: 'spacandles', price: 800, required: false }, { id: 'spaorchid', price: 900, required: false } ] } ] }
+        { id: 'spashelf', price: 2200, skn: 6 }, { id: 'spafountain', price: 2600 }, { id: 'spacandles', price: 800, gems: 15, required: false }, { id: 'spaorchid', price: 900, gems: 18, required: false } ] } ] }
 ,
   { id: 'makeup', active: true, preview: 'makeup-base',                                              // switched on: Makeup Studio (docs/salon/MAKEUP_PLAN.md); art docs/art/makeup-v1
     unlock: { level: 22, afterStages: ['spa2'] },                                                  // level 22 + Spa stage 2 complete; NO Atelier prerequisite for the first stage (design parameters, not player data)
@@ -60,8 +60,8 @@ const AREAS = [
       { id: 'mks1', level: 22, after: [], discovered: 0, props: [ { id: 'mkrug', price: 600 }, { id: 'mkvanity', price: 1900 }, { id: 'mkchair', price: 1600 }, { id: 'mkmirror', price: 2400 } ] },
       { id: 'mks2', level: 25, after: [{ stage: 'mks1', minOwned: 3 }], discovered: 0, commissions: 6, props: [ { id: 'mkring', price: 1500 }, { id: 'mkcabinet', price: 2400 }, { id: 'mkshelf', price: 1300 } ] },
       // mks3: only mks2 is referenced by minOwned and mks2 holds required props only, so optional purchases can never become necessary (checked by verify/makeup-rules.js)
-      { id: 'mks3', level: 25, after: [{ stage: 'mks2', minOwned: 2 }], discovered: 0, commissions: 16, props: [ { id: 'mkgallery', price: 2500 }, { id: 'mksheers', price: 900, required: false },
-        { id: 'mkplinth', price: 3200, required: false, chapters: 12 } ] } ] }
+      { id: 'mks3', level: 25, after: [{ stage: 'mks2', minOwned: 2 }], discovered: 0, commissions: 16, props: [ { id: 'mkgallery', price: 2500 }, { id: 'mksheers', price: 900, gems: 15, required: false },
+        { id: 'mkplinth', price: 3200, gems: 25, required: false, chapters: 12 } ] } ] }
 ];
 const areaById = id => AREAS.find(a => a.id === id) || null;
 const activeAreas = () => AREAS.filter(a => a.active);
@@ -163,7 +163,7 @@ function evaluate(inp) {
         if (p.chapters && (inp.chap || 0) < p.chapters) pr.push({ k: 'chapters', need: p.chapters, have: inp.chap || 0 });
         const owned = !!inp.owned[p.id];
         const reasons = owned ? [] : (unlockMet ? sr.concat(pr) : ur.concat(sr, pr));
-        const row = { id: p.id, price: p.price, required: isRequired(p), owned, state: owned ? 'owned' : reasons.length ? 'locked' : 'open', reasons };
+        const row = { id: p.id, price: p.price, gems: p.gems || 0, required: isRequired(p), owned, state: owned ? 'owned' : reasons.length ? 'locked' : 'open', reasons };
         if (p.variants) { row.variants = true; row.colours = ownedColours(p.id, inp.owned, inp.vo); row.equipped = equippedColour(p.id, inp.owned, inp.vo, inp.ve); }
         return row;
       });

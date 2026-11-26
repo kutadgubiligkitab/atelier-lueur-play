@@ -1,14 +1,14 @@
 {
- "sourceCommit": "fe583ea2e66ae423e1bc663767e2787f3e28e1e5",
+ "sourceCommit": "5f5a15594dae3674c8790e70878e16f6b81300f0",
  "sourceHasUncommittedChanges": false,
- "cacheBust": "fe583ea2e66a",
+ "cacheBust": "5f5a15594dae",
  "fileCount": 401,
- "totalBytes": 84513747,
+ "totalBytes": 84541871,
  "files": [
   {
    "path": "art.js",
-   "bytes": 38758,
-   "sha256": "31d2aab7a9cd977b13650a9e47bf7dadf6435262097b6cdafd56e45797f0820b"
+   "bytes": 39407,
+   "sha256": "e191b959303367e1b2565c57b35b00f7ef9e41e1caeb237446d0032f61efe54b"
   },
   {
    "path": "assets/atelier-v1/generators/gen_atl_1.png",
@@ -1947,13 +1947,13 @@
   },
   {
    "path": "config.js",
-   "bytes": 682,
-   "sha256": "89a91f66a8a836a6e6a2b46a4f60b5998e05f65285cf195c5c5e114c269780e6"
+   "bytes": 787,
+   "sha256": "6400c6e4bc72b8a68b845357a529186d601344b6de230af9dafb70ab63e96b89"
   },
   {
    "path": "content.js",
-   "bytes": 20253,
-   "sha256": "af6708230a85ab08c8179eab58746093991ad58b088ccfe03dfd9a0d7af5d5d4"
+   "bytes": 20281,
+   "sha256": "4419e4a574ac1ab142cde83ca7bde78ccd2e4dcbe23b15f9ef3d32fa4d1a0275"
   },
   {
    "path": "fonts.css",
@@ -1962,13 +1962,13 @@
   },
   {
    "path": "game.js",
-   "bytes": 158859,
-   "sha256": "9a1aa297516d2543eeb78b5f02d4d994422e9f3a847cdf247fadbdf2fba779c0"
+   "bytes": 170334,
+   "sha256": "f0dd039604e709e5b9541cb09f8f745b0dc46a1425a688242a04f245c050a878"
   },
   {
    "path": "i18n.js",
-   "bytes": 203035,
-   "sha256": "c044d3eb363b2208d85c1279548c025c7c35c5ca2271d05f94080782ece1d86c"
+   "bytes": 216417,
+   "sha256": "519880056e016687b187a447aa2569e3bb515f6ae3a280040bcad5d1c067fcd7"
   },
   {
    "path": "icon.png",
@@ -1978,7 +1978,7 @@
   {
    "path": "index.html",
    "bytes": 8451,
-   "sha256": "61960e5420a3244c40d7d1758e22fce97787f5b85b719853306ce890f6767446"
+   "sha256": "7144bf30e8044cf360eb1176ca17a91fff3ea64726fca791d69e867947640681"
   },
   {
    "path": "manifest.json",
@@ -1997,18 +1997,18 @@
   },
   {
    "path": "salon-data.js",
-   "bytes": 23793,
-   "sha256": "699ca32859c32960bb67cf00d4a5b56b159b1de1e7d4ed980bc70e61c98e5240"
+   "bytes": 23852,
+   "sha256": "e53a68633cb73c9fc8fade6e5d43c4a7af2f7dba771300ea0753c6e48e7214f4"
   },
   {
    "path": "save.js",
-   "bytes": 28817,
-   "sha256": "e91f80d3256e03e3dd027aa4f40affce5a150d7b2ceca342aec44edfb2828faa"
+   "bytes": 30325,
+   "sha256": "1af3fd35b5d3341cfb6d6163ac426b20627be34333bb949d14e2bf9f7befcc29"
   },
   {
    "path": "style.css",
-   "bytes": 57623,
-   "sha256": "19b391f015eb44020e6e68c53ea12d00c7de2a49833b1cc1ab21f97416adcf5b"
+   "bytes": 58541,
+   "sha256": "3693ae2d32a711b5fc3e7dc0c0239d1175e5f35e86e5ce5a0320031cb2563a84"
   }
  ]
 }

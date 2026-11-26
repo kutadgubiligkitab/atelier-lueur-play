@@ -14,6 +14,7 @@ const DEFS = `
  <linearGradient id="gLav" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f1e6ff"/><stop offset=".5" stop-color="#c3a6ff"/><stop offset="1" stop-color="#8a63e6"/></linearGradient>
  <linearGradient id="gLavB" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#9a74f0"/><stop offset=".4" stop-color="#dccbff"/><stop offset="1" stop-color="#7f58dc"/></linearGradient>
  <linearGradient id="gPinkBox" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd6e8"/><stop offset=".55" stop-color="#ff8fbe"/><stop offset="1" stop-color="#e0558f"/></linearGradient>
+ <linearGradient id="gGemBox" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e8fbff"/><stop offset=".55" stop-color="#7ed0ea"/><stop offset="1" stop-color="#2a7a96"/></linearGradient>
  <linearGradient id="gGlass" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffffff" stop-opacity=".55"/><stop offset=".3" stop-color="#ffffff" stop-opacity=".95"/><stop offset="1" stop-color="#f3dff0" stop-opacity=".6"/></linearGradient>
  <linearGradient id="gLiqPink" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffb3d1"/><stop offset="1" stop-color="#f0609c"/></linearGradient>
  <linearGradient id="gLiqLav" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e3d2ff"/><stop offset="1" stop-color="#9b78f0"/></linearGradient>
@@ -155,6 +156,9 @@ const ICON = {
   star: svg(`<path d="M50 6L62 36L94 38L69 58L78 90L50 72L22 90L31 58L6 38L38 36Z" fill="url(#gStar)" stroke="#b81f78" stroke-width="4" stroke-linejoin="round"/><path d="M40 30L48 14" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".7"/>`),
   bolt: svg(`<path d="M58 4L18 56H46L38 96L82 40H54Z" fill="url(#gBolt)" stroke="#2f7d12" stroke-width="5" stroke-linejoin="round"/><path d="M52 16L32 48" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".6"/>`),
   gift: svg(giftBox(3,'gPinkBox','gGoldH')),
+  gem: svg(`<path d="M50 8L86 38L50 94L14 38Z" fill="url(#gGem)" stroke="#1e5a70" stroke-width="5" stroke-linejoin="round"/><path d="M50 8L64 38H36Z" fill="#fff" opacity=".55"/><path d="M14 38H86" stroke="#fff" stroke-width="3" opacity=".45"/>`),
+  gemBox: svg(giftBox(3,'gGemBox','gGoldH') + `<g transform="translate(50 58) scale(.42)"><path d="M0 -28L24 0L0 36L-24 0Z" fill="#7ed0ea" stroke="#1e5a70" stroke-width="8" stroke-linejoin="round"/></g>`),
+
   tasks: svg(`<rect x="18" y="12" width="64" height="80" rx="10" fill="url(#gWhite)" stroke="#d24b84" stroke-width="5"/><rect x="34" y="4" width="32" height="16" rx="6" fill="url(#gGoldH)"/><path d="M30 42L38 50L52 36M30 68L38 76L52 62" stroke="#46c35a" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><rect x="58" y="40" width="14" height="6" rx="3" fill="#f3a9c8"/><rect x="58" y="66" width="14" height="6" rx="3" fill="#f3a9c8"/>`),
   shop: svg(`<rect x="14" y="44" width="72" height="48" rx="6" fill="url(#gWood)" stroke="#c77a52" stroke-width="4"/><path d="M8 44L18 12H82L92 44Z" fill="#fff" stroke="#d24b84" stroke-width="4"/><path d="M18 12L14 44M34 12L32 44M50 12V44M66 12L68 44M82 12L86 44" stroke="#ff5fa2" stroke-width="9"/><rect x="38" y="60" width="24" height="32" rx="3" fill="#7fd3f0" stroke="#3a9ac2" stroke-width="3"/>`),
   salon: svg(`<path d="M50 8L92 40V90H8V40Z" fill="url(#gPinkBox)" stroke="#c93f7c" stroke-width="5" stroke-linejoin="round"/><ellipse cx="50" cy="56" rx="16" ry="20" fill="url(#gMirror)" stroke="url(#gGoldH)" stroke-width="5"/><rect x="26" y="78" width="48" height="8" rx="3" fill="url(#gGoldH)"/>`),

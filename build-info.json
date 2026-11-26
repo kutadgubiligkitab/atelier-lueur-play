@@ -1,9 +1,9 @@
 {
- "sourceCommit": "ca8a524816a34a36a00acd94311cd8f035b73161",
+ "sourceCommit": "aace445cd51dc1a0c303946ba50f0207251c86d9",
  "sourceHasUncommittedChanges": false,
- "cacheBust": "ca8a524816a3",
- "fileCount": 401,
- "totalBytes": 84546821,
+ "cacheBust": "aace445cd51d",
+ "fileCount": 455,
+ "totalBytes": 97548730,
  "files": [
   {
    "path": "art.js",
@@ -256,6 +256,51 @@
    "sha256": "5ef3d36ff824a517ae8381fc92155263a37ccbfd682d25aec8f43e40552f049e"
   },
   {
+   "path": "assets/characters/customer-ada-blink.png",
+   "bytes": 60063,
+   "sha256": "c1f3a281d048cf5da243de34e170d41fd0f5350274add870c7526273fe1e400e"
+  },
+  {
+   "path": "assets/characters/customer-ada-blink@2x.png",
+   "bytes": 206122,
+   "sha256": "b87634eaa294575e5529b90db308c781ee953d082172a00f6d906115d8a36cb5"
+  },
+  {
+   "path": "assets/characters/customer-ada-blink@3x.png",
+   "bytes": 424797,
+   "sha256": "405dfc26857906a1e36200379634683a5ee48a453dad58ae6c2310424605fdc4"
+  },
+  {
+   "path": "assets/characters/customer-ada-happy.png",
+   "bytes": 59711,
+   "sha256": "15af6ac2ea6c099eff0ea80a3bd9a8ef63467caec30d2e6bc0b5a69cd33c73b1"
+  },
+  {
+   "path": "assets/characters/customer-ada-happy@2x.png",
+   "bytes": 205430,
+   "sha256": "96a87f3b7422f0d56ae43434cd6054ea9425fd6ca30b804597257a33f2cff6c6"
+  },
+  {
+   "path": "assets/characters/customer-ada-happy@3x.png",
+   "bytes": 424119,
+   "sha256": "14db66fc36fd48379f1e5809edb373cee27a66e214bbdf8a002c282ffad34568"
+  },
+  {
+   "path": "assets/characters/customer-ada-idle.png",
+   "bytes": 60158,
+   "sha256": "99b95b7fa541747bb48e69fc95edbf03dc7f77eaa57dd84914197452465e10f1"
+  },
+  {
+   "path": "assets/characters/customer-ada-idle@2x.png",
+   "bytes": 209443,
+   "sha256": "6aa00a5277004f198ec7f90decc6266cd703f88190e1e16af24be7e1b1b9d7f7"
+  },
+  {
+   "path": "assets/characters/customer-ada-idle@3x.png",
+   "bytes": 441507,
+   "sha256": "bacf9600d14d1aafb12492e08052a86dbce9b6df471767c3cee5fdc3d3cdcb04"
+  },
+  {
    "path": "assets/characters/customer-amina-blink.png",
    "bytes": 60980,
    "sha256": "94d439abc3820e066bbc31eeba7941c349835d30b1aa7da58ab4c88fc1350bc7"
@@ -391,6 +436,186 @@
    "sha256": "9a73e7b993d8d7fbbe37eed7e8548c7a8e0576f00e2c7d6b94183b29deeffa78"
   },
   {
+   "path": "assets/characters/customer-gulnar-blink.png",
+   "bytes": 64845,
+   "sha256": "7d5a3d337adc35b5fc845def19a9ff3095ed2efef4d1163d54038b819942da86"
+  },
+  {
+   "path": "assets/characters/customer-gulnar-blink@2x.png",
+   "bytes": 212828,
+   "sha256": "a13114ad12feb030e9f453ef3f240370ea41cf55df36ed41806e0660e67cb109"
+  },
+  {
+   "path": "assets/characters/customer-gulnar-blink@3x.png",
+   "bytes": 418296,
+   "sha256": "85fc68d957ea817f405905a6db1ad33c948157545150df74dd15c6bcbbb90638"
+  },
+  {
+   "path": "assets/characters/customer-gulnar-happy.png",
+   "bytes": 66553,
+   "sha256": "ef9349320d7ae746c51a218f4d39a840e1c1b1f5e15c6a5caad7aef551ca6997"
+  },
+  {
+   "path": "assets/characters/customer-gulnar-happy@2x.png",
+   "bytes": 217965,
+   "sha256": "976e528a4b5c97887d3d23152680daf54f3dbaceefaa60b01206b03bdc309d3b"
+  },
+  {
+   "path": "assets/characters/customer-gulnar-happy@3x.png",
+   "bytes": 429518,
+   "sha256": "ed3e677764000d26b8d46de3e9b8e4531cee01e4260cb39738a6853b6842ddc3"
+  },
+  {
+   "path": "assets/characters/customer-gulnar-idle.png",
+   "bytes": 66320,
+   "sha256": "c1b11206675040de7f3f0e76046346ed8185c3780271fb8c32cd2af6c5801fe9"
+  },
+  {
+   "path": "assets/characters/customer-gulnar-idle@2x.png",
+   "bytes": 218656,
+   "sha256": "a583df41d28f887c370af00977f62c9b1c8222564fa6ef85fe11b57f999adb74"
+  },
+  {
+   "path": "assets/characters/customer-gulnar-idle@3x.png",
+   "bytes": 431217,
+   "sha256": "cc02a0d39075960fac4ff61ed883ec79ea9579f30fd560b6827468cf02ca82ee"
+  },
+  {
+   "path": "assets/characters/customer-ingrid-blink.png",
+   "bytes": 54019,
+   "sha256": "2c248de5af803fd9c3b23700378fd01ef73b7871f480292cefe0fef5ade54878"
+  },
+  {
+   "path": "assets/characters/customer-ingrid-blink@2x.png",
+   "bytes": 182187,
+   "sha256": "1f67c32f8428f2d50f9e915ebf44ceddcf822d771065cc0eff0ae6a2ae28e93a"
+  },
+  {
+   "path": "assets/characters/customer-ingrid-blink@3x.png",
+   "bytes": 371378,
+   "sha256": "8eef52cc0f022c61aec4259babbacbe4b211e29451c7144ec4f36cd39b21237c"
+  },
+  {
+   "path": "assets/characters/customer-ingrid-happy.png",
+   "bytes": 56555,
+   "sha256": "9f99d0145055516a9be071b7ddbf3a6e6a4ca6af54f16872e52f834b55c1ae48"
+  },
+  {
+   "path": "assets/characters/customer-ingrid-happy@2x.png",
+   "bytes": 189350,
+   "sha256": "5461a5bf3c0854fb4c6bb5f9e448a0f3cf687c1f93eecf185db86d5ffc4d45b4"
+  },
+  {
+   "path": "assets/characters/customer-ingrid-happy@3x.png",
+   "bytes": 382476,
+   "sha256": "a8e2f11cdaf498f8dffef107f6739c631ba8362f89fce7f0cf2fbb1203088ce3"
+  },
+  {
+   "path": "assets/characters/customer-ingrid-idle.png",
+   "bytes": 54314,
+   "sha256": "9ed5234f15589615f99e01d2c2a8f21ebce483623eea6a507a3431f5e9dc5bef"
+  },
+  {
+   "path": "assets/characters/customer-ingrid-idle@2x.png",
+   "bytes": 185567,
+   "sha256": "40e6d2940a312dfb75c74e6f68c405677684ada422d1d2c419199d6549d2bed3"
+  },
+  {
+   "path": "assets/characters/customer-ingrid-idle@3x.png",
+   "bytes": 381731,
+   "sha256": "ea21f8d3a512deea4e312bb5ceec427dd2fd5bf436ca1f01234c634dc1adf489"
+  },
+  {
+   "path": "assets/characters/customer-jiwoo-blink.png",
+   "bytes": 63304,
+   "sha256": "4b7be90e1150f0f9bb64beb93e66cd916d5573adbea803b0af2469406168ba22"
+  },
+  {
+   "path": "assets/characters/customer-jiwoo-blink@2x.png",
+   "bytes": 217732,
+   "sha256": "5e9fccb3fd6c8bf8e77588ed771ea31c3f1305a21c75487642b6d732aa9a0711"
+  },
+  {
+   "path": "assets/characters/customer-jiwoo-blink@3x.png",
+   "bytes": 452823,
+   "sha256": "cad6ab0bd1d8786bc188e34efb4ba723b3779617a99bbc4a7d903f643a5b4e25"
+  },
+  {
+   "path": "assets/characters/customer-jiwoo-happy.png",
+   "bytes": 63980,
+   "sha256": "6bc5292612e036c1d8fa801b5923543601f03d91d82e465acbce143e2b43e1ee"
+  },
+  {
+   "path": "assets/characters/customer-jiwoo-happy@2x.png",
+   "bytes": 222571,
+   "sha256": "084ca918e09b3776601361395eb2d62dab4490a457dd541e3de16fc4ffc53918"
+  },
+  {
+   "path": "assets/characters/customer-jiwoo-happy@3x.png",
+   "bytes": 463954,
+   "sha256": "21b404a51b7c3d252825baf87af0f8586057a93cf8e5185f23fa51543e74a935"
+  },
+  {
+   "path": "assets/characters/customer-jiwoo-idle.png",
+   "bytes": 65219,
+   "sha256": "a870db2ae6d52b8aa6fcce68db6c08b4ac944511eacfb9e16781b01d9ba062fd"
+  },
+  {
+   "path": "assets/characters/customer-jiwoo-idle@2x.png",
+   "bytes": 230911,
+   "sha256": "6ec363eb0f5ee1fe32268051c3a4adc2cf6d453d80562501416d63edfa2128cb"
+  },
+  {
+   "path": "assets/characters/customer-jiwoo-idle@3x.png",
+   "bytes": 487312,
+   "sha256": "f7ee18da95cfbc4cf6c6cb4b2cdbc5db52171196b968304dfab94f4ecd797bea"
+  },
+  {
+   "path": "assets/characters/customer-marisol-blink.png",
+   "bytes": 61309,
+   "sha256": "f2b33726e0f3f9d712e58e2a979f0daedd4f971d92a9985ea91f28509ad6baa6"
+  },
+  {
+   "path": "assets/characters/customer-marisol-blink@2x.png",
+   "bytes": 211521,
+   "sha256": "bb20cccb831486d756849b04273f6931569718b450785edf54ea618dbe6ddc9b"
+  },
+  {
+   "path": "assets/characters/customer-marisol-blink@3x.png",
+   "bytes": 443126,
+   "sha256": "e322b38b92e3306447bc8dc90dfaeba1c3db88b5a3041fb608abf2a0ccdd31c5"
+  },
+  {
+   "path": "assets/characters/customer-marisol-happy.png",
+   "bytes": 64158,
+   "sha256": "57b66f6f1394c324d09340176fc7a89b379fe6abbc47ae32401a6be4a0e7bf02"
+  },
+  {
+   "path": "assets/characters/customer-marisol-happy@2x.png",
+   "bytes": 222057,
+   "sha256": "6aeffed626100b8a801c68fe8b4d16f88302ef97976337d5f0cd8aa961a91550"
+  },
+  {
+   "path": "assets/characters/customer-marisol-happy@3x.png",
+   "bytes": 469021,
+   "sha256": "dc6d107d81604659a4038a28d124bd41327cec4de33d67f528c152a6077d861d"
+  },
+  {
+   "path": "assets/characters/customer-marisol-idle.png",
+   "bytes": 62597,
+   "sha256": "4f9db3acc8a4f37526335c58c259be868578373f5c00caead8a7ed39b6bd331a"
+  },
+  {
+   "path": "assets/characters/customer-marisol-idle@2x.png",
+   "bytes": 221932,
+   "sha256": "a7f02e999d3d2b0ad628a9569f66b428a99fe3b994b2791ed9747425014e832a"
+  },
+  {
+   "path": "assets/characters/customer-marisol-idle@3x.png",
+   "bytes": 477650,
+   "sha256": "4515ae59aa0bb7b72c32c049b47dcad42982e3cd04b38af7144b138a4d02494c"
+  },
+  {
    "path": "assets/characters/customer-mira-blink.png",
    "bytes": 59659,
    "sha256": "1fd4e3b14dbdc0225721f77aad8e998515b2f93d5559764a359c0eb35d83675d"
@@ -524,6 +749,51 @@
    "path": "assets/characters/customer-sora-idle@3x.png",
    "bytes": 452471,
    "sha256": "66bfb4bf49647eff242b9ea24bcb3b97a73f3629f8d963b0c27fe12cb836a4cf"
+  },
+  {
+   "path": "assets/characters/customer-tamara-blink.png",
+   "bytes": 68618,
+   "sha256": "0ce335f3943a66887cd90526f503e7f43eeaed84ed88840e44b308f9b3e527db"
+  },
+  {
+   "path": "assets/characters/customer-tamara-blink@2x.png",
+   "bytes": 237338,
+   "sha256": "53e611a0ff6b82024b028f205faa7f5d05adad7fcb2eb8c0f6e9c77a5fbe36b0"
+  },
+  {
+   "path": "assets/characters/customer-tamara-blink@3x.png",
+   "bytes": 489451,
+   "sha256": "72552a3a1ac2f41736b7683280bed96fa24b983fbc51b32ab4e24cdcf3881bd5"
+  },
+  {
+   "path": "assets/characters/customer-tamara-happy.png",
+   "bytes": 69483,
+   "sha256": "94a0c0ab5e5111ef9ed48d7f621ac7b08166db79dae2745c52043cc1322cd5e2"
+  },
+  {
+   "path": "assets/characters/customer-tamara-happy@2x.png",
+   "bytes": 239175,
+   "sha256": "90ad01dc00df7ccb8924ce20049cf4dabc6b774381751361b18ef794d69ca05a"
+  },
+  {
+   "path": "assets/characters/customer-tamara-happy@3x.png",
+   "bytes": 489593,
+   "sha256": "2eb6ac7b59e23011f329ec72c5d4b28806f98a6729ac1362224daa918a942203"
+  },
+  {
+   "path": "assets/characters/customer-tamara-idle.png",
+   "bytes": 68391,
+   "sha256": "33bb10fb96ee62cc785369c6035be58138e174dc68fc36535b6a64973c33554f"
+  },
+  {
+   "path": "assets/characters/customer-tamara-idle@2x.png",
+   "bytes": 239672,
+   "sha256": "16a24f5caf9b8705afdce3dd30265f997fd75cbb3552f870aaae8b5536f6e849"
+  },
+  {
+   "path": "assets/characters/customer-tamara-idle@3x.png",
+   "bytes": 500120,
+   "sha256": "9655e8251f584dcbd1ef8d970c1f9b3057503edececc81d9ce3d9bdee9d7386d"
   },
   {
    "path": "assets/fonts/GreatVibes-Regular.ttf",
@@ -1962,13 +2232,13 @@
   },
   {
    "path": "game.js",
-   "bytes": 173260,
-   "sha256": "f09bcee296ff1f2eb6b50d6dec6f12062880fa83445052666c2b1765aace3d49"
+   "bytes": 174394,
+   "sha256": "7ec11d930953741d08f6810155ad9d8c0ae3c9df6484a27dec455e5c1a99cae9"
   },
   {
    "path": "i18n.js",
-   "bytes": 215079,
-   "sha256": "ce729a540d0cb8c3271a4691df066f32b75279722c0cb8533887ffe41f241135"
+   "bytes": 237390,
+   "sha256": "ab96b4fffb8c9f5a1921c20f72fb435079b0a4722ac7de1bd5ddd17466c2ec2f"
   },
   {
    "path": "icon.png",
@@ -1978,7 +2248,7 @@
   {
    "path": "index.html",
    "bytes": 8451,
-   "sha256": "94b9db2db8288f92dde9e7c323b54888abb7a55c4e49501da377345db272a05d"
+   "sha256": "9576fb3dba118b2b014c692e96fb52aec65a053f1e69cff2ac9dc8b51797ea0f"
   },
   {
    "path": "manifest.json",
@@ -2007,8 +2277,8 @@
   },
   {
    "path": "style.css",
-   "bytes": 61415,
-   "sha256": "0d556d6125237f9638c57283f13dd8ef541c4ef83df18c34e8c84f11f37de80b"
+   "bytes": 61736,
+   "sha256": "521cfab77ffd4b329fae461d563486827119040c44a452c0c90011662adc4cd9"
   }
  ]
 }

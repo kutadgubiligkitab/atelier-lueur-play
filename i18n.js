@@ -1801,3 +1801,595 @@ window.pickBestLang = function (nav, keys) {
   var en = window.LANGS.en;
   Object.keys(window.LANGS).forEach(function (lg) { if (lg !== 'en') fill(window.LANGS[lg], en); });
 })();
+
+/* New-customer spoken lines (order + thank-you). Keys match LANGS: ug, en, tr, ar, zh-Hans, ru, fr, de, es, pt-BR.
+   Japanese from the source file is omitted (the game has no ja). pt-BR was added because the game has it. */
+window.CUST_LINES = {
+  "ada": {
+    "name": {
+      "ug": "ئادا",
+      "en": "Ada",
+      "ar": "آدا",
+      "ru": "Ада",
+      "zh-Hans": "阿达"
+    },
+    "order": [
+      {
+        "ug": "تېز ۋە ياخشى بولسۇن، رەھمەت!",
+        "en": "Quick and good, please!",
+        "tr": "Hızlı ve güzel olsun, lütfen!",
+        "ar": "سريع وجيد من فضلك!",
+        "zh-Hans": "快一点，要好的！",
+        "ru": "Быстро и хорошо, пожалуйста!",
+        "fr": "Vite et bien, s’il vous plaît !",
+        "de": "Schnell und gut, bitte!",
+        "es": "¡Rápido y bueno, por favor!",
+        "pt-BR": "Rápido e bem feito, por favor!"
+      },
+      {
+        "ug": "بىر زاكاز، ئارتۇق ئاۋارىچىلىقسىز.",
+        "en": "One order, no fuss.",
+        "tr": "Tantana yok, tek sipariş.",
+        "ar": "طلب واحد، بلا تعقيد.",
+        "zh-Hans": "一份订单，别太麻烦。",
+        "ru": "Один заказ, без суеты.",
+        "fr": "Une commande, sans chichi.",
+        "de": "Eine Bestellung, ohne Aufhebens.",
+        "es": "Un pedido, sin complicaciones.",
+        "pt-BR": "Um pedido, sem complicação."
+      },
+      {
+        "ug": "ئاددىي ۋە چىرايلىق قىلىڭ.",
+        "en": "Make it nice and simple.",
+        "tr": "Güzel ve sade olsun.",
+        "ar": "اجعله جميلًا وبسيطًا.",
+        "zh-Hans": "漂亮又简单就好。",
+        "ru": "Красиво и просто, пожалуйста.",
+        "fr": "Joli et simple, s’il vous plaît !",
+        "de": "Schön und schlicht, bitte.",
+        "es": "Bonito y sencillo, por favor.",
+        "pt-BR": "Faça algo bonito e simples."
+      }
+    ],
+    "thanks": [
+      {
+        "ug": "ئاجايىپ! سىز ھەقىقىي ئۇستا.",
+        "en": "Perfect! You are a star.",
+        "tr": "Mükemmel! Sen bir yıldızsın.",
+        "ar": "رائع! أنتِ نجمة.",
+        "zh-Hans": "太棒了！你真是明星。",
+        "ru": "Идеально! Вы просто звезда.",
+        "fr": "Parfait ! Vous êtes une star.",
+        "de": "Perfekt! Du bist ein Star.",
+        "es": "¡Perfecto! Eres una estrella.",
+        "pt-BR": "Perfeito! Você é uma estrela."
+      },
+      {
+        "ug": "تېز بولدى. رەھمەت!",
+        "en": "That was fast. Thank you!",
+        "tr": "Çok hızlıydı. Teşekkürler!",
+        "ar": "كان سريعًا. شكرًا لك!",
+        "zh-Hans": "好快！谢谢！",
+        "ru": "Так быстро! Спасибо!",
+        "fr": "Déjà fini ? Merci !",
+        "de": "So schnell! Danke dir!",
+        "es": "¡Qué rápido! ¡Gracias!",
+        "pt-BR": "Foi rápido. Obrigada!"
+      },
+      {
+        "ug": "ھەممەيلەنگە ئېيتىمەن.",
+        "en": "I will tell everyone.",
+        "tr": "Herkese anlatacağım.",
+        "ar": "سأخبر الجميع.",
+        "zh-Hans": "我要告诉大家。",
+        "ru": "Всем расскажу.",
+        "fr": "Je le dirai à tous.",
+        "de": "Ich erzähle es allen.",
+        "es": "Se lo diré a todos.",
+        "pt-BR": "Vou contar para todo mundo."
+      }
+    ]
+  },
+  "marisol": {
+    "name": {
+      "ug": "مارىسول",
+      "en": "Marisol",
+      "ar": "ماريسول",
+      "ru": "Марисоль",
+      "zh-Hans": "玛丽索尔"
+    },
+    "order": [
+      {
+        "ug": "رەسىمگە ئالغۇدەك چىرايلىق نەرسە بارمۇ؟",
+        "en": "Something pretty I can photograph?",
+        "tr": "Fotoğraflanacak güzel bir şey var mı?",
+        "ar": "هل عندك شيء جميل أصوّره؟",
+        "zh-Hans": "有好看的能拍照吗？",
+        "ru": "Есть что-нибудь красивое для фото?",
+        "fr": "Un truc joli à photographier ?",
+        "de": "Etwas Schönes zum Fotografieren?",
+        "es": "¿Algo bonito para fotografiar?",
+        "pt-BR": "Tem algo bonito para eu fotografar?"
+      },
+      {
+        "ug": "ۋاي، كۆرسەم بولامدۇ؟",
+        "en": "Ooh, can I see it?",
+        "tr": "Ooh, görebilir miyim?",
+        "ar": "أوه، هل يمكنني رؤيته؟",
+        "zh-Hans": "哇，能让我看看吗？",
+        "ru": "Ой, можно посмотреть?",
+        "fr": "Oh, je peux voir ?",
+        "de": "Oh, darf ich mal sehen?",
+        "es": "Ay, ¿puedo verlo?",
+        "pt-BR": "Oba, posso ver?"
+      },
+      {
+        "ug": "مېنى خۇشال قىلىدىغان نەرسە بېرىڭ!",
+        "en": "Surprise me with something lovely!",
+        "tr": "Beni güzel bir şeyle şaşırt!",
+        "ar": "فاجئني بشيء جميل!",
+        "zh-Hans": "给我个惊喜吧！",
+        "ru": "Удивите меня чем-нибудь красивым!",
+        "fr": "Surprenez-moi avec du beau !",
+        "de": "Überrasch mich mit etwas Schönem!",
+        "es": "¡Sorpréndeme con algo bonito!",
+        "pt-BR": "Me surpreenda com algo encantador!"
+      }
+    ],
+    "thanks": [
+      {
+        "ug": "ئاجايىپ! ئاز تۇرۇڭ، بىر سۈرەت.",
+        "en": "Gorgeous! Hold still, one photo.",
+        "tr": "Muhteşem! Kıpırdama, bir fotoğraf.",
+        "ar": "رائع! لا تتحركي، صورة واحدة.",
+        "zh-Hans": "太美了！别动，拍一张。",
+        "ru": "Чудесно! Не двигайтесь, один снимок.",
+        "fr": "Splendide ! Ne bougez pas, une photo.",
+        "de": "Herrlich! Stillhalten, ein Foto.",
+        "es": "¡Precioso! Quieta, una foto.",
+        "pt-BR": "Lindo! Fique assim, uma foto."
+      },
+      {
+        "ug": "يورۇقلۇق بۇنى ياخشى كۆردى. رەھمەت!",
+        "en": "The light loves this. Thanks!",
+        "tr": "Işık bunu çok sevdi. Sağ ol!",
+        "ar": "الضوء يحب هذا. شكرًا!",
+        "zh-Hans": "光线很喜欢它。谢谢！",
+        "ru": "Свет это обожает. Спасибо!",
+        "fr": "La lumière adore ça. Merci !",
+        "de": "Das Licht liebt das. Danke!",
+        "es": "A la luz le encanta. ¡Gracias!",
+        "pt-BR": "A luz adorou isso. Obrigada!"
+      },
+      {
+        "ug": "يېڭى ياخشى كۆرگىنىمنى تاپتىم.",
+        "en": "I found my new favourite.",
+        "tr": "Yeni favorimi buldum.",
+        "ar": "وجدت مفضلي الجديد.",
+        "zh-Hans": "我找到新最爱了。",
+        "ru": "Нашла новое любимое.",
+        "fr": "J’ai trouvé mon nouveau préféré.",
+        "de": "Ich habe meinen neuen Liebling.",
+        "es": "Encontré mi nuevo favorito.",
+        "pt-BR": "Encontrei o meu novo favorito."
+      }
+    ]
+  },
+  "jiwoo": {
+    "name": {
+      "ug": "جىۋۇ",
+      "en": "Jiwoo",
+      "ar": "جيو",
+      "ru": "Джиу",
+      "zh-Hans": "智雨"
+    },
+    "order": [
+      {
+        "ug": "ئۇ... بىر نەرسە زاكاز قىلسام بولامدۇ؟",
+        "en": "Um... could I order something?",
+        "tr": "Şey... bir şey sipariş edebilir miyim?",
+        "ar": "عفوًا... هل أستطيع أن أطلب شيئًا؟",
+        "zh-Hans": "那个……我能下单吗？",
+        "ru": "Эм… можно что-нибудь заказать?",
+        "fr": "Euh… je pourrais commander quelque chose ?",
+        "de": "Ähm… dürfte ich etwas bestellen?",
+        "es": "Eh… ¿podría pedir algo?",
+        "pt-BR": "Hum... posso pedir alguma coisa?"
+      },
+      {
+        "ug": "كىچىك ۋە جىمجىت بىرى بولسۇن.",
+        "en": "Something small and quiet, please.",
+        "tr": "Küçük ve sessiz bir şey, lütfen.",
+        "ar": "شيء صغير وهادئ من فضلك.",
+        "zh-Hans": "小小的、安静的就好。",
+        "ru": "Что-нибудь маленькое и тихое, пожалуйста.",
+        "fr": "Quelque chose de petit et discret.",
+        "de": "Etwas Kleines und Ruhiges, bitte.",
+        "es": "Algo pequeño y tranquilo, por favor.",
+        "pt-BR": "Algo pequeno e quieto, por favor."
+      },
+      {
+        "ug": "مەن بۇ توغرىسىدا ئوقۇغانىدىم.",
+        "en": "I read about this one.",
+        "tr": "Bunu bir yerde okudum.",
+        "ar": "قرأت عن هذا.",
+        "zh-Hans": "我在书里读到过它。",
+        "ru": "Я читала про это.",
+        "fr": "J’ai lu des choses dessus.",
+        "de": "Darüber habe ich gelesen.",
+        "es": "Leí sobre este.",
+        "pt-BR": "Eu li sobre isso."
+      }
+    ],
+    "thanks": [
+      {
+        "ug": "رەھمەت. دەل ئۆزى ئىكەن.",
+        "en": "Thank you. It is perfect.",
+        "tr": "Teşekkürler. Tam istediğim gibi.",
+        "ar": "شكرًا. إنه مثالي.",
+        "zh-Hans": "谢谢，正合我意。",
+        "ru": "Спасибо. Это идеально.",
+        "fr": "Merci. C’est parfait.",
+        "de": "Danke. Es ist perfekt.",
+        "es": "Gracias. Es perfecto.",
+        "pt-BR": "Obrigada. Está perfeito."
+      },
+      {
+        "ug": "ئۇنى جىمجىت ئاسراپ ساقلايمەن.",
+        "en": "I will treasure it quietly.",
+        "tr": "Onu sessizce saklayacağım.",
+        "ar": "سأحتفظ به بهدوء.",
+        "zh-Hans": "我会悄悄珍藏它。",
+        "ru": "Буду тихо беречь это.",
+        "fr": "Je le garderai en silence.",
+        "de": "Ich hüte es ganz still.",
+        "es": "Lo guardaré en silencio.",
+        "pt-BR": "Vou guardar com carinho, em silêncio."
+      },
+      {
+        "ug": "ھەر قانداق كىتابتىن ياخشى.",
+        "en": "Better than any book.",
+        "tr": "Her kitaptan daha güzel.",
+        "ar": "أجمل من أي كتاب.",
+        "zh-Hans": "比任何书都好。",
+        "ru": "Лучше любой книги.",
+        "fr": "Mieux que n’importe quel livre.",
+        "de": "Besser als jedes Buch.",
+        "es": "Mejor que cualquier libro.",
+        "pt-BR": "Melhor do que qualquer livro."
+      }
+    ]
+  },
+  "gulnar": {
+    "name": {
+      "ug": "گۈلنار",
+      "en": "Gulnar",
+      "ar": "غولنار",
+      "ru": "Гульнар",
+      "zh-Hans": "古丽娜尔"
+    },
+    "order": [
+      {
+        "ug": "جېنىم، ماڭا مۇشۇ كېرەك.",
+        "en": "My dear, I need this.",
+        "tr": "Canım, bana bu lazım.",
+        "ar": "يا عزيزتي، أحتاج هذا.",
+        "zh-Hans": "亲爱的，我就要这个。",
+        "ru": "Милая, мне нужно вот это.",
+        "fr": "Ma chère, il me faut ça.",
+        "de": "Liebes, ich brauche das.",
+        "es": "Querida, necesito esto.",
+        "pt-BR": "Minha querida, preciso disto."
+      },
+      {
+        "ug": "ئانامنىڭكىدەك ئېسىل بىرى بولسۇن.",
+        "en": "Something fine, like my mother's.",
+        "tr": "Annemin ki gibi zarif olsun.",
+        "ar": "شيء راقٍ مثل ما عند أمي.",
+        "zh-Hans": "要像我妈妈那种精致的。",
+        "ru": "Что-то изысканное, как у мамы.",
+        "fr": "Quelque chose de fin, comme maman.",
+        "de": "Etwas Feines, wie bei Mama.",
+        "es": "Algo fino, como el de mamá.",
+        "pt-BR": "Algo fino, como o da minha mãe."
+      },
+      {
+        "ug": "داستىخانغا لايىق قىلىڭ.",
+        "en": "Make it worthy of a feast.",
+        "tr": "Bir sofraya yakışsın.",
+        "ar": "ليكن يليق بوليمة.",
+        "zh-Hans": "配得上一桌盛宴。",
+        "ru": "Достойное большого стола.",
+        "fr": "Digne d’un grand festin.",
+        "de": "Würdig eines großen Festmahls.",
+        "es": "Digno de un gran banquete.",
+        "pt-BR": "Faça algo digno de um banquete."
+      }
+    ],
+    "thanks": [
+      {
+        "ug": "قولىڭىز دەردسىز بولسۇن، جېنىم!",
+        "en": "Bless your hands, my dear!",
+        "tr": "Ellerine sağlık, canım!",
+        "ar": "بارك الله في يديكِ يا عزيزتي!",
+        "zh-Hans": "愿你双手平安，亲爱的！",
+        "ru": "Благослови Бог ваши руки, милая!",
+        "fr": "Bénies soient vos mains, ma chère !",
+        "de": "Gesegnet seien deine Hände, Liebes!",
+        "es": "¡Benditas sean tus manos, querida!",
+        "pt-BR": "Abençoadas sejam as suas mãos, querida!"
+      },
+      {
+        "ug": "مانا بۇ ھەقىقىي سۈپەت.",
+        "en": "Now this is real quality.",
+        "tr": "İşte gerçek kalite bu.",
+        "ar": "هذه هي الجودة الحقيقية.",
+        "zh-Hans": "这才是真正的品质。",
+        "ru": "Вот это настоящее качество.",
+        "fr": "Voilà la vraie qualité.",
+        "de": "Das ist echte Qualität.",
+        "es": "Esto sí es buena calidad.",
+        "pt-BR": "Isto sim é qualidade de verdade."
+      },
+      {
+        "ug": "بىر كۈنى ئۆيۈمگە كېلىڭ.",
+        "en": "Come to my home sometime.",
+        "tr": "Bir gün evime gel.",
+        "ar": "زوريني في بيتي يومًا.",
+        "zh-Hans": "改天来我家做客。",
+        "ru": "Заходите как-нибудь ко мне.",
+        "fr": "Venez chez moi un jour.",
+        "de": "Komm mich mal besuchen.",
+        "es": "Ven a mi casa algún día.",
+        "pt-BR": "Venha à minha casa um dia."
+      }
+    ]
+  },
+  "ingrid": {
+    "name": {
+      "ug": "ئىنگرىد",
+      "en": "Ingrid",
+      "ar": "إنغريد",
+      "ru": "Ингрид",
+      "zh-Hans": "英格丽德"
+    },
+    "order": [
+      {
+        "ug": "ئەتىگىنىڭىز خەيرلىك. بىر زاكاز، رەھمەت.",
+        "en": "Good morning. One order, please.",
+        "tr": "Günaydın. Tek sipariş, lütfen.",
+        "ar": "صباح الخير. طلب واحد من فضلك.",
+        "zh-Hans": "早上好。请来一份。",
+        "ru": "Доброе утро. Один заказ, пожалуйста.",
+        "fr": "Bonjour. Une commande, s’il vous plaît.",
+        "de": "Guten Morgen. Eine Bestellung, bitte.",
+        "es": "Buenos días. Un pedido, por favor.",
+        "pt-BR": "Bom dia. Um pedido, por favor."
+      },
+      {
+        "ug": "ئالدىرىماڭ. مەن كۈتىمەن.",
+        "en": "Take your time. I will wait.",
+        "tr": "Acele etme. Ben beklerim.",
+        "ar": "خذي وقتك. سأنتظر.",
+        "zh-Hans": "别急，我可以等。",
+        "ru": "Не спешите. Я подожду.",
+        "fr": "Prenez votre temps. J’attends.",
+        "de": "Lass dir Zeit. Ich warte.",
+        "es": "Tómate tu tiempo. Espero.",
+        "pt-BR": "Sem pressa. Eu espero."
+      },
+      {
+        "ug": "پاكىز ۋە سەمىمىي بىرى بولسۇن.",
+        "en": "Something clean and honest.",
+        "tr": "Temiz ve dürüst bir şey.",
+        "ar": "شيء نظيف وصادق.",
+        "zh-Hans": "要干净、实在的。",
+        "ru": "Что-нибудь чистое и честное.",
+        "fr": "Quelque chose de net et honnête.",
+        "de": "Etwas Klares und Ehrliches.",
+        "es": "Algo limpio y honesto.",
+        "pt-BR": "Algo limpo e sincero."
+      }
+    ],
+    "thanks": [
+      {
+        "ug": "ناھايىتى ياخشى بولۇپتۇ. رەھمەت.",
+        "en": "Well done. Thank you.",
+        "tr": "Aferin. Teşekkürler.",
+        "ar": "أحسنتِ. شكرًا لك.",
+        "zh-Hans": "做得好。谢谢。",
+        "ru": "Отлично. Спасибо.",
+        "fr": "Bien joué. Merci.",
+        "de": "Gut gemacht. Danke.",
+        "es": "Bien hecho. Gracias.",
+        "pt-BR": "Muito bem. Obrigada."
+      },
+      {
+        "ug": "ئەمدى ئىش راۋان بولىدۇ.",
+        "en": "Smooth sailing from here.",
+        "tr": "Buradan sonrası kolay.",
+        "ar": "الإبحار سلس من هنا.",
+        "zh-Hans": "往后一帆风顺。",
+        "ru": "Дальше — ровный путь.",
+        "fr": "Mer calme à partir d’ici.",
+        "de": "Ab hier ruhige See.",
+        "es": "Aguas tranquilas desde aquí.",
+        "pt-BR": "Agora tudo vai andar bem."
+      },
+      {
+        "ug": "قولىڭىز ئىشەنچلىك ئىكەن.",
+        "en": "You have a steady hand.",
+        "tr": "Elin çok sağlam.",
+        "ar": "يدك ثابتة.",
+        "zh-Hans": "你的手很稳。",
+        "ru": "У вас твёрдая рука.",
+        "fr": "Vous avez la main sûre.",
+        "de": "Du hast eine ruhige Hand.",
+        "es": "Tienes pulso firme.",
+        "pt-BR": "Você tem a mão firme."
+      }
+    ]
+  },
+  "tamara": {
+    "name": {
+      "ug": "تامارا",
+      "en": "Tamara",
+      "ar": "تامارا",
+      "ru": "Тамара",
+      "zh-Hans": "塔玛拉"
+    },
+    "order": [
+      {
+        "ug": "سالام! يېڭى، ساپ بىر نەرسە بولسۇن.",
+        "en": "Hello! Something fresh, please.",
+        "tr": "Merhaba! Taze bir şey, lütfen.",
+        "ar": "مرحبًا! شيء منعش من فضلك.",
+        "zh-Hans": "你好！想要清新漂亮的。",
+        "ru": "Здравствуйте! Что-нибудь свежее, пожалуйста.",
+        "fr": "Bonjour ! Du frais, s’il vous plaît.",
+        "de": "Hallo! Etwas Frisches, bitte.",
+        "es": "¡Hola! Algo fresco, por favor.",
+        "pt-BR": "Olá! Algo fresco, por favor."
+      },
+      {
+        "ug": "يۇمشاق ۋە تاتلىق بولسا بولامدۇ؟",
+        "en": "Could it be soft and sweet?",
+        "tr": "Yumuşak ve tatlı olabilir mi?",
+        "ar": "هل يمكن أن يكون ناعمًا وحلوًا؟",
+        "zh-Hans": "能柔和甜美一点吗？",
+        "ru": "Можно что-то мягкое и нежное?",
+        "fr": "Quelque chose de doux et sucré ?",
+        "de": "Darf es weich und süß sein?",
+        "es": "¿Puede ser suave y dulce?",
+        "pt-BR": "Pode ser macio e doce?"
+      },
+      {
+        "ug": "سىزنى ئاۋارە قىلمىغان بولسام ياخشى ئىدى!",
+        "en": "I hope it is no trouble!",
+        "tr": "Umarım zahmet olmaz!",
+        "ar": "آمل ألا أكون قد أزعجتك!",
+        "zh-Hans": "希望没有打扰到你！",
+        "ru": "Надеюсь, я не помешаю!",
+        "fr": "J’espère ne pas déranger !",
+        "de": "Hoffentlich mache ich keine Umstände!",
+        "es": "¡Espero no ser una molestia!",
+        "pt-BR": "Espero não estar atrapalhando!"
+      }
+    ],
+    "thanks": [
+      {
+        "ug": "ناھايىتى چىرايلىق! سىزگە رەھمەت!",
+        "en": "It is lovely! Thank you!",
+        "tr": "Çok güzel! Çok teşekkürler!",
+        "ar": "جميل جدًا! شكرًا جزيلًا!",
+        "zh-Hans": "太可爱了！谢谢你！",
+        "ru": "Как красиво! Спасибо вам!",
+        "fr": "Si joli ! Merci beaucoup !",
+        "de": "Wunderschön! Vielen lieben Dank!",
+        "es": "¡Qué bonito! ¡Gracias!",
+        "pt-BR": "Que lindo! Obrigada!"
+      },
+      {
+        "ug": "بۇ دالا گۈللىرى سىزگە سوۋغا.",
+        "en": "Take these wildflowers, my gift!",
+        "tr": "Bu kır çiçekleri benden hediye!",
+        "ar": "هذه أزهار برية، هدية لكِ!",
+        "zh-Hans": "这些野花送给你！",
+        "ru": "Возьмите полевые цветы — подарок!",
+        "fr": "Ces fleurs sauvages sont pour vous !",
+        "de": "Diese Wildblumen sind mein Geschenk!",
+        "es": "Estas flores silvestres son un regalo para ti.",
+        "pt-BR": "Estas flores do campo são um presente para você."
+      },
+      {
+        "ug": "يېقىندا يەنە كېلىمەن.",
+        "en": "I will come back soon.",
+        "tr": "Yakında yine gelirim.",
+        "ar": "سأعود قريبًا.",
+        "zh-Hans": "我很快还会再来。",
+        "ru": "Скоро снова приду.",
+        "fr": "Je reviendrai bientôt.",
+        "de": "Ich komme bald wieder.",
+        "es": "Volveré pronto.",
+        "pt-BR": "Volto em breve."
+      }
+    ]
+  },
+  "mira": {
+    "name": {
+      "ug": "مىرا",
+      "en": "Mira",
+      "ar": "ميرا",
+      "ru": "Мира",
+      "zh-Hans": "米拉"
+    },
+    "order": [],
+    "thanks": []
+  },
+  "elara": {
+    "name": {
+      "ug": "ئېلارا",
+      "en": "Elara",
+      "ar": "إلارا",
+      "ru": "Элара",
+      "zh-Hans": "埃拉拉"
+    },
+    "order": [],
+    "thanks": []
+  },
+  "sora": {
+    "name": {
+      "ug": "سورا",
+      "en": "Sora",
+      "ar": "سورا",
+      "ru": "Сора",
+      "zh-Hans": "空"
+    },
+    "order": [],
+    "thanks": []
+  },
+  "amina": {
+    "name": {
+      "ug": "ئامىنە",
+      "en": "Amina",
+      "ar": "أمينة",
+      "ru": "Амина",
+      "zh-Hans": "阿米娜"
+    },
+    "order": [],
+    "thanks": []
+  },
+  "nila": {
+    "name": {
+      "ug": "نىلا",
+      "en": "Nila",
+      "ar": "نيلا",
+      "ru": "Нила",
+      "zh-Hans": "尼拉"
+    },
+    "order": [],
+    "thanks": []
+  },
+  "celine": {
+    "name": {
+      "ug": "سېلىن",
+      "en": "Celine",
+      "ar": "سيلين",
+      "ru": "Селин",
+      "zh-Hans": "席琳"
+    },
+    "order": [],
+    "thanks": []
+  }
+};
+window.custText = function (id, kind, ix, lang) {
+  const c = window.CUST_LINES && window.CUST_LINES[id];
+  if (!c) return '';
+  lang = lang || 'ug';
+  const pick = function (row) { return (row && (row[lang] || row.en)) || ''; };
+  if (kind === 'name') return pick(c.name);
+  const arr = c[kind];
+  if (!arr || !arr.length) return '';
+  const i = ((ix % arr.length) + arr.length) % arr.length;
+  return pick(arr[i]);
+};

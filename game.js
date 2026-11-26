@@ -48,7 +48,7 @@ const A = window.ART, C = window.CONFIG;
 document.body.insertAdjacentHTML('afterbegin', A.DEFS);
 const PREVIEW = typeof location !== 'undefined' && /\/preview(?:\/|$)/.test(location.pathname || '');
 const KEY = PREVIEW ? 'atelierLueur.preview.v2' : 'atelierLueur.v2';   // preview play path uses its own save so the main playtest is untouched
-SAVE.configure({N, CHAINS: ALL_CHAINS, CUSTOMERS: ['mira','elara','sora','amina','nila','celine'], MAXLV, GEN_TYPES: GEN_TYPES_ALL, GEN_MAXLV, LANG_KEYS:Object.keys(LANGS),
+SAVE.configure({N, CHAINS: ALL_CHAINS, CUSTOMERS: ['mira','elara','sora','amina','nila','celine','ada','marisol','jiwoo','gulnar','ingrid','tamara'], MAXLV, GEN_TYPES: GEN_TYPES_ALL, GEN_MAXLV, LANG_KEYS:Object.keys(LANGS),
   validateEv: v => window.CONTENT.strictEventState(v), evSummary: v => window.CONTENT.summaryOf(v), checkVariants: (o, vo, ve) => window.SALON.checkVariants(o, vo, ve)});
 // storage adapter: may throw (blocked storage / quota). save.js reports every failure; nothing is swallowed here.
 const persist = SAVE.createStore({
@@ -662,6 +662,7 @@ function deliver(oi){
   const atl = ATL.onOrdinaryDelivery(S);                                                  // Atelier cadence: ordinary deliveries only (commission deliveries never come through here)
   SFX.deliver(); buzz(20);
   setPortrait(oi, 'happy');   // art reaction after a REAL successful delivery only
+  const thanks = custLine('thanks', o, oi); if (thanks) toast(thanks);
   const el = $('orders').children[oi]; if (el) el.classList.add('leave');
   lastWho[oi] = whoOf(o, oi); S.orders[oi] = null; save(); closeModal();
   fxAfterGive(fromEl || el, snap, {stars: payStars});
@@ -1087,7 +1088,21 @@ function renderSide(){                                 // the level star opens t
 const PORTRAIT_BY_SLOT = ['mira','elara','sora'];          // LEGACY slot identity: how an order saved without "who" has always looked
 /* Customer registry: immutable ids. Identity is stored on the order ("who") so it survives rerender, language change, reload, import and restore.
    Customers are interchangeable for gameplay: every customer can get every order type (selection never reads appearance, tone, religion or ethnicity). */
-const CUSTOMERS = ['mira','elara','sora','amina','nila','celine'];
+const CUSTOMERS = ['mira','elara','sora','amina','nila','celine','ada','marisol','jiwoo','gulnar','ingrid','tamara'];
+/* The new six join the same open rotation as Amina, Nila and Celine: no level gate, any order type. */
+function custLang(){ return (S && S.set && S.set.lang) || 'ug'; }
+function lineIx(who, o){
+  let h = 0; const s = String(who || '');
+  for (let i = 0; i < s.length; i++) h = (h * 33 + s.charCodeAt(i)) >>> 0;
+  h = (h + ((o && o.coins) || 0) * 7 + ((o && o.l) || 0) + ((o && o.stars) || 0) * 3) >>> 0;
+  return h % 3;
+}
+function custName(id){ return (typeof window.custText === 'function' && window.custText(id, 'name', 0, custLang())) || ''; }
+function custLine(kind, o, slot){
+  const id = whoOf(o, slot);
+  return (typeof window.custText === 'function' && window.custText(id, kind, lineIx(id, o), custLang())) || '';
+}
+
 const whoOf = (o, slot) => (o && o.who) || PORTRAIT_BY_SLOT[(slot || 0) % 3];
 const lastWho = [null, null, null];          // the customer who just left a slot (memory only): the replacement prefers someone else
 function pickCustomer(slot){
@@ -1606,7 +1621,9 @@ function openOrder(oi){
   const o = S.orders[oi]; if (!o) return;
   const rq = needs(o).map(q => ({q, have: Math.min(q.n, haveCount(q.c, q.l))})), ok = rq.every(x => x.have >= x.q.n);
   const mixed = rq.length > 1;
-  modal(L.orderTitle, (mixed ? `<div class="center muted" style="font-weight:800">${L.mixedOrder}</div>` : '') +
+  const say = custLine('order', o, oi), whoName = custName(whoOf(o, oi));
+  const quote = say ? `<div class="custSay">${whoName ? `<b>${whoName}</b>` : ''}${say}</div>` : '';
+  modal(L.orderTitle, quote + (mixed ? `<div class="center muted" style="font-weight:800">${L.mixedOrder}</div>` : '') +
     rq.map(x => `<div class="${mixed ? 'ordReq' : ''}"><div class="bigart">${A.item(x.q.c, x.q.l)}</div>
     <div class="center" style="font-weight:800">${L.items[x.q.c][x.q.l-1]} (${L.level(x.q.l)})</div>
     <div class="center ltr" style="font-size:22px;font-weight:800;color:${x.have>=x.q.n?'var(--green-dark)':'var(--pink-dark)'}">${x.have}/${x.q.n}</div>${orderPathHtml(x.q.c, x.q.l)}</div>`).join('') +
@@ -2392,5 +2409,5 @@ setInterval(save, 5000);
 document.addEventListener('visibilitychange', () => { if (document.hidden) save(true); else { tick(); renderAll(); refreshContent(false).catch(() => {}); } });
 
 // سىناق ئۈچۈن
-window.__game = { AUDIO, applyAudio, atelier: {open: () => openAtelier(), env: atelierEnv, notes: atelierNotes}, ALL_CHAINS, buyProp, buyColour, equipColour, salonInp, taskCounts, openTasks, tasksFor, get EV(){ return EV; }, energyTimes, ENERGY_CAP, ENERGY_MS, ENERGY_PACKS, GEM_ENERGY, energyOffer, buyEnergy, buyEnergyGems, eshopState, dayKey, weekKey, monthKey, tick, applyLang, buyProducer, placeQueued, producerPrice, equivOf, grantMilestones, claimEvent, newOrder, accessibleChains, deliver: oi => deliver(oi), save: () => save(), get contentInfo(){ return contentInfo; }, refreshContent, get S(){ return S; }, get gate(){ return saveGate; }, get recovery(){ return recovery; }, renderAll, openShop, MSN, MSN_CFG, select: i => { selected = i; renderBoard(); renderInfo(); }, storeSelected, placeInv, expandInv, undoLastSale, get undoSale(){ return undoSale; }, openGenUpgrade, genDropTable, claimDailyGift, giftStreakNext, giftReward, skipTut, tutAdvance, INV_CAPS, INV_EXPAND, INV_EXPAND_GEMS, get fxCoinHold(){ return fxCoinHold; }, get fxEnergyHold(){ return fxEnergyHold; }, get fxGemHold(){ return fxGemHold; }, get fxBits(){ return fxBits; }, fxWalletSnap, fxAfterGive, fxRewardFlight, fxGrantFromCell, drop, sell, produce, give, openBoardBox, collectGem, roadReward, addStarsCore, openRoad, openOrder, GEN_STOCK, GEN_REST_MS, settleAllGens, settleGen, genRestLeft, genStockOf, freshGen };
+window.__game = { AUDIO, applyAudio, atelier: {open: () => openAtelier(), env: atelierEnv, notes: atelierNotes}, ALL_CHAINS, buyProp, buyColour, equipColour, salonInp, taskCounts, openTasks, tasksFor, get EV(){ return EV; }, energyTimes, ENERGY_CAP, ENERGY_MS, ENERGY_PACKS, GEM_ENERGY, energyOffer, buyEnergy, buyEnergyGems, eshopState, dayKey, weekKey, monthKey, tick, applyLang, buyProducer, placeQueued, producerPrice, equivOf, grantMilestones, claimEvent, newOrder, accessibleChains, deliver: oi => deliver(oi), save: () => save(), get contentInfo(){ return contentInfo; }, refreshContent, get S(){ return S; }, get gate(){ return saveGate; }, get recovery(){ return recovery; }, renderAll, openShop, MSN, MSN_CFG, select: i => { selected = i; renderBoard(); renderInfo(); }, storeSelected, placeInv, expandInv, undoLastSale, get undoSale(){ return undoSale; }, openGenUpgrade, genDropTable, claimDailyGift, giftStreakNext, giftReward, skipTut, tutAdvance, INV_CAPS, INV_EXPAND, INV_EXPAND_GEMS, get fxCoinHold(){ return fxCoinHold; }, get fxEnergyHold(){ return fxEnergyHold; }, get fxGemHold(){ return fxGemHold; }, get fxBits(){ return fxBits; }, fxWalletSnap, fxAfterGive, fxRewardFlight, fxGrantFromCell, drop, sell, produce, give, openBoardBox, collectGem, roadReward, addStarsCore, openRoad, openOrder, GEN_STOCK, GEN_REST_MS, settleAllGens, settleGen, genRestLeft, genStockOf, freshGen, CUSTOMERS, pickCustomer, custLine, custName, whoOf };
 })();

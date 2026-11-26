@@ -151,13 +151,45 @@ function giftBox(level, body, rib){
 }
 
 /* ---------------- سىنبەلگىلەر ---------------- */
+const GEM_A = `<defs>
+ <radialGradient id="gemAHalo" cx=".5" cy=".45" r=".55"><stop offset="0" stop-color="#c8f8ff" stop-opacity=".7"/><stop offset="1" stop-color="#c8f8ff" stop-opacity="0"/></radialGradient>
+ <linearGradient id="gemATable" x1=".15" y1="0" x2=".9" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".45" stop-color="#f3fdff"/><stop offset="1" stop-color="#b7eaf8"/></linearGradient>
+ <linearGradient id="gemAFront" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e7fbff"/><stop offset="1" stop-color="#7ed4ee"/></linearGradient>
+ <linearGradient id="gemAPavL" x1=".2" y1="0" x2=".8" y2="1"><stop offset="0" stop-color="#9ae8f8"/><stop offset=".4" stop-color="#3db3d8"/><stop offset="1" stop-color="#166488"/></linearGradient>
+ <linearGradient id="gemAPavR" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5ec0de"/><stop offset=".45" stop-color="#1e7aa0"/><stop offset="1" stop-color="#0d4a66"/></linearGradient>
+ <linearGradient id="gemAFire" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff1c8" stop-opacity=".0"/><stop offset=".45" stop-color="#ffe09a" stop-opacity=".55"/><stop offset=".7" stop-color="#ffc2e6" stop-opacity=".4"/><stop offset="1" stop-color="#ffc2e6" stop-opacity="0"/></linearGradient>
+</defs>
+ <ellipse cx="50" cy="50" rx="40" ry="42" fill="url(#gemAHalo)"/>
+ <ellipse cx="50" cy="94" rx="28" ry="4.2" fill="#7a2c5a" opacity=".14"/>
+ <path d="M50 8L70 22L88 44L50 92L12 44L30 22Z" fill="#1a5a72" stroke="#1a5a72" stroke-width="3.2" stroke-linejoin="round"/>
+ <path d="M50 8L30 22L40 20Z" fill="#d9f6ff"/>
+ <path d="M50 8L70 22L60 20Z" fill="#8fd4ea"/>
+ <path d="M40 20L60 20L64 32L36 32Z" fill="url(#gemATable)"/>
+ <path d="M30 22L12 44L36 32L40 20Z" fill="#6ec8e4"/>
+ <path d="M70 22L88 44L64 32L60 20Z" fill="#2f8fb4"/>
+ <path d="M36 32L64 32L72 44L28 44Z" fill="url(#gemAFront)"/>
+ <path d="M42 21.5L54 21.5L50 26L39.5 26Z" fill="#fff" opacity=".9"/>
+ <path d="M12 44L28 44L50 92Z" fill="#1c6e92"/>
+ <path d="M28 44L50 44L50 92Z" fill="url(#gemAPavL)"/>
+ <path d="M50 44L72 44L50 92Z" fill="url(#gemAPavR)"/>
+ <path d="M72 44L88 44L50 92Z" fill="#0e4a66"/>
+ <path d="M30 46L48 46L50 78Z" fill="url(#gemAFire)"/>
+ <path d="M33 50L42 52L50 70L46 52Z" fill="#fff" opacity=".55"/>
+ <path d="M12 44H88" stroke="#fff" stroke-width="2.4" opacity=".55" stroke-linecap="round"/>
+ <path d="M36 32H64" stroke="#fff" stroke-width="1.6" opacity=".65" stroke-linecap="round"/>
+ <path d="M50 8L70 22L88 44L50 92L12 44L30 22Z" fill="none" stroke="#fff" stroke-width="1.3" stroke-linejoin="round" opacity=".35"/>
+ <path d="M84 9.8Q85.116 14.884 90.2 16Q85.116 17.116 84 22.2Q82.884 17.116 77.8 16Q82.884 14.884 84 9.8Z" fill="#fff"/>
+ <path d="M84 13.6Q84.432 15.568 86.4 16Q84.432 16.432 84 18.4Q83.568 16.432 81.6 16Q83.568 15.568 84 13.6Z" fill="#fff6b0"/>
+ <path d="M16 55.8Q16.756 59.244 20.2 60Q16.756 60.756 16 64.2Q15.244 60.756 11.8 60Q15.244 59.244 16 55.8Z" fill="#fff" opacity=".9"/>
+ <path d="M58 21.9Q58.378 23.622 60.1 24Q58.378 24.378 58 26.1Q57.622 24.378 55.9 24Q57.622 23.622 58 21.9Z" fill="#fff"/>`;
+
 const ICON = {
   coin: svg(`<circle cx="50" cy="50" r="42" fill="url(#gCoin)" stroke="#c07a08" stroke-width="5"/><circle cx="50" cy="50" r="30" fill="none" stroke="#fff3b0" stroke-width="3" opacity=".7"/><path d="M50 70C30 56 30 42 40 38C46 36 49 40 50 43C51 40 54 36 60 38C70 42 70 56 50 70Z" fill="#e8a414"/>`),
   star: svg(`<path d="M50 6L62 36L94 38L69 58L78 90L50 72L22 90L31 58L6 38L38 36Z" fill="url(#gStar)" stroke="#b81f78" stroke-width="4" stroke-linejoin="round"/><path d="M40 30L48 14" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".7"/>`),
   bolt: svg(`<path d="M58 4L18 56H46L38 96L82 40H54Z" fill="url(#gBolt)" stroke="#2f7d12" stroke-width="5" stroke-linejoin="round"/><path d="M52 16L32 48" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".6"/>`),
   gift: svg(giftBox(3,'gPinkBox','gGoldH')),
-  gem: svg(`<path d="M50 8L86 38L50 94L14 38Z" fill="url(#gGem)" stroke="#1e5a70" stroke-width="5" stroke-linejoin="round"/><path d="M50 8L64 38H36Z" fill="#fff" opacity=".55"/><path d="M14 38H86" stroke="#fff" stroke-width="3" opacity=".45"/>`),
-  gemBox: svg(giftBox(3,'gGemBox','gGoldH') + `<g transform="translate(50 58) scale(.42)"><path d="M0 -28L24 0L0 36L-24 0Z" fill="#7ed0ea" stroke="#1e5a70" stroke-width="8" stroke-linejoin="round"/></g>`),
+  gem: svg(GEM_A),
+  gemBox: svg(giftBox(3,'gGemBox','gGoldH') + `<g transform="translate(50 58) scale(.42) translate(-50 -50)">` + GEM_A + `</g>`),
 
   tasks: svg(`<rect x="18" y="12" width="64" height="80" rx="10" fill="url(#gWhite)" stroke="#d24b84" stroke-width="5"/><rect x="34" y="4" width="32" height="16" rx="6" fill="url(#gGoldH)"/><path d="M30 42L38 50L52 36M30 68L38 76L52 62" stroke="#46c35a" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><rect x="58" y="40" width="14" height="6" rx="3" fill="#f3a9c8"/><rect x="58" y="66" width="14" height="6" rx="3" fill="#f3a9c8"/>`),
   shop: svg(`<rect x="14" y="44" width="72" height="48" rx="6" fill="url(#gWood)" stroke="#c77a52" stroke-width="4"/><path d="M8 44L18 12H82L92 44Z" fill="#fff" stroke="#d24b84" stroke-width="4"/><path d="M18 12L14 44M34 12L32 44M50 12V44M66 12L68 44M82 12L86 44" stroke="#ff5fa2" stroke-width="9"/><rect x="38" y="60" width="24" height="32" rx="3" fill="#7fd3f0" stroke="#3a9ac2" stroke-width="3"/>`),
@@ -165,6 +197,7 @@ const ICON = {
   book: svg(`<path d="M50 20C38 12 22 12 10 16V86C22 82 38 82 50 90C62 82 78 82 90 86V16C78 12 62 12 50 20Z" fill="url(#gLav)" stroke="#7f58dc" stroke-width="5" stroke-linejoin="round"/><path d="M50 20V90" stroke="#7f58dc" stroke-width="4"/><path d="M28 40C24 34 30 28 34 34C38 28 44 34 40 40L34 46Z" fill="#ff5fa2"/><rect x="58" y="34" width="22" height="5" rx="2" fill="#fff" opacity=".8"/><rect x="58" y="48" width="18" height="5" rx="2" fill="#fff" opacity=".8"/>`),
   crown: svg(crown(50,74,2.6)),
   gear: svg(`<path d="M50 8l8 10 12-4 2 13 13 2-4 12 10 8-10 8 4 12-13 2-2 13-12-4-8 10-8-10-12 4-2-13-13-2 4-12-10-8 10-8-4-12 13-2 2-13 12 4z" fill="url(#gLav)" stroke="#7f58dc" stroke-width="4" stroke-linejoin="round"/><circle cx="50" cy="50" r="14" fill="#fff" stroke="#7f58dc" stroke-width="4"/>`),
+  home: svg(`<path d="M50 10L92 46V90H60V62H40V90H8V46Z" fill="url(#gPinkBox)" stroke="#c93f7c" stroke-width="5" stroke-linejoin="round"/><rect x="42" y="64" width="16" height="26" rx="3" fill="#7fd3f0" stroke="#3a9ac2" stroke-width="3"/><path d="M22 46L50 22L78 46" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".55"/>`),
   letter: svg(`<rect x="8" y="26" width="84" height="58" rx="8" fill="url(#gWhite)" stroke="#d24b84" stroke-width="5"/><path d="M10 30L50 60L90 30" stroke="#d24b84" stroke-width="5" fill="none" stroke-linejoin="round"/><path d="M50 74C36 64 36 54 43 52C47 51 49 53 50 55C51 53 53 51 57 52C64 54 64 64 50 74Z" fill="#ff3f86" stroke="#fff" stroke-width="2"/>`),
   heart: svg(`<path d="M50 88C10 60 6 32 24 22C36 16 46 24 50 32C54 24 64 16 76 22C94 32 90 60 50 88Z" fill="url(#gStar)" stroke="#b81f78" stroke-width="5"/><path d="M26 34Q30 26 38 26" stroke="#fff" stroke-width="5" stroke-linecap="round" fill="none" opacity=".7"/>`),
   lock: svg(`<rect x="22" y="44" width="56" height="46" rx="10" fill="url(#gGold)" stroke="#a86d10" stroke-width="5"/><path d="M34 44V32a16 16 0 0 1 32 0V44" stroke="#a86d10" stroke-width="8" fill="none"/><circle cx="50" cy="64" r="6" fill="#a86d10"/><rect x="47" y="64" width="6" height="14" rx="3" fill="#a86d10"/>`),

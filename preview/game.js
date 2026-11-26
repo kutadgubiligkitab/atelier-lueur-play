@@ -377,8 +377,25 @@ function fxPt(el){
   const r = el.getBoundingClientRect();
   return {x: r.left + r.width / 2, y: r.top + r.height / 2};
 }
-let fxCoinHold = null, fxCoinRaf = 0, fxStarHold = null, fxBits = 0;
-const FX_BIT_CAP = 28;
+let fxCoinHold = null, fxCoinRaf = 0, fxStarHold = null, fxEnergyHold = null, fxEnergyRaf = 0, fxGemHold = null, fxGemRaf = 0, fxBits = 0;
+const FX_BIT_CAP = 28, FX_BURST_CAP = 8;   // concurrent leftover cap, and a soft cap per grant burst
+const FX_GEM_SVG = '<svg viewBox="0 0 100 100" aria-hidden="true"><path d="M50 6L90 38L50 96L10 38Z" fill="#7ec8e8" stroke="#2a6d88" stroke-width="5"/><path d="M50 6L66 38H34Z" fill="#d4f3ff" opacity=".75"/></svg>';
+function fxIcon(kind){ return kind === 'star' ? A.icon('star') : kind === 'energy' ? A.icon('bolt') : kind === 'gem' ? FX_GEM_SVG : A.icon('coin'); }
+function fxTargetEl(kind){
+  if (kind === 'star') return $('tLv');
+  if (kind === 'energy') return $('tEp');
+  if (kind === 'gem') return $('tGv') && ($('tGv').closest('.pill') || $('tGv'));   // future gems pill: reserved id, no layout until it exists
+  return $('tCv') && ($('tCv').closest('.pill') || $('tCv'));
+}
+function fxWalletSnap(){
+  return {
+    coins: fxCoinHold != null ? fxCoinHold : (S ? S.coins : 0),
+    energy: fxEnergyHold != null ? fxEnergyHold : (S ? S.energy : 0),
+    gems: fxGemHold != null ? fxGemHold : (S && S.gems) || 0,
+    pct: fxStarHold != null ? fxStarHold : (S ? Math.min(100, S.stars / starsNeed(S.lv) * 100) : 0),
+    lv: S ? S.lv : 1
+  };
+}
 function fxClearBit(el){ if (!el || !el.parentNode) return; el.remove(); fxBits = Math.max(0, fxBits - 1); }
 function fxBounce(el, soft){
   if (!el || fxReduce() || !el.animate) return;
@@ -411,6 +428,43 @@ function fxCountCoins(target, dur){
   };
   fxCoinRaf = requestAnimationFrame(step);
 }
+function fxCountEnergy(target, dur){
+  const el = $('tEv');
+  const from = fxEnergyHold != null ? fxEnergyHold : (el ? (parseInt(el.textContent, 10) || target) : target);
+  if (fxEnergyRaf) cancelAnimationFrame(fxEnergyRaf);
+  if (fxReduce() || !el){ fxEnergyHold = null; if (el) el.textContent = S.energy + '/' + ENERGY_CAP; return; }
+  const t0 = performance.now(), len = dur || 120, dest = target;
+  fxEnergyHold = from;
+  const step = now => {
+    const t = Math.min(1, (now - t0) / len);
+    const eased = 1 - Math.pow(1 - t, 3);
+    fxEnergyHold = from + (dest - from) * eased;
+    if ($('tEv')) $('tEv').textContent = Math.round(fxEnergyHold) + '/' + ENERGY_CAP;
+    if (t < 1) fxEnergyRaf = requestAnimationFrame(step);
+    else {
+      fxEnergyHold = dest === S.energy ? null : dest;
+      fxEnergyRaf = 0;
+      if ($('tEv')) $('tEv').textContent = Math.round(dest === S.energy ? S.energy : dest) + '/' + ENERGY_CAP;
+    }
+  };
+  fxEnergyRaf = requestAnimationFrame(step);
+}
+function fxCountGems(target, dur){
+  const el = $('tGv'); if (!el){ fxGemHold = null; return; }
+  const from = fxGemHold != null ? fxGemHold : (parseInt(el.textContent, 10) || target);
+  if (fxGemRaf) cancelAnimationFrame(fxGemRaf);
+  if (fxReduce()){ fxGemHold = null; el.textContent = String((S && S.gems) || 0); return; }
+  const t0 = performance.now(), len = dur || 120, dest = target, live = () => (S && S.gems) || 0;
+  fxGemHold = from;
+  const step = now => {
+    const t = Math.min(1, (now - t0) / len);
+    fxGemHold = from + (dest - from) * (1 - Math.pow(1 - t, 3));
+    if ($('tGv')) $('tGv').textContent = String(Math.round(fxGemHold));
+    if (t < 1) fxGemRaf = requestAnimationFrame(step);
+    else { const g = live(); fxGemHold = dest === g ? null : dest; fxGemRaf = 0; if ($('tGv')) $('tGv').textContent = String(Math.round(dest === g ? g : dest)); }
+  };
+  fxGemRaf = requestAnimationFrame(step);
+}
 function fxTweenStarBar(fromPct, toPct, dur){
   const bar = $('tLvB'); if (!bar) return;
   if (fxReduce()){ fxStarHold = null; bar.style.width = toPct + '%'; return; }
@@ -442,7 +496,8 @@ function fxFlyBits(kind, from, to, n, stagger, onLand){
   n = Math.max(0, Math.min(8, n | 0));
   if (!n || fxReduce() || !from || !to) { if (onLand) onLand(true); return 0; }
   const layer = fxLayer();
-  const html = kind === 'star' ? A.icon('star') : A.icon('coin');
+  const html = fxIcon(kind);
+  const klass = kind === 'star' ? 'Star' : kind === 'energy' ? 'Energy' : kind === 'gem' ? 'Gem' : 'Coin';
   const dur = 760, gap = 36;
   const ang = Math.atan2(to.y - from.y, to.x - from.x);
   const perp = ang + Math.PI / 2;
@@ -453,7 +508,7 @@ function fxFlyBits(kind, from, to, n, stagger, onLand){
     const finish = () => { if (onLand) onLand(last); if (d) fxClearBit(d); };
     if (fxBits >= FX_BIT_CAP) { finish(); continue; }
     d = document.createElement('div');
-    d.className = 'fxBit fx' + (kind === 'star' ? 'Star' : 'Coin');
+    d.className = 'fxBit fx' + klass;
     d.innerHTML = html;
     layer.appendChild(d); fxBits++; spawned++;
     const fan = n === 1 ? 0 : (i - (n - 1) / 2) / ((n - 1) / 2);           // -1..1
@@ -478,56 +533,90 @@ function fxFlyBits(kind, from, to, n, stagger, onLand){
   return spawned;
 }
 function fxRewardFlight(opts){
-  const fromEl = opts && opts.from, coins = (opts && opts.coins) || 0, stars = (opts && opts.stars) || 0;
-  const fromCoins = opts && opts.fromCoins != null ? opts.fromCoins : (fxCoinHold != null ? fxCoinHold : (S ? S.coins - coins : 0));
-  const toCoins = opts && opts.toCoins != null ? opts.toCoins : (S ? S.coins : fromCoins);
-  const fromPct = opts && opts.fromPct != null ? opts.fromPct : null;
-  const toPct = opts && opts.toPct != null ? opts.toPct : (S ? Math.min(100, S.stars / starsNeed(S.lv) * 100) : 0);
-  const src = fxPt(fromEl);
-  const coinTo = fxPt($('tCv') && $('tCv').closest('.pill') || $('tCv'));
-  const starTo = fxPt($('tLv'));
+  opts = opts || {};
+  if (opts.silent) return;                                  // load-time / regen grants stay quiet
+  const fromEl = opts.from;
+  const src = fromEl && fromEl.getBoundingClientRect ? fxPt(fromEl) : (fromEl && fromEl.x != null ? fromEl : fxPt(fromEl));
+  const coins = Math.max(0, opts.coins || 0), energy = Math.max(0, opts.energy || 0), stars = Math.max(0, opts.stars || 0), gems = Math.max(0, opts.gems || 0);
+  const fromCoins = opts.fromCoins != null ? opts.fromCoins : (fxCoinHold != null ? fxCoinHold : (S ? S.coins - coins : 0));
+  const toCoins = opts.toCoins != null ? opts.toCoins : (S ? S.coins : fromCoins);
+  const fromEnergy = opts.fromEnergy != null ? opts.fromEnergy : (fxEnergyHold != null ? fxEnergyHold : (S ? S.energy - energy : 0));
+  const toEnergy = opts.toEnergy != null ? opts.toEnergy : (S ? S.energy : fromEnergy);
+  const fromGems = opts.fromGems != null ? opts.fromGems : (fxGemHold != null ? fxGemHold : ((S && S.gems) || 0) - gems);
+  const toGems = opts.toGems != null ? opts.toGems : ((S && S.gems) || 0);
+  const fromPct = opts.fromPct != null ? opts.fromPct : null;
+  const toPct = opts.toPct != null ? opts.toPct : (S ? Math.min(100, S.stars / starsNeed(S.lv) * 100) : 0);
   if (fxReduce()){
     fxCoinHold = null; if ($('tCv')) $('tCv').textContent = String(S.coins);
+    fxEnergyHold = null; if ($('tEv')) $('tEv').textContent = S.energy + '/' + ENERGY_CAP;
     fxStarHold = null; if ($('tLvB')) $('tLvB').style.width = toPct + '%';
+    fxGemHold = null; if ($('tGv')) $('tGv').textContent = String((S && S.gems) || 0);
     return;
   }
-  // Hold the displayed wallet at the pre-payout value until pieces start to land (renderTop would otherwise jump)
+  // Hold displayed wallets at the pre-payout values until pieces land (renderTop would otherwise jump)
   if (coins && fxCoinHold == null){ fxCoinHold = fromCoins; if ($('tCv')) $('tCv').textContent = String(Math.round(fromCoins)); }
-  const nCoin = coins ? Math.min(8, Math.max(5, Math.round(Math.min(8, 4 + coins / 20)))) : 0;
-  const nStar = stars ? Math.min(6, Math.max(4, Math.round(Math.min(6, 3 + stars / 15)))) : 0;
-  let coinLanded = 0, starLanded = 0, coinsDone = !nCoin, starsDone = !nStar;
-  const coinPill = $('tCv') && $('tCv').closest('.pill');
-  const onCoinLand = last => {
-    if (coinsDone) return;
-    coinLanded++;
-    const shown = (last || coinLanded >= nCoin) ? toCoins : fromCoins + Math.round((toCoins - fromCoins) * (coinLanded / nCoin));
-    if (last || coinLanded >= nCoin) coinsDone = true;
-    fxBounce(coinPill, true);
-    fxCountCoins(shown, last ? 140 : 100);
+  if (energy && fxEnergyHold == null){ fxEnergyHold = fromEnergy; if ($('tEv')) $('tEv').textContent = Math.round(fromEnergy) + '/' + ENERGY_CAP; }
+  if (gems && fxTargetEl('gem') && fxGemHold == null){ fxGemHold = fromGems; if ($('tGv')) $('tGv').textContent = String(Math.round(fromGems)); }
+  const parts = [];
+  if (coins) parts.push({kind:'coin', amount:coins, from:fromCoins, to:toCoins});
+  if (energy) parts.push({kind:'energy', amount:energy, from:fromEnergy, to:toEnergy});
+  if (stars) parts.push({kind:'star', amount:stars, from:fromPct, to:toPct});
+  if (gems && fxTargetEl('gem')) parts.push({kind:'gem', amount:gems, from:fromGems, to:toGems});
+  let slots = FX_BURST_CAP;
+  parts.forEach((p, i) => {
+    const remain = parts.length - i;
+    p.n = Math.min(slots - (remain - 1), Math.max(1, Math.min(FX_BURST_CAP, Math.round(2 + Math.min(p.amount, 80) / 20))));
+    slots -= p.n;
+  });
+  const done = {};
+  const land = (p, last) => {
+    if (done[p.kind]) return;
+    p.landed = (p.landed || 0) + 1;
+    const fin = last || p.landed >= p.n;
+    if (fin) done[p.kind] = true;
+    const shown = fin ? p.to : p.from + (p.to - p.from) * (p.landed / p.n);
+    fxBounce(fxTargetEl(p.kind), true);
+    if (p.kind === 'coin') fxCountCoins(shown, fin ? 140 : 100);
+    else if (p.kind === 'energy') fxCountEnergy(shown, fin ? 140 : 100);
+    else if (p.kind === 'gem') fxCountGems(shown, fin ? 140 : 100);
+    else if (p.kind === 'star' && fromPct != null) fxTweenStarBar(fxStarHold != null ? fxStarHold : fromPct, shown, fin ? 180 : 120);
   };
-  const onStarLand = last => {
-    if (starsDone) return;
-    starLanded++;
-    const pct = (last || starLanded >= nStar || fromPct == null) ? toPct : fromPct + (toPct - fromPct) * (starLanded / nStar);
-    if (last || starLanded >= nStar) starsDone = true;
-    fxBounce($('tLv'), true);
-    if (fromPct != null) fxTweenStarBar(fxStarHold != null ? fxStarHold : fromPct, pct, last ? 180 : 120);
-  };
-  if (!nCoin && !nStar){ if (coins) fxCountCoins(toCoins, 80); return; }
-  if (nCoin) fxFlyBits('coin', src, coinTo, nCoin, 0, onCoinLand);
-  if (nStar) fxFlyBits('star', src, starTo, nStar, 50, onStarLand);
-  setTimeout(() => {                                        // never leave the counter short if a flight was capped
-    if (coins && !coinsDone){ coinsDone = true; fxCountCoins(toCoins, 120); }
-    if (stars && !starsDone && fromPct != null){ starsDone = true; fxTweenStarBar(fxStarHold != null ? fxStarHold : fromPct, toPct, 160); }
+  if (!parts.length){ if (coins) fxCountCoins(toCoins, 80); if (energy) fxCountEnergy(toEnergy, 80); return; }
+  parts.forEach((p, i) => fxFlyBits(p.kind, src, fxPt(fxTargetEl(p.kind)), p.n, i * 40, last => land(p, last)));
+  setTimeout(() => {
+    parts.forEach(p => { if (done[p.kind]) return; done[p.kind] = true;
+      if (p.kind === 'coin') fxCountCoins(p.to, 120);
+      else if (p.kind === 'energy') fxCountEnergy(p.to, 120);
+      else if (p.kind === 'gem') fxCountGems(p.to, 120);
+      else if (p.kind === 'star' && fromPct != null) fxTweenStarBar(fxStarHold != null ? fxStarHold : fromPct, toPct, 160);
+    });
   }, 1100);
+}
+function fxAfterGive(from, snap, extra){     // wallet already committed; fly the visible delta (spends are ignored)
+  snap = snap || fxWalletSnap(); extra = extra || {};
+  if (extra.silent) return;
+  const toPct = Math.min(100, S.stars / starsNeed(S.lv) * 100);
+  const dCoins = Math.max(0, S.coins - snap.coins);
+  const dEnergy = Math.max(0, S.energy - snap.energy);
+  const dGems = Math.max(0, ((S && S.gems) || 0) - (snap.gems || 0));
+  const dStars = extra.stars != null ? extra.stars : ((snap.lv != null && S.lv > snap.lv) || (snap.pct != null && Math.abs(toPct - snap.pct) > 0.5) ? 4 : 0);
+  if (!dCoins && !dEnergy && !dStars && !dGems) return;
+  fxRewardFlight({from, coins:dCoins, energy:dEnergy, stars:dStars, gems:dGems,
+    fromCoins:snap.coins, toCoins:S.coins, fromEnergy:snap.energy, toEnergy:S.energy,
+    fromGems:snap.gems, toGems:(S && S.gems) || 0, fromPct:snap.pct, toPct});
+}
+function fxGrantFromCell(i, reward){         // future board chests / gem boxes: same helper, source is the cell
+  const el = $('board') && $('board').children[i];
+  const snap = fxWalletSnap();
+  if (reward) give(reward);
+  fxAfterGive(el, snap, {stars: reward && reward.stars});
 }
 
 function deliver(oi){
   const o = S.orders[oi]; if (!ready(o)) { toast(L.notReady); SFX.no(); return; }       // all-or-nothing: nothing is consumed unless EVERY requirement is met
   const fromEl = $('orders') && $('orders').children[oi];
-  const fromCoins = fxCoinHold != null ? fxCoinHold : S.coins;
-  const fromPct = Math.min(100, S.stars / starsNeed(S.lv) * 100);
-  const payCoins = o.coins, payStars = o.stars;
+  const snap = fxWalletSnap();
+  const payStars = o.stars;
   needs(o).forEach(r => { let left = r.n;
     S.board.forEach((it,i) => { if (left && it && it.c===r.c && it.l===r.l){ S.board[i] = null; if (selected===i) selected=null; left--; } }); });
   give({coins:o.coins}); addStars(o.stars); count('order');                              // one payout, one generic order count — wallet commits before any animation
@@ -537,7 +626,7 @@ function deliver(oi){
   setPortrait(oi, 'happy');   // art reaction after a REAL successful delivery only
   const el = $('orders').children[oi]; if (el) el.classList.add('leave');
   lastWho[oi] = whoOf(o, oi); S.orders[oi] = null; save(); closeModal();
-  fxRewardFlight({from: fromEl || el, coins: payCoins, stars: payStars, fromCoins, toCoins: S.coins, fromPct, toPct: Math.min(100, S.stars / starsNeed(S.lv) * 100)});
+  fxAfterGive(fromEl || el, snap, {stars: payStars});
   if (atl.created){ setTimeout(() => { toast(L.atl.newCommission); renderSide(); }, 900); }
   if (S.tut === 3) tutAdvance(3);
   setTimeout(() => { S.orders[oi] = newOrder(oi); PSTATE[oi] = 'idle'; orderFx[oi] = 'arrive'; save(); renderOrders(); renderBoard(); renderTut(); }, 420);
@@ -695,9 +784,9 @@ function giftReward(n){ const k = Math.max(1, Math.min(3, n)); return {energy: 2
 function claimDailyGift(){
   const dk = dayKey(); if (S.gift === dk) return {ok:false, reason:'already'};
   const n = giftStreakNext(), rew = giftReward(n);
-  const fromCoins = fxCoinHold != null ? fxCoinHold : S.coins;
+  const snap = fxWalletSnap();
   S.gift = dk; S.gst = {k: dk, n}; give(rew); SFX.coin(); save();
-  fxRewardFlight({from: $('shGift'), coins: rew.coins, stars: 0, fromCoins, toCoins: S.coins});
+  fxAfterGive($('shGift'), snap);
   if (S.tut === 4) tutAdvance(4);
   return {ok:true, n, rew};
 }
@@ -780,9 +869,9 @@ function sell(){
   const it = S.board[selected]; if (!it || it.g) return;          // generators stay unsellable
   const cell = selected, copy = {c:it.c, l:it.l}, coins = it.l * 2;
   const fromEl = $('board') && $('board').children[cell];
-  const fromCoins = fxCoinHold != null ? fxCoinHold : S.coins;
+  const snap = fxWalletSnap();
   give({coins}); S.board[selected] = null; selected = null; SFX.coin(); save();
-  fxRewardFlight({from: fromEl, coins, stars: 0, fromCoins, toCoins: S.coins});
+  fxAfterGive(fromEl, snap);
   undoSale = {it:copy, cell, coins, until: Date.now() + UNDO_MS};
   clearInterval(undoTimer); undoTimer = setInterval(() => { if (!undoSale || Date.now() >= undoSale.until) clearUndo(); else renderUndo(); }, 200);
   renderAll(); renderUndo();
@@ -805,9 +894,15 @@ function renderTop(){
   }
   $('tLvN').textContent = S.lv;
   if (fxStarHold == null) $('tLvB').style.width = pct + '%';
-  $('tEv').textContent = S.energy + '/' + ENERGY_CAP; $('tEt').textContent = timer; $('tEt').classList.toggle('full', S.energy >= ENERGY_CAP);
+  if (fxEnergyHold == null) $('tEv').textContent = S.energy + '/' + ENERGY_CAP;
+  else $('tEv').textContent = Math.round(fxEnergyHold) + '/' + ENERGY_CAP;
+  $('tEt').textContent = timer; $('tEt').classList.toggle('full', S.energy >= ENERGY_CAP);
   if (fxCoinHold == null) $('tCv').textContent = S.coins;
   else $('tCv').textContent = String(Math.round(fxCoinHold));
+  if ($('tGv')){
+    if (fxGemHold == null) $('tGv').textContent = String((S && S.gems) || 0);
+    else $('tGv').textContent = String(Math.round(fxGemHold));
+  }
 }
 const ATL_PREVIEW_LEVEL = 20;              // UI only: from this level the locked Atelier tile (with its requirements) is shown; its single sprite loads only then
 function renderSide(){                                 // the level star opens the road; no duplicate crown beside the orders
@@ -1419,13 +1514,16 @@ function openTasks(opts){
   });
   $('modal').querySelectorAll('[data-claim]').forEach(b => b.onclick = () => {
     const t = tasksFor(taskTab).find(x => x.id===b.dataset.claim); if (!t) return;
+    const snap = fxWalletSnap();
     const r = claimTask(taskTab, t);
     if (!r.ok){ if (r.reason === 'storage' || r.reason === 'error'){ toast(L.errWrite); SFX.no(); } openTasks(); return; }
+    fxAfterGive(b, snap, {stars: t.r && t.r.stars});
     sfxReward(t.r); announceLevelUps(r.ups); renderTop(); renderNav(); openTasks();
   });
   $('modal').querySelectorAll('[data-evclaim]').forEach(b => b.onclick = () => {
-    const [eid, oid] = b.dataset.evclaim.split('|'); const r = claimEvent(eid, oid);
+    const [eid, oid] = b.dataset.evclaim.split('|'); const snap = fxWalletSnap(); const r = claimEvent(eid, oid);
     if (!r.ok){ toast(L.eventClaimFail); SFX.no(); openTasks(); return; }
+    fxAfterGive(b, snap, {stars: r.reward && r.reward.stars});
     sfxReward(r.reward); renderTop(); renderNav(); openTasks();
   });
 }
@@ -1499,10 +1597,10 @@ function openAlbum(){
   });
   modal(L.albumTitle, h);
   $('modal').querySelectorAll('[data-set]').forEach(b => b.onclick = () => {
-    const k = b.dataset.set;
-    if (ATL.FAMILIES.indexOf(k) >= 0){ const r = ATL.claimChapter(atelierEnv(), k); if (!r.ok){ SFX.no(); toast(L.atl.fail); return; } SFX.level(); confetti(); renderTop(); renderNav(); openAlbum(); return; }
+    const k = b.dataset.set, snap = fxWalletSnap();
+    if (ATL.FAMILIES.indexOf(k) >= 0){ const r = ATL.claimChapter(atelierEnv(), k); if (!r.ok){ SFX.no(); toast(L.atl.fail); return; } fxAfterGive(b, snap); SFX.level(); confetti(); renderTop(); renderNav(); openAlbum(); return; }
     S.album[k] = 1;
-    const rew = k==='all' ? {coins:500, energy:50} : {coins:100, energy:20}; give(rew); SFX.coin(); confetti(); save(); renderTop(); renderNav(); openAlbum();
+    const rew = k==='all' ? {coins:500, energy:50} : {coins:100, energy:20}; give(rew); SFX.coin(); confetti(); save(); fxAfterGive(b, snap); renderTop(); renderNav(); openAlbum();
   });
 }
 
@@ -1555,12 +1653,11 @@ function openAtelier(reward){          // reward (optional) is passed ONLY by th
   const goBtn = $('atlGo'); if (!goBtn) return;
   goBtn.onclick = () => {
     if (goBtn.disabled) return; goBtn.disabled = true;                                           // a second tap cannot start a second delivery (the rule also refuses it: no active commission)
+    const snap = fxWalletSnap();
     const r = ATL.deliverCommission(atelierEnv());
     if (r.ok){
-      const fromCoins = fxCoinHold != null ? fxCoinHold : (S.coins - (r.coins || 0));
-      const fromPct = Math.min(100, (S.stars - (r.stars || 0)) / starsNeed(S.lv) * 100);
       SFX.deliver(); buzz(20); selected = null;
-      fxRewardFlight({from: goBtn, coins: r.coins, stars: r.stars, fromCoins, toCoins: S.coins, fromPct, toPct: Math.min(100, S.stars / starsNeed(S.lv) * 100)});
+      fxAfterGive(goBtn, snap, {stars: r.stars});
       announceLevelUps(r.ups.concat(r.grants.map(g => ({supply: {g: ATL.PRODUCER, where: g.where}}))), true);    // the level-up is shown inside the reward card below
       renderTop(); renderBoard(); renderOrders(); renderInfo(); renderNav(); renderSide();
       openAtelier({recipe: r.recipe, coins: r.coins, stars: r.stars, levels: r.ups.filter(u => u.lv)});       // the ACTUAL credited (frozen) values, shown only because the write committed
@@ -1639,9 +1736,10 @@ function openShop(mode){
   $('shGift').onclick = () => { if (!claimDailyGift().ok) return; renderTop(); openShop(mode); };
   renderTut();
   const onBuy = pack => {
+    const btn = $('shE' + pack), snap = fxWalletSnap();
     const r = buyEnergy(pack);
     if (!r.ok){ SFX.no(); toast(r.reason === 'coins' ? L.noCoins : L.shopSoldOut); openShop(mode); return; }
-    SFX.shop(); renderTop(); openShop(mode);
+    SFX.shop(); fxAfterGive(btn, snap); renderTop(); openShop(mode);
   };
   $('shE20').onclick = () => onBuy(20);
   $('shE50').onclick = () => onBuy(50);
@@ -2051,5 +2149,5 @@ setInterval(save, 5000);
 document.addEventListener('visibilitychange', () => { if (document.hidden) save(true); else { tick(); renderAll(); refreshContent(false).catch(() => {}); } });
 
 // سىناق ئۈچۈن
-window.__game = { AUDIO, applyAudio, atelier: {open: () => openAtelier(), env: atelierEnv, notes: atelierNotes}, ALL_CHAINS, buyProp, buyColour, equipColour, salonInp, taskCounts, openTasks, tasksFor, get EV(){ return EV; }, energyTimes, ENERGY_CAP, ENERGY_MS, ENERGY_PACKS, energyOffer, buyEnergy, eshopState, dayKey, weekKey, monthKey, tick, applyLang, buyProducer, placeQueued, producerPrice, equivOf, grantMilestones, claimEvent, newOrder, accessibleChains, deliver: oi => deliver(oi), save: () => save(), get contentInfo(){ return contentInfo; }, refreshContent, get S(){ return S; }, get gate(){ return saveGate; }, get recovery(){ return recovery; }, renderAll, openShop, MSN, MSN_CFG, select: i => { selected = i; renderBoard(); renderInfo(); }, storeSelected, placeInv, expandInv, undoLastSale, get undoSale(){ return undoSale; }, openGenUpgrade, genDropTable, claimDailyGift, giftStreakNext, giftReward, skipTut, tutAdvance, INV_CAPS, INV_EXPAND, get fxCoinHold(){ return fxCoinHold; }, get fxBits(){ return fxBits; }, drop, sell, produce };
+window.__game = { AUDIO, applyAudio, atelier: {open: () => openAtelier(), env: atelierEnv, notes: atelierNotes}, ALL_CHAINS, buyProp, buyColour, equipColour, salonInp, taskCounts, openTasks, tasksFor, get EV(){ return EV; }, energyTimes, ENERGY_CAP, ENERGY_MS, ENERGY_PACKS, energyOffer, buyEnergy, eshopState, dayKey, weekKey, monthKey, tick, applyLang, buyProducer, placeQueued, producerPrice, equivOf, grantMilestones, claimEvent, newOrder, accessibleChains, deliver: oi => deliver(oi), save: () => save(), get contentInfo(){ return contentInfo; }, refreshContent, get S(){ return S; }, get gate(){ return saveGate; }, get recovery(){ return recovery; }, renderAll, openShop, MSN, MSN_CFG, select: i => { selected = i; renderBoard(); renderInfo(); }, storeSelected, placeInv, expandInv, undoLastSale, get undoSale(){ return undoSale; }, openGenUpgrade, genDropTable, claimDailyGift, giftStreakNext, giftReward, skipTut, tutAdvance, INV_CAPS, INV_EXPAND, get fxCoinHold(){ return fxCoinHold; }, get fxEnergyHold(){ return fxEnergyHold; }, get fxBits(){ return fxBits; }, fxWalletSnap, fxAfterGive, fxRewardFlight, fxGrantFromCell, drop, sell, produce, give };
 })();

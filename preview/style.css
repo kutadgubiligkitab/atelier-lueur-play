@@ -127,6 +127,7 @@ html[dir="rtl"] .order.arriving{--custInX:-22px}
 .fxBit svg{width:100%;height:100%;display:block}
 .fxConf{width:8px;height:10px;margin:-5px 0 0 -4px;border-radius:2px;filter:none}
 .fxHeart{width:16px;height:16px;margin:-8px 0 0 -8px;font-size:14px;line-height:16px;text-align:center;filter:none}
+.fxEnergy,.fxGem{filter:drop-shadow(0 2px 2px rgba(40,80,60,.25))}
 
 /* ---------- info strip ---------- */
 .info{position:relative;flex:none;display:grid;grid-template-columns:auto minmax(0,1fr) auto;column-gap:8px;row-gap:2px;align-items:center;min-height:var(--infoH,64px);height:auto;overflow:visible;padding:4px 10px;background:#fffd;border:2.5px solid var(--panel-edge);border-radius:16px}

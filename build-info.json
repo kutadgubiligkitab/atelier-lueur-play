@@ -1,9 +1,9 @@
 {
- "sourceCommit": "00bcfaa0260fac07b7ae8d498a40e5909a1ce5e5",
+ "sourceCommit": "a1db3fdb51ac49a9659e86213f678d76ad76a0b2",
  "sourceHasUncommittedChanges": false,
- "cacheBust": "00bcfaa0260f",
+ "cacheBust": "a1db3fdb51ac",
  "fileCount": 456,
- "totalBytes": 97673596,
+ "totalBytes": 97678076,
  "files": [
   {
    "path": "art.js",
@@ -2237,13 +2237,13 @@
   },
   {
    "path": "game.js",
-   "bytes": 178604,
-   "sha256": "d3988653cd8aa592aa12e95a7ab5e01c8f4b800964d2ee29895f02d5acdfbd12"
+   "bytes": 181095,
+   "sha256": "17bb926a38ea462db300a18e9a3cf00da3f76ed6503c2409ca13ab397dbac171"
   },
   {
    "path": "i18n.js",
-   "bytes": 237792,
-   "sha256": "d121b00df535caebf22fbfd4f123436d0bdd77ec31b5d157f0a386efac1427c4"
+   "bytes": 238356,
+   "sha256": "f77b54c6bd1efea0916966a6593319716f3941f4006a985c86e7d193e43f72d8"
   },
   {
    "path": "icon.png",
@@ -2253,7 +2253,7 @@
   {
    "path": "index.html",
    "bytes": 9154,
-   "sha256": "0304419905fb7bf551cf149766448a0ce0242fcd40f833b2ef55c7812ceb4598"
+   "sha256": "b6f7948c5b8b5fde6009a238f87366d76bacb13ebb71b29a7bcf119af8f3ccbc"
   },
   {
    "path": "manifest.json",
@@ -2277,13 +2277,13 @@
   },
   {
    "path": "save.js",
-   "bytes": 30773,
-   "sha256": "305a5a4d6b2fe0720ac3d8c046929d9f03378460d2117d5d3a5561bef06a94ba"
+   "bytes": 31191,
+   "sha256": "879a7a660624b66862ca5363ba00e25af58f1d90c2b1b46fceb7e6ea861e920d"
   },
   {
    "path": "style.css",
-   "bytes": 66580,
-   "sha256": "617b1c0bf5c5d614b81407bc0c8a8213d7e237734e7732d6d3d886fea274f2c2"
+   "bytes": 67587,
+   "sha256": "3c19c5b4832c5b4ad3eccb31073b9595a1f650e145689a51a9244524a18da2d2"
   }
  ]
 }

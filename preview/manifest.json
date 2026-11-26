@@ -1,0 +1,10 @@
+{
+  "name": "گۈزەللىك سالونى",
+  "short_name": "گۈزەللىك",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffe3ef",
+  "theme_color": "#ffd3e6",
+  "icons": [{"src": "icon.png", "sizes": "512x512", "type": "image/png"}]
+}

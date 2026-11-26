@@ -951,34 +951,46 @@ function openColourSheet(slot, startColour){
 /* ---- Salon selector: every implemented area in registry order (Studio, Reception, Spa), locked ones included. Cards derive from the canonical registry
    (SALON.evaluate / unlockRequirements). Browsing is read-only: nothing is charged, granted, owned, counted or unlocked; closing changes nothing. ---- */
 const areaThumbId = id => id === 'studio' ? 'base' : id + '-base';
+const COMING_AREAS = ['nail', 'perfume'];                                  // placeholders in the picker only; not in the salon registry yet
 function areaProgressHtml(x){
   if (x.optionalTotal > 0) return `<span>${L.requiredProg(x.requiredOwned, x.requiredTotal)}</span> <span class="optp">${L.optionalProg(x.optionalOwned, x.optionalTotal)}</span>`;   // extra colours never count
   return `<span>${L.areaFurnished(x.ownedCount, x.total)}</span>`;
 }
+function areaPickerThumb(x, def, open){
+  if (!open){                                                              // locked real room: empty base + the usual veil and lock
+    return `${A.salonImg(areaThumbId(x.id), 'selImg')}<div class="selVeil"></div><div class="selLock">${A.icon('lock')}</div>`;
+  }
+  return A.room(S.owned, def.draw.map(id => ({id})), null, x.id, x.id === 'spa' ? equippedMap() : undefined);  // current furniture, or the finished room when everything is owned
+}
 function openSalonSelector(){
-  const v = salonView(), inp = salonInp();
+  const v = salonView();
   const cards = v.shown.map(x => {
     const open = x.accessible || x.id === 'studio', def = SALON.areaById(x.id), cur = x.id === v.area;
-    const reqs = open ? '' : `<div class="selReqs">` + SALON.unlockRequirements(def, inp).map(r => `<div class="req ${r.met ? 'met' : ''}"><i>${A.icon(r.met ? 'check' : 'lock')}</i><span>${reasonText(r)}</span><b>${r.have}/${r.need}</b></div>`).join('') + '</div>';
-    return `<button class="selCard ${open ? 'open' : 'lock'}${cur ? ' cur' : ''}" data-area="${x.id}" aria-label="${L.areaNames[x.id]} · ${open ? L.areaOpenTag : L.areaLockedTag}"${cur ? ' aria-current="true"' : ''}>
-      <div class="selThumb" dir="ltr">${A.salonImg(areaThumbId(x.id), 'selImg')}${open ? '' : `<div class="selVeil"></div><div class="selLock">${A.icon('lock')}</div>`}</div>
-      <div class="selBody"><div class="selHead"><b>${L.areaNames[x.id]}</b><span class="selTags">${cur ? `<span class="selTag cur">${L.areaCurrent}</span>` : ''}<span class="selTag ${open ? 'open' : 'lock'}">${open ? L.areaOpenTag : L.areaLockedTag}</span></span></div>
-        <div class="selProg">${open ? areaProgressHtml(x) : L.areaTapPreview}</div>${reqs}</div></button>`;
+    const name = L.areaNames[x.id] || x.id;
+    return `<button type="button" class="selCard ${open ? 'open' : 'lock'}${cur ? ' cur' : ''}" data-area="${x.id}" aria-label="${name} · ${open ? (x.ownedCount + '/' + x.total) : L.areaLockedTag}"${cur ? ' aria-current="true"' : ''}>
+      <div class="selThumb" dir="ltr">${areaPickerThumb(x, def, open)}</div>
+      <div class="selMeta"><div class="selName">${name}</div>${open ? `<div class="selProg">${x.ownedCount}/${x.total}</div>` : `<div class="selSoon">${L.areaLockedTag}</div>`}</div></button>`;
+  }).join('') + COMING_AREAS.map(id => {
+    const name = L.areaNames[id] || id;
+    return `<button type="button" class="selCard lock soon" data-soon="${id}" aria-label="${name} · ${L.soon}">
+      <div class="selThumb" dir="ltr">${A.salonImg('base', 'selImg')}<div class="selVeil"></div><div class="selLock">${A.icon('lock')}</div></div>
+      <div class="selMeta"><div class="selName">${name}</div><div class="selSoon">${L.soon}</div></div></button>`;
   }).join('');
-  modal(L.salonsTitle, `<div class="selList" id="salonList">${cards}</div><div class="selFoot"><button class="btn wide" id="selClose">${L.selClose}</button></div>`);
-  $('selClose').onclick = closeModal;                                    // closing without a choice leaves the current room untouched
+  modal(L.salonsTitle, `<div class="selList" id="salonList">${cards}</div>`);
   $('modal').querySelectorAll('.selImg').forEach(im => { const ok = () => im.classList.add('ok'); if (im.complete && im.naturalWidth) ok(); else { im.addEventListener('load', ok); im.addEventListener('error', () => im.classList.add('bad')); } });
-  $('modal').querySelectorAll('.selCard').forEach(c => c.onclick = () => {
+  $('salonList').onclick = ev => {
+    const c = ev.target.closest('.selCard'); if (!c || !c.closest('#salonList')) return;
+    if (c.dataset.soon){ toast(L.soon); return; }                          // placeholder: do not leave the picker
     const id = c.dataset.area, x = salonView().byId[id], open = x.accessible || id === 'studio';
-    salonArea = id; salonPicked = !open;                                // a locked pick is a session-only read-only preview
+    salonArea = id; salonPicked = !open;                                   // a locked pick is a session-only read-only preview
     if (open){ try { localStorage.setItem(SALON_PREF, id); } catch(e){} }
     closeModal(); renderSalon();
-  });
+  };
 }
 function renderSalon(justBought, entering){
   endSalonFx();
   const v = salonView(), a = v.byId[v.area], def = SALON.areaById(v.area), accessible = a.accessible || v.area === 'studio';
-  $('pageSalon').classList.toggle('multi', v.area !== 'studio');   // other rooms keep the room image undistorted at its natural 4:3 and let the page scroll when the screen is short; the Studio layout is unchanged
+  $('pageSalon').classList.add('multi');   // same 4:3 room framing for every area, so switching rooms does not jump the picture vertically
   $('salonTabs').innerHTML = `<button class="salonSelBtn" id="salonSel" data-area="${v.area}" aria-haspopup="dialog"><span class="sbIc">${accessible ? '' : `<i>${A.icon('lock')}</i>`}</span><span class="sbName">${L.areaNames[v.area]}</span><span class="sbTag">${L.salonsBtn} ▾</span></button>`;   // ONE room-selection control (replaces the old tab strip)
   $('salonSel').onclick = openSalonSelector;
   if (a.accessible && v.area === 'reception') preloadRoom('reception'); else if (v.byId.reception && v.byId.reception.accessible && v.area === 'studio') preloadRoom('reception');

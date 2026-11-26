@@ -72,7 +72,7 @@
     if (!CFG) throw new Error('SAVE.configure() was not called');
     const bad = code => ({ ok: false, code });
     if (!isObj(s)) return bad('not-object');
-    const allowed = ['v', 'board', 'energy', 'et', 'coins', 'stars', 'gems', 'lv', 'orders', 'seen', 'owned', 'road', 'album', 'cnt', 'claimed', 'gift', 'set', 'secretSeen', 'ev', 'queue', 'qid', 'pg', 'pbuy', 'ecap', 'vo', 've', 'atl', 'msn', 'eshop', 'ptcg', 'ptgg', 'tut', 'inv', 'gst'];
+    const allowed = ['v', 'board', 'energy', 'et', 'coins', 'stars', 'gems', 'lv', 'orders', 'seen', 'owned', 'road', 'album', 'cnt', 'claimed', 'gift', 'set', 'secretSeen', 'ev', 'queue', 'qid', 'pg', 'pbuy', 'ecap', 'vo', 've', 'atl', 'msn', 'eshop', 'ptcg', 'ptgg', 'tut', 'inv', 'gst', 'ghs', 'ghp'];
     for (const k of Object.keys(s)) if (allowed.indexOf(k) < 0) return bad('unknown-field:' + k);
     if (s.v !== 2) return bad('version');
 
@@ -278,6 +278,8 @@
       if (!isObj(s.gst) || Object.keys(s.gst).some(k => k !== 'k' && k !== 'n') || typeof s.gst.k !== 'string' || s.gst.k.length > 20 || !isInt(s.gst.n, 1, 7)) return bad('gst');
       gst = { k: s.gst.k, n: s.gst.n };
     }
+    let ghs; if (s.ghs !== undefined) { if (!isInt(s.ghs, 0, 3)) return bad('ghs'); ghs = s.ghs; }   // times the long-press hint was shown (0–3)
+    let ghp; if (s.ghp !== undefined) { if (s.ghp !== 0 && s.ghp !== 1) return bad('ghp'); ghp = s.ghp; }   // 1 = the player has long-pressed a generator once
 
     const out = { ok: true, state: {
       v: 2, board, energy: s.energy, et, coins: s.coins, stars: s.stars, gems, lv: s.lv, orders, seen, owned, road, album,
@@ -299,6 +301,8 @@
     if (tut !== undefined) out.state.tut = tut;
     if (inv !== undefined) out.state.inv = inv;
     if (gst !== undefined) out.state.gst = gst;
+    if (ghs !== undefined) out.state.ghs = ghs;
+    if (ghp !== undefined) out.state.ghp = ghp;
     return out;
   }
 

@@ -1271,6 +1271,7 @@ function renderInfo(){
   renderInfoInner(); if (page === 'board') layout();   // the panel's content may need more or less height: recompute
 }
 function renderInfoInner(){
+  maybeCountGenSelect();
   const it = selected != null ? S.board[selected] : null, box = $('info');
   if (!it && S.queue && S.queue.length){             // persistent delivery tray (only when a producer is waiting): same panel, board size unchanged
     const q = S.queue[0], free = emptyCell() >= 0;
@@ -1315,7 +1316,8 @@ function infoItemHtml(it){                  // markup of the selected-item panel
   const sellBtn = it.g ? '' : `<button class="btn pink" id="bSell">${L.sell} <span class="rw"><i>${A.icon('coin')}</i>${it.l*2}</span></button>`;
   const genInfo = it.g ? `<button type="button" class="infoBtn genHintBtn" data-info="hint-gen" aria-expanded="false" aria-controls="td-hint-gen" aria-label="${L.genRestHint}"><i class="infoDot" aria-hidden="true">!</i></button>` : '';
   const genDet = it.g ? `<div class="tcDet" id="td-hint-gen" hidden>${L.genRestHint}</div>` : '';
-  return `${store}<div class="art">${itemArt(it)}</div><div class="txt"><div class="ttl">${itemName(it)} · ${L.level(it.l)}</div><div class="hint">${hint}</div>${genDet}</div>
+  const peek = (it.g && showPeekHint()) ? ` <span class="peekHint">${L.genPeekHint}</span>` : '';
+  return `${store}<div class="art">${itemArt(it)}</div><div class="txt"><div class="ttl">${itemName(it)} · ${L.level(it.l)}</div><div class="hint">${hint}${peek}</div>${genDet}</div>
     ${genInfo}${sellBtn}`;
 }
 /* Height the panel needs for the LONGEST content in the current language and width (every item rank, every producer, the delivery-tray row), measured off-screen once per width/language.
@@ -1353,6 +1355,7 @@ function go(p){
   const entering = p === 'salon' && page !== 'salon';
   if (page === 'salon' && p !== 'salon') endSalonFx();
   if (page === 'board' && p !== 'board') endCustomerFx();       // leaving the room: drop any one-shot visuals
+  if (p !== 'board'){ clearPeekTimer(); hideGenPeek(); }
   page = p;
   $('pageBoard').style.display = p==='board' ? 'contents' : 'none';
   $('pageSalon').style.display = p==='salon' ? 'flex' : 'none';
@@ -2300,16 +2303,75 @@ function confetti(hearts, origin){
 
 /* ---------------- سۆرەش ---------------- */
 const bd = $('board');
+const PEEK_MS = 450;
+let peekTimer = 0, peekSel = null, peekHintOn = false;
+function clearPeekTimer(){ clearTimeout(peekTimer); peekTimer = 0; }
+function hideGenPeek(){ const el = $('genPeek'); if (el) el.remove(); }
+function showPeekHint(){ return !!(peekHintOn && S && !S.ghp); }
+function maybeCountGenSelect(){
+  const it = selected != null && S ? S.board[selected] : null;
+  if (!it || !it.g){ peekSel = null; peekHintOn = false; return; }
+  if (peekSel === selected) return;
+  peekSel = selected;
+  peekHintOn = !S.ghp && (S.ghs || 0) < 3;
+  if (peekHintOn){ S.ghs = (S.ghs || 0) + 1; save(); }
+}
+function markGenPeeked(){
+  if (S && S.ghp !== 1){ S.ghp = 1; save(); }
+  peekHintOn = false;
+  renderInfo();
+}
+function showGenPeek(i){
+  hideGenPeek();
+  const it = S && S.board[i], cell = bd && bd.children[i];
+  if (!it || !it.g || !cell) return;
+  const fams = GEN_CHAINS[it.g] || [];
+  const el = document.createElement('div');
+  el.id = 'genPeek';
+  el.setAttribute('role', 'tooltip');
+  el.setAttribute('aria-label', L.genUpOutputs);
+  el.innerHTML = `<div class="gpCap">${L.genUpOutputs}</div>` + fams.map(c => {
+    let row = '<div class="gpRow">';
+    for (let l = 1; l <= MAXLV; l++){
+      row += S.seen[c + l]
+        ? `<div class="gpTile">${A.item(c, l)}</div>`
+        : `<div class="gpTile lock">?</div>`;
+    }
+    return row + '</div>';
+  }).join('');
+  document.body.appendChild(el);
+  const r = cell.getBoundingClientRect(), pr = el.getBoundingClientRect();
+  let left = r.left + r.width / 2 - pr.width / 2;
+  left = Math.max(8, Math.min(left, window.innerWidth - pr.width - 8));
+  let top = r.top - pr.height - 8;
+  if (top < 8) top = Math.min(window.innerHeight - pr.height - 8, r.bottom + 8);
+  el.style.left = left + 'px';
+  el.style.top = top + 'px';
+  SFX.tap();
+}
 bd.addEventListener('pointerdown', e => {
   audio();
   const c = e.target.closest('.cell'); if (!c) return;
   const i = +c.dataset.i;
-  drag = {i, x0:e.clientX, y0:e.clientY, moved:false, target:null};
+  drag = {i, x0:e.clientX, y0:e.clientY, moved:false, target:null, peek:false};
   if (S.board[i]) try { bd.setPointerCapture(e.pointerId); } catch(err){}
+  clearPeekTimer();
+  hideGenPeek();
+  if (S.board[i] && S.board[i].g){
+    peekTimer = setTimeout(() => {
+      if (!drag || drag.moved || drag.peek || drag.i !== i) return;
+      drag.peek = true;
+      selected = i;
+      showGenPeek(i);
+      markGenPeeked();
+    }, PEEK_MS);
+  }
 });
 bd.addEventListener('pointermove', e => {
   if (!drag || !S.board[drag.i]) return;
+  if (drag.peek) return;
   if (!drag.moved && Math.hypot(e.clientX-drag.x0, e.clientY-drag.y0) > 8){
+    clearPeekTimer();
     drag.moved = true; selected = drag.i;
     const g = document.createElement('div'); g.id = 'ghost'; g.innerHTML = itemArt(S.board[drag.i]);
     document.body.appendChild(g); renderBoard(); renderInfo();
@@ -2329,10 +2391,14 @@ bd.addEventListener('pointermove', e => {
   }
 });
 function endDrag(cancel){
+  clearPeekTimer();
+  const peeked = !!(drag && drag.peek);
+  hideGenPeek();
   if (!drag) return;
   const d = drag; drag = null;
   $('ghost')?.remove();
   if (d.target != null) bd.children[d.target].classList.remove('target', 'mergeOk');
+  if (peeked){ renderBoard(); renderInfo(); return; }
   if (cancel){ renderBoard(); return; }
   if (!d.moved) tap(d.i); else drop(d.i, d.target);
 }
@@ -2429,6 +2495,7 @@ function showHome(opts){
   $('home').classList.add('on');
   if (page === 'salon') endSalonFx();
   if (page === 'board') endCustomerFx();
+  clearPeekTimer(); hideGenPeek();
   mountTop('homeTopHost');
   renderHome();
 }

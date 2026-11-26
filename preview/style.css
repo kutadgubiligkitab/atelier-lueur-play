@@ -730,3 +730,13 @@ button.taskTitle:focus-visible{outline:3px solid #ff5fa2;outline-offset:2px;bord
 /* slim customer quote in the order modal (does not affect the board) */
 .custSay{margin:0 0 8px;padding:6px 8px;border-radius:10px;background:#fff4f9;font-size:12px;font-weight:700;line-height:1.4;color:#6a3a55;text-align:center}
 .custSay b{display:block;font-size:11px;font-weight:800;color:#b4577f;margin-bottom:2px}
+
+/* long-press generator peek (items + merge chain; undiscovered levels stay locked) */
+#genPeek{position:fixed;z-index:70;pointer-events:none;min-width:0;max-width:calc(100vw - 16px);padding:6px 7px 7px;background:linear-gradient(#fffdf8,#ffeaf3);border:2.5px solid #fff;border-radius:16px;box-shadow:0 4px 0 var(--panel-edge),0 10px 22px rgba(106,35,80,.22)}
+#genPeek .gpCap{font-size:10px;font-weight:800;color:var(--ink-soft);text-align:center;margin:0 0 4px;line-height:1.15}
+#genPeek .gpRow{display:flex;gap:3px;justify-content:center;direction:ltr}
+#genPeek .gpRow + .gpRow{margin-top:3px}
+#genPeek .gpTile{width:30px;height:30px;border-radius:8px;background:#fff;border:1.5px solid var(--panel-edge);display:grid;place-items:center;overflow:hidden;flex:none}
+#genPeek .gpTile svg,#genPeek .gpTile img{width:24px;height:24px;display:block}
+#genPeek .gpTile.lock{background:#f4e6ee;color:var(--ink-soft);font:800 14px/1 Nunito,sans-serif}
+.info .hint .peekHint{color:var(--pink-dark);font-weight:800}

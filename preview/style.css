@@ -51,16 +51,17 @@ button{font:inherit;color:inherit}
 .bigbtn:active{transform:translateY(3px)}
 
 /* ---------- top bar ---------- */
-.top{display:flex;align-items:center;gap:6px;flex:none}
+.top{display:flex;align-items:center;gap:4px;flex:none;flex-wrap:nowrap}
 .lvbadge{width:48px;height:48px;flex:none;position:relative;cursor:pointer}
 .lvbadge b{position:absolute;inset:0;display:grid;place-items:center;font-size:17px;font-weight:800;color:#fff;text-shadow:0 1px 2px #8a1a5a;padding-top:4px;direction:ltr}
 .lvbadge .bar{position:absolute;bottom:-5px;left:3px;right:3px;height:7px;border-radius:5px;background:#fff;border:1.5px solid var(--pink-dark);overflow:hidden}
 .lvbadge .bar i{display:block;height:100%;background:linear-gradient(90deg,#8fe04a,var(--green));width:0;transition:width .4s}
-.pill{flex:1;min-width:0;height:34px;display:flex;align-items:center;gap:2px;background:#fff;border:2.5px solid var(--panel-edge);border-radius:18px;
-  box-shadow:0 3px 0 var(--panel-edge);position:relative;padding:0 4px;direction:ltr}
-.pill .ic{width:28px;height:28px;flex:none;margin-left:-8px}
-.pill .val{flex:1;text-align:center;font-weight:800;font-size:15px;white-space:nowrap}
-.pill .plus{width:20px;height:20px;flex:none;border-radius:50%;background:var(--green);color:#fff;font-weight:800;font-size:16px;line-height:19px;text-align:center;border:0;padding:0;cursor:pointer}
+.pill{flex:1;min-width:0;height:32px;display:flex;align-items:center;gap:0;background:#fff;border:2.5px solid var(--panel-edge);border-radius:18px;
+  box-shadow:0 3px 0 var(--panel-edge);position:relative;padding:0 3px;direction:ltr}
+.pill .ic{width:22px;height:22px;flex:none;margin-left:-6px}
+.pill .val{flex:1;text-align:center;font-weight:800;font-size:13px;white-space:nowrap}
+.pill .plus{width:18px;height:18px;flex:none;border-radius:50%;background:var(--green);color:#fff;font-weight:800;font-size:14px;line-height:17px;text-align:center;border:0;padding:0;cursor:pointer}
+#tGp.pill{flex:0.9;cursor:pointer}
 .pill .sub{position:absolute;bottom:-13px;left:0;right:0;text-align:center;font-size:10px;font-weight:700;color:var(--ink-soft)}
 .roundbtn{width:40px;height:40px;flex:none;border:0;background:none;padding:2px;cursor:pointer;position:relative}
 .roundbtn:active{transform:scale(.92)}
@@ -464,10 +465,10 @@ button,.btn,.plus,.roundbtn,.nav,.nav *,.pill,.lvbadge,.cust,.ordersRow,.side,.i
 
 /* energy: countdown under the pill (always visible: +1 m:ss, or Full) and the details panel */
 .pill .val.ev{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;line-height:1;min-width:0}
-.pill .val.ev #tEv{font-size:15px;line-height:16px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pill .val.ev #tEv{font-size:12px;line-height:13px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .pill .val.ev{padding:0 1px}
-@media (max-width:360px){.pill#tEp{padding:0 2px;gap:0}.pill#tEp .ic{width:24px;height:24px}.pill#tEp .plus{width:18px;height:18px;line-height:17px;font-size:15px}.pill .val.ev #tEv{font-size:13px}}
-.pill .sub{position:static;display:block;font-size:10.5px;line-height:11px;font-weight:800;direction:ltr;font-variant-numeric:tabular-nums;min-width:5.4ch;text-align:center;white-space:nowrap;letter-spacing:0}
+@media (max-width:360px){.pill{height:30px}.pill .ic{width:20px;height:20px}.pill .val{font-size:12px}.pill .plus{width:16px;height:16px;line-height:15px;font-size:13px}.pill .val.ev #tEv{font-size:11px;line-height:12px}}
+.pill .sub{position:static;display:block;font-size:9px;line-height:10px;font-weight:800;direction:ltr;font-variant-numeric:tabular-nums;min-width:0;text-align:center;white-space:nowrap;letter-spacing:0}
 .pill .sub.full{color:var(--green-dark)}
 .pill#tEp{cursor:pointer}
 .pill .gemMini{display:flex;align-items:center;flex:none;gap:0;height:22px;padding:0 1px 0 5px;margin-inline-start:1px;border-inline-start:1.5px solid var(--panel-edge)}

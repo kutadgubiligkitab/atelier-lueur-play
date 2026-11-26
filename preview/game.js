@@ -415,7 +415,7 @@ function fxIcon(kind){ return kind === 'star' ? A.icon('star') : kind === 'energ
 function fxTargetEl(kind){
   if (kind === 'star') return $('tLv');
   if (kind === 'energy') return $('tEp');
-  if (kind === 'gem') return $('tGv') && ($('tGv').closest('.pill') || $('tGv'));   // future gems pill: reserved id, no layout until it exists
+  if (kind === 'gem') return $('tGp') || ($('tGv') && ($('tGv').closest('.pill') || $('tGv')));   // the standalone gem pill
   return $('tCv') && ($('tCv').closest('.pill') || $('tCv'));
 }
 function fxWalletSnap(){
@@ -1040,10 +1040,12 @@ function renderTop(){
     $('top').innerHTML = `
       <div class="lvbadge" id="tLv">${A.icon('star')}<b id="tLvN"></b><div class="bar"><i id="tLvB"></i></div></div>
       <div class="pill" id="tEp"><span class="ic">${A.icon('bolt')}</span><span class="val ev"><span id="tEv"></span><span class="sub" id="tEt"></span></span><button class="plus" id="tE">+</button></div>
-      <div class="pill" id="tCp"><span class="ic">${A.icon('coin')}</span><span class="val" id="tCv"></span><span class="gemMini" id="tGp" title="${L.gems}"><span class="ic">${A.icon('gem')}</span><span class="val" id="tGv"></span></span><button class="plus" id="tC">+</button></div>
+      <div class="pill" id="tCp"><span class="ic">${A.icon('coin')}</span><span class="val" id="tCv"></span><button class="plus" id="tC">+</button></div>
+      <div class="pill" id="tGp" title="${L.gems}"><span class="ic">${A.icon('gem')}</span><span class="val" id="tGv"></span><button type="button" class="plus" id="tG">+</button></div>
       <button class="roundbtn" id="tSet">${A.icon('gear')}</button>`;
     $('tLv').onclick = openRoad; $('tE').onclick = openShop; $('tEp').onclick = e => { if (!e.target.closest('#tE')) openEnergy(); };   // + keeps opening the Shop; the rest of the pill shows the energy details
-    $('tC').onclick = openShop; $('tSet').onclick = openSettings; if ($('tGp')) $('tGp').onclick = () => openShop('energy');
+    $('tC').onclick = openShop; $('tSet').onclick = openSettings;
+    if ($('tGp')) $('tGp').onclick = () => openShop('energy');   // gem + and the pill open the shop energy/gem row; no real-money shop yet
   }
   $('tLvN').textContent = S.lv;
   if (fxStarHold == null) $('tLvB').style.width = pct + '%';

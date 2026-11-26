@@ -34,8 +34,10 @@ const TASKS = {
 };
 const starsNeed = lv => 30 + lv*20;
 function roadReward(lv){
-  if (lv % 5 === 0) return {coins:200, energy:50};
-  return [{coins:120},{energy:30},{coins:80},{energy:20,coins:40}][lv % 4];
+  const r = lv % 5 === 0 ? {coins:200, energy:50} : Object.assign({}, [{coins:120},{energy:30},{coins:80},{energy:20,coins:40}][lv % 4]);
+  if (lv === 10 || lv === 20 || lv === 30) r.gems = 20;      // every 5th level +10 gems; 10/20/30 get +20 instead
+  else if (lv % 5 === 0) r.gems = 10;
+  return r;
 }
 
 /* ---------------- ياردەمچىلەر ---------------- */
@@ -268,6 +270,8 @@ function give(r, ups){            // ups (optional): collect level-ups instead o
   if (r.gems) S.gems = (S.gems || 0) + r.gems;
   if (r.stars){ if (ups) ups.push(...addStarsCore(r.stars)); else addStars(r.stars); }
 }
+const payChip = (n, kind) => `<span class="rw"><i>${A.icon(kind)}</i>${n}</span>`;
+const payAmt = (n, kind) => `<span class="rw"><i>${A.icon(kind)}</i>+${n}</span>`;
 const rwHtml = r => [r.coins && `<span class="rw"><i>${A.icon('coin')}</i>${r.coins}</span>`,
   r.energy && `<span class="rw"><i>${A.icon('bolt')}</i>${r.energy}</span>`,
   r.gems && `<span class="rw"><i>${A.icon('gem')}</i>${r.gems}</span>`,
@@ -277,7 +281,7 @@ function addStarsCore(n){          // state change only; returns the level-ups s
   while (S.stars >= starsNeed(S.lv)){
     S.stars -= starsNeed(S.lv); S.lv++;
     if (curDef && EV) { try { EV.sync(curDef, S.lv); } catch(e){} }   // level-gated events may become eligible
-    const r = roadReward(S.lv); S.road[S.lv] = 1; give(r); give({gems: 5});
+    const r = roadReward(S.lv), paid = !!S.road[S.lv]; S.road[S.lv] = 1; if (!paid) give(r); give({gems: 5});
     ups.push({lv: S.lv, r: Object.assign({}, r, {gems: (r.gems || 0) + 5})}); ups.push(...grantMilestones());      // producer milestone copies (once per save, recorded in S.pg)
   }
   return ups;
@@ -356,7 +360,7 @@ function supplyHtml(){
         : `<button class="btn pink ${poor ? 'no' : ''}" data-pbuy="${g}" ${poor ? 'aria-label="' + L.supplyBuyNeed + '"' : ''}><span class="rw"><i>${A.icon('coin')}</i>${price}</span></button>`}</div>`; }).join('');
   const tray = (S.queue || []).map(q => `<div class="row prow"><div class="art">${A.gen(q.g, q.l)}</div><div class="grow"><b>${L.gens[q.g]}</b> · ${L.level(q.l)}<div class="muted" style="font-size:12px">${emptyCell() < 0 ? L.trayBoardFull : L.supplyWaiting(L.gens[q.g])}</div></div>
       <button class="btn" data-pplace="${q.id}" ${emptyCell() < 0 ? 'disabled' : ''}>${L.trayPlace}</button></div>`).join('');
-  return (rows ? `<div class="ribbon small">${L.supplyTitle}</div><p class="muted center" style="margin:2px 0 4px;font-size:12px">${L.supplyNote}</p>${rows}` : '') + (tray ? `<div class="ribbon small">${L.trayTitle}</div>${tray}` : '');
+  return (rows ? `<div class="hintHead"><div class="ribbon small">${L.supplyTitle}</div>${infoHead('hint-supply', '', L.supplyNote)}</div>${rows}` : '') + (tray ? `<div class="ribbon small">${L.trayTitle}</div>${tray}` : '');
 }
 const lastBuy = {};
 function wireSupply(reopen){
@@ -731,7 +735,7 @@ function expandInv(){                                 // confirm first; a double
   if (pr.gems && (S.gems || 0) < pr.gems){ SFX.no(); toast(L.noGems); return {ok:false, reason:'gems'}; }
   if (pr.coins && S.coins < pr.coins){ SFX.no(); toast(L.noCoins); return {ok:false, reason:'coins'}; }
   invExpandBusy = true;
-  const ask = pr.gems ? L.invExpandAskGems(pr.gems, n) : L.invExpandAsk(pr.coins, n);
+  const ask = pr.gems ? L.invExpandAskGems(payChip(pr.gems, 'gem'), n) : L.invExpandAsk(payChip(pr.coins, 'coin'), n);
   modal(L.invExpandTitle, `<p class="center">${ask}</p><div style="display:flex;gap:8px"><button type="button" class="btn pink wide" id="invExY">${L.yes}</button><button type="button" class="btn wide" data-close>${L.no}</button></div>`);
   const yes = $('invExY');
   if (yes) yes.onclick = ev => {
@@ -951,7 +955,7 @@ function skipGenCd(i){
   const it = S.board[i]; if (!it || !it.g) return {ok:false, reason:'none'};
   const price = genSkipPrice(it); if (!price) return {ok:false, reason:'ready'};
   if ((S.gems || 0) < price){ SFX.no(); toast(L.noGems); return {ok:false, reason:'gems'}; }
-  return confirmGemSpend(L.gemSkipTitle, L.gemSkipAsk(price, Math.ceil(genCdLeft(it)/1000)), () => txn(() => {
+  return confirmGemSpend(L.gemSkipTitle, L.gemSkipAsk(payChip(price, 'gem'), Math.ceil(genCdLeft(it)/1000)), () => txn(() => {
     const cur = S.board[i]; if (!cur || !cur.g) return {ok:false, reason:'none'};
     const p = genSkipPrice(cur); if (!p) return {ok:false, reason:'ready'};
     if ((S.gems || 0) < p) return {ok:false, reason:'gems'};
@@ -964,7 +968,7 @@ function skipGenCd(i){
 function buyEnergyGems(){
   if ((S.gems || 0) < GEM_ENERGY.price){ SFX.no(); toast(L.noGems); return {ok:false, reason:'gems'}; }
   const from = fxPt($('shEGem') || $('tGp') || $('tEp'));
-  return confirmGemSpend(L.gemEnergyTitle, L.gemEnergyAsk(GEM_ENERGY.price, GEM_ENERGY.amt), () => {
+  return confirmGemSpend(L.gemEnergyTitle, L.gemEnergyAsk(payChip(GEM_ENERGY.price, 'gem'), payAmt(GEM_ENERGY.amt, 'bolt')), () => {
     const snap = fxWalletSnap();
     const r = txn(() => {
       if ((S.gems || 0) < GEM_ENERGY.price) return {ok:false, reason:'gems'};
@@ -1173,6 +1177,7 @@ function renderOrders(){
         : `<div class="need"><div class="art">${A.item(o.c, o.l)}</div><div class="cnt">${rq[0].have}/${rq[0].q.n}</div></div>`}
       <div class="rw"><span><i>${A.icon('coin')}</i>${o.coins}</span><span><i>${A.icon('star')}</i>${o.stars}</span></div>`;
     d.onclick = () => r ? deliver(oi) : openOrder(oi);
+    d.querySelectorAll('.need .art').forEach(art => art.addEventListener('click', ev => { ev.stopPropagation(); openOrder(oi); }));
     box.appendChild(d);
   });
 }
@@ -1263,7 +1268,7 @@ function infoItemHtml(it){                  // markup of the selected-item panel
   if (it.g){
     const left = genCdLeft(it);
     hint = `${L.genHint}. ${next ? L.genMerge : L.genMax}`;
-    if (left) hint += ` ${L.gemWait(Math.ceil(left/1000))} <button type="button" class="btn" id="bSkip" style="padding:2px 8px;font-size:12px;height:auto;margin-inline-start:4px">${L.gemSkip(genSkipPrice(it))}</button>`;
+    if (left) hint += ` ${L.gemWait(Math.ceil(left/1000))} <button type="button" class="btn" id="bSkip" style="padding:2px 8px;font-size:12px;height:auto;margin-inline-start:4px">${L.gemSkip(payChip(genSkipPrice(it), 'gem'))}</button>`;
   }
   else hint = next ? `${L.mergeInto} <i>${itemArt(next)}</i> ${itemName(next)}` : L.maxLevel;
   const store = `<button type="button" class="invStoreBtn" id="bStore"${invFree() < 1 ? ' disabled' : ''} aria-label="${L.invStore}">${INV_MARK}</button>`;
@@ -1373,7 +1378,7 @@ function openColourSheet(slot, startColour){
     if (locked) action = `<button class="btn" disabled>${L.stLocked}</button>`;
     else if (pvOwned && pv === eq) action = `<button class="btn" disabled id="cAct">${L.btnEquippedNow}</button>`;
     else if (pvOwned) action = `<button class="btn pink" id="cAct" data-act="apply">${L.btnApply}</button>`;
-    else action = `<button class="btn pink ${S.coins < price(pv) ? 'no' : ''}" id="cAct" data-act="${owns ? 'buyColour' : 'buy'}">${owns ? L.btnBuyColour(price(pv)) : L.btnBuy(price(pv))}</button>`;
+    else action = `<button class="btn pink ${S.coins < price(pv) ? 'no' : ''}" id="cAct" data-act="${owns ? 'buyColour' : 'buy'}">${owns ? L.btnBuyColour(payChip(price(pv), 'coin')) : L.btnBuy(payChip(price(pv), 'coin'))}</button>`;
     modal(L.decos[slot], `<div class="room sheetRoom">${room}</div><div class="pvTag">${L.previewHint}</div>
       <div class="swatches" role="radiogroup" aria-label="${L.colourPickTitle}">${pal.map(c => { const st = colourState(c); return `<button class="sw ${c === pv ? 'on' : ''} s-${st}" role="radio" aria-checked="${c === pv}" data-col="${c}"><i class="cdot c-${c}"></i><span class="swn">${L.colourNames[c]}</span><em>${st === 'equipped' ? L.stEquipped : st === 'owned' ? L.stOwned : price(c) + ' ' + A.icon('coin')}</em></button>`; }).join('')}</div>
       <div class="sheetNote">${owns ? L.hintOwned + ' ' + L.hintExtra(SALON.colourPrice(slot)) : L.hintFirst}</div>
@@ -1508,7 +1513,7 @@ function buyDeco(id, colour){            // UI wrapper: feedback only; all state
   const p = SALON.findProp(id);
   if (p && p.gems && !S.owned[id]){
     if ((S.gems || 0) < p.gems){ toast(L.noGems); SFX.no(); return {ok:false, reason:'gems'}; }
-    return confirmGemSpend(L.decos[id], L.gemDecoAsk(L.decos[id], p.gems), () => buyProp(id, colour), r => {
+    return confirmGemSpend(L.decos[id], L.gemDecoAsk(L.decos[id], payChip(p.gems, 'gem')), () => buyProp(id, colour), r => {
       if (!r || !r.ok){
         if (r && r.reason === 'locked'){ toast(L.salonLocked); SFX.no(); }
         else if (r && r.reason === 'gems'){ toast(L.noGems); SFX.no(); }
@@ -1552,6 +1557,32 @@ function closeModal(){
 }
 $('overlay').addEventListener('click', e => { if (e.target.id==='overlay' || e.target.closest('[data-close]')) closeModal(); });
 
+function infoHead(id, titleHtml, detailHtml){
+  const open = taskOpenKey === id;
+  return `<button type="button" class="infoBtn" data-info="${id}" aria-expanded="${open ? 'true' : 'false'}" aria-controls="td-${id}">${titleHtml ? `<span class="ttxt">${titleHtml}</span>` : ''}<i class="infoDot" aria-hidden="true">!</i></button>
+    <div class="tcDet" id="td-${id}" role="region"${open ? '' : ' hidden'}>${detailHtml}</div>`;
+}
+function wireInfoDots(){                                         // one expanded section at a time; used by quests, shop, energy, atelier
+  const box = $('modal'); if (!box) return;
+  box.querySelectorAll('[data-info]').forEach(btn => btn.onclick = ev => {
+    ev.preventDefault(); ev.stopPropagation();
+    const open = btn.getAttribute('aria-expanded') !== 'true';
+    box.querySelectorAll('[data-info]').forEach(x => { x.setAttribute('aria-expanded', 'false'); const d = document.getElementById(x.getAttribute('aria-controls')); if (d) d.hidden = true; });
+    taskOpenKey = open ? btn.dataset.info : '';
+    if (open){ const d = document.getElementById(btn.getAttribute('aria-controls')); btn.setAttribute('aria-expanded', 'true'); if (d){ d.hidden = false; d.scrollIntoView({block: 'nearest'}); } }
+  });
+}
+function genForChain(c){
+  for (const g of Object.keys(GEN_CHAINS)) if (GEN_CHAINS[g].indexOf(c) >= 0) return g;
+  return null;
+}
+function orderPathHtml(c, l){
+  const steps = [];
+  for (let i = 1; i <= l; i++){ if (i > 1) steps.push('<span class="opathArrow" aria-hidden="true">→</span>'); steps.push(`<span class="opathIt">${A.item(c, i)}</span>`); }
+  const g = genForChain(c);
+  const box = g ? `<div class="opathBox"><span class="art">${A.gen(g, 1)}</span><span>${L.orderBox} · ${L.gens[g]}</span></div>` : '';
+  return `<div class="opath"><div class="opathLabel">${L.orderPath}</div><div class="opathRow ltr">${steps.join('')}</div>${box}</div>`;
+}
 function openOrder(oi){
   const o = S.orders[oi]; if (!o) return;
   const rq = needs(o).map(q => ({q, have: Math.min(q.n, haveCount(q.c, q.l))})), ok = rq.every(x => x.have >= x.q.n);
@@ -1559,7 +1590,7 @@ function openOrder(oi){
   modal(L.orderTitle, (mixed ? `<div class="center muted" style="font-weight:800">${L.mixedOrder}</div>` : '') +
     rq.map(x => `<div class="${mixed ? 'ordReq' : ''}"><div class="bigart">${A.item(x.q.c, x.q.l)}</div>
     <div class="center" style="font-weight:800">${L.items[x.q.c][x.q.l-1]} (${L.level(x.q.l)})</div>
-    <div class="center ltr" style="font-size:22px;font-weight:800;color:${x.have>=x.q.n?'var(--green-dark)':'var(--pink-dark)'}">${x.have}/${x.q.n}</div></div>`).join('') +
+    <div class="center ltr" style="font-size:22px;font-weight:800;color:${x.have>=x.q.n?'var(--green-dark)':'var(--pink-dark)'}">${x.have}/${x.q.n}</div>${orderPathHtml(x.q.c, x.q.l)}</div>`).join('') +
     `<div class="center" style="font-weight:800;margin-top:8px">${L.reward}</div>
     <div class="center" style="font-size:18px;margin:4px 0">${rwHtml({coins:o.coins, stars:o.stars})}</div>
     <button class="btn wide" id="mDeliver" ${ok?'':'disabled'}>${L.deliver}</button>
@@ -1630,7 +1661,7 @@ function eventsHtml(){
     const bonus = ev.completion ? `<div class="row is-${ev.completion.claimed ? 'claimed' : ev.completion.ready ? 'ready' : 'progress'}"><div class="art">${A.icon('star')}</div><div class="grow">${L.eventBonus}</div><div class="center" style="min-width:70px">${ev.completion.claimed ? `<span class="stlab claimed"><span style="width:20px;display:inline-block;vertical-align:middle">${A.icon('check')}</span> ${L.claimed}</span>` :
       `${ev.completion.ready ? `<div class="stlab ready">${L.taskReady}</div>` : ''}<div style="font-size:12px">${rwHtml(ev.completion.reward)}</div><button class="btn" data-evclaim="${esc(ev.id)}|*" ${ev.completion.ready?'':'disabled'}>${L.claim}</button>`}</div></div>` : '';
     const ekey = 'events|' + ev.id, eopen = taskOpenKey === ekey, eid = 'td-events-' + ev.id;
-    const title = `<button type="button" class="evTitle infoBtn" data-info="${esc(ekey)}" aria-expanded="${eopen}" aria-controls="${eid}"><span class="ttxt">${esc(evCopy(ev.title))}</span><i class="infoDot" aria-hidden="true">i</i></button>`;
+    const title = `<button type="button" class="evTitle infoBtn" data-info="${esc(ekey)}" aria-expanded="${eopen}" aria-controls="${eid}"><span class="ttxt">${esc(evCopy(ev.title))}</span><i class="infoDot" aria-hidden="true">!</i></button>`;
     const det = evCopy(ev.desc) ? `<div class="tcDet" id="${eid}" role="region"${eopen ? '' : ' hidden'}><p>${esc(evCopy(ev.desc))}</p></div>` : '';
     return `<div class="evCard">${title}<div class="evWhen">${esc(when)}</div>${det}${rows}${bonus}</div>`;
   }).join('');
@@ -1673,7 +1704,7 @@ function openTasks(opts){
     if (t.a && t.k === 'coins'){ const s4 = MSN.altProgress(S, taskTab === 'daily' ? 'daily' : 'weekly', t); sub = `<div class="taskSub orSub"><span>${L.task.coinsRoute(s4.coins, s4.n)}</span> <span class="orWord">${L.task.orWord}</span> <span>${L.task.atlRoute(s4.atl, 1)}</span></div>`; }
     const text = t.a && t.k === 'coins' ? L.task.coinsAlt(t.n) : t.k === 'fam' ? L.task.fam(t.per) : (t.k === 'days' && taskTab === 'month' ? L.task.daysMonth(t.n) : L.task[t.k](t.n));
     const det = taskDetail(t), key = dkey(t), open = !!det && taskOpenKey === key, did = 'td-' + taskTab + '-' + t.id;
-    const title = det ? `<button type="button" class="taskTitle infoBtn" data-info="${esc(key)}" aria-expanded="${open}" aria-controls="${did}"><span class="ttxt">${text}</span><i class="infoDot" aria-hidden="true">i</i></button>` : `<div class="taskTitle">${text}</div>`;
+    const title = det ? `<button type="button" class="taskTitle infoBtn" data-info="${esc(key)}" aria-expanded="${open}" aria-controls="${did}"><span class="ttxt">${text}</span><i class="infoDot" aria-hidden="true">!</i></button>` : `<div class="taskTitle">${text}</div>`;
     const rew = `<div class="tcRew">${state === 'claimed' ? `<span class="stlab claimed"><span class="ck">${A.icon('check')}</span> ${L.claimed}</span>` : state === 'ready' ? `<div class="stlab ready">${L.taskReady}</div>` : ''}<div class="tcChips">${rwHtml(t.r)}</div></div>`;
     const btn = state === 'claimed' ? '' : `<button class="btn" data-claim="${t.id}" ${done ? '' : 'disabled'}>${L.claim}</button>`;
     return `<div class="row taskCard is-${state}" data-state="${state}"><div class="tcHead"><div class="art">${A.icon(icons[t.k])}</div>${title}</div>${sub}
@@ -1685,12 +1716,7 @@ function openTasks(opts){
   const mb = $('modal').querySelector('.mbody');
   if (auto){ const first = $('modal').querySelector('.row.is-ready'); if (first) first.scrollIntoView({block: 'nearest'}); } else if (prevScroll && mb) mb.scrollTop = prevScroll;
   $('modal').querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { taskTab = b.dataset.tab; openTasks(); });
-  $('modal').querySelectorAll('[data-info]').forEach(btn => btn.onclick = () => {      // toggles one inline details section in place: no re-render, no claim, scroll untouched unless the new content is out of view
-    const open = btn.getAttribute('aria-expanded') !== 'true';
-    $('modal').querySelectorAll('[data-info]').forEach(x => { x.setAttribute('aria-expanded', 'false'); const d = document.getElementById(x.getAttribute('aria-controls')); if (d) d.hidden = true; });
-    taskOpenKey = open ? btn.dataset.info : '';
-    if (open){ const d = document.getElementById(btn.getAttribute('aria-controls')); btn.setAttribute('aria-expanded', 'true'); d.hidden = false; d.scrollIntoView({block: 'nearest'}); }
-  });
+  wireInfoDots();
   $('modal').querySelectorAll('[data-claim]').forEach(b => b.onclick = () => {
     const t = tasksFor(taskTab).find(x => x.id===b.dataset.claim); if (!t) return;
     const snap = fxWalletSnap();
@@ -1771,7 +1797,7 @@ function openAlbum(){
   albumChains().forEach(c => {
     const got = [1,2,3,4,5,6].filter(l => S.seen[c+l]).length;
     h += `<div class="set"><h4>${L.chains[c]} <span class="prog">${got}/6</span>
-      ${S.album[c] ? `<span style="width:24px;margin-inline-start:auto">${A.icon('check')}</span>` : got===6 ? `<button class="btn" data-set="${c}">${L.claim} 100</button>` : ''}</h4>
+      ${S.album[c] ? `<span style="width:24px;margin-inline-start:auto">${A.icon('check')}</span>` : got===6 ? `<button class="btn" data-set="${c}">${L.claim} ${payChip(100, 'coin')}</button>` : ''}</h4>
       <div class="cards">${[1,2,3,4,5,6].map(l => `<div class="card6 ${S.seen[c+l]?'':'no'}">${A.item(c,l)}</div>`).join('')}</div></div>`;
   });
   modal(L.albumTitle, h);
@@ -1817,9 +1843,9 @@ function atelierHtml(reward){
     body = `<div class="center atlHead"><b>${L.atl.title}</b></div>
       <div class="center atlWait" role="status"><div class="atlWaitMain" id="atlRemain">${L.atl.waitRemaining(left)}</div>
       <div class="atlProg" id="atlProg">${L.atl.progress(done, N)}</div></div>
-      <p class="muted center" style="font-size:12px">${L.atl.separateNote}</p>`;
+      <div class="center">${infoHead('hint-atl-wait', '', L.atl.separateNote)}</div>`;
   }
-  const foot = rec ? `<p class="muted center" style="font-size:11px;margin:4px 0">${L.atl.cells} · ${L.atl.pickNote}</p>
+  const foot = rec ? `<div class="center">${infoHead('hint-atl-foot', '', L.atl.cells + ' · ' + L.atl.pickNote)}</div>
     <div class="atlFoot"><button class="btn pink wide" id="atlGo" ${req && req.ready ? '' : 'disabled'}>${L.atl.deliver}</button><button class="btn wide" data-close>${L.atl.close}</button></div>`
     : `<div class="atlFoot"><button class="btn pink wide" id="atlBack">${L.atl.backToBoard}</button></div>`;    // no commission: no Deliver button and no ingredient instructions
   return `${rewardCard}${station}${body}${foot}`;
@@ -1827,7 +1853,7 @@ function atelierHtml(reward){
 function openAtelier(reward){          // reward (optional) is passed ONLY by the delivery that just committed: it is shown once and never replayed on reopen/reload
   if (!ATL.hasChapter(S)){ modal(L.atl.title, atelierLockedHtml()); return; }
   preloadSprites();
-  modal(L.atl.title, atelierHtml(reward));
+  modal(L.atl.title, atelierHtml(reward)); wireInfoDots();
   const back = $('atlBack'); if (back) back.onclick = () => { closeModal(); go('board'); };       // view change only: no state is touched
   const goBtn = $('atlGo'); if (!goBtn) return;
   goBtn.onclick = () => {
@@ -1855,9 +1881,8 @@ function energyInfoHtml(){
     : `<div class="row"><div class="grow">${L.energyNextIn}</div><b class="ltr" id="enNext">${fmtDur(t.next)}</b></div>
     <div class="row"><div class="grow">${L.energyFullIn}</div><b class="ltr" id="enFull">${fmtDur(t.full)}</b></div>`;
   return `<div class="enInfo" id="enInfo"><div class="enBig ltr">${S.energy}<small>/${ENERGY_CAP}</small></div>
-    <div class="row"><div class="grow">${L.energyInterval(ENERGY_MS/1000)}</div></div>
-    ${timers}
-    <div class="muted center" id="enNote" style="font-size:12px;margin:2px 0 6px">${S.energy > ENERGY_CAP ? L.energyAbove(ENERGY_CAP) : L.energyKept}</div></div>`;
+    <div class="row"><div class="grow">${infoHead('hint-energy', L.energyInterval(ENERGY_MS/1000), S.energy > ENERGY_CAP ? L.energyAbove(ENERGY_CAP) : L.energyKept)}</div></div>
+    ${timers}</div>`;
 }
 function refreshEnergyInfo(){                // display only: recomputed from S.energy/S.et every second while the panel is open
   if (!energyOpen || !$('enInfo')) return; const t = energyTimes(Date.now()), full = S.energy >= ENERGY_CAP;
@@ -1868,7 +1893,7 @@ function refreshEnergyInfo(){                // display only: recomputed from S.
   if (!!full !== !$('enFullNow') && !!full !== !!(next || fullEl)) { openShop('energy'); return; }
   if (full && !$('enFullNow')) { openShop('energy'); return; }
   if (!full && $('enFullNow')) { openShop('energy'); return; }
-  $('enInfo').querySelector('.enBig').firstChild.textContent = S.energy; $('enNote').textContent = S.energy > ENERGY_CAP ? L.energyAbove(ENERGY_CAP) : L.energyKept;
+  $('enInfo').querySelector('.enBig').firstChild.textContent = S.energy; const enDet = $('td-hint-energy'); if (enDet) enDet.textContent = S.energy > ENERGY_CAP ? L.energyAbove(ENERGY_CAP) : L.energyKept;
 }
 function eshopState(){
   const k = dayKey();
@@ -1891,7 +1916,7 @@ function buyEnergy(pack){
   });
 }
 function packRow(pack){
-  const off = energyOffer(pack), label = '+' + pack + ' ' + L.energy;
+  const off = energyOffer(pack), label = payAmt(pack, 'bolt');
   if (off.sold) return `<div class="row" id="shE${pack}row"><div class="art">${A.icon('bolt')}</div><div class="grow">${label}<div class="muted" style="font-size:12px">${L.shopSoldOut}</div></div>
       <button class="btn pink" id="shE${pack}" disabled>${L.tomorrow}</button></div>`;
   return `<div class="row" id="shE${pack}row"><div class="art">${A.icon('bolt')}</div><div class="grow">${label}<div class="muted" style="font-size:12px">${L.shopLeft(off.left)}</div></div>
@@ -1906,15 +1931,15 @@ function openShop(mode){
   const dots = '<span class="gdots">' + [1,2,3,4,5,6,7].map(i => `<i class="gdot${i <= streak ? ' on' : ''}${i===7?' gem':''}"></i>`).join('') + '</span>';
   eshopState();
   const gemPoor = (S.gems || 0) < GEM_ENERGY.price;
-  const gemRow = `<div class="row" id="shEGemRow"><div class="art">${A.icon('bolt')}</div><div class="grow">${L.gemEnergyTitle}<div class="muted" style="font-size:12px">${L.gemsN(GEM_ENERGY.price)}</div></div>
-      <button class="btn pink" id="shEGem" ${gemPoor ? 'disabled' : ''}>${L.gemEnergyBuy(GEM_ENERGY.amt, GEM_ENERGY.price)}</button></div>`;
+  const gemRow = `<div class="row" id="shEGemRow"><div class="art">${A.icon('bolt')}</div><div class="grow">${L.gemEnergyTitle}</div>
+      <button class="btn pink" id="shEGem" ${gemPoor ? 'disabled' : ''}>${payAmt(GEM_ENERGY.amt, 'bolt')} · ${payChip(GEM_ENERGY.price, 'gem')}</button></div>`;
   modal(mode === 'energy' ? L.energyTitle : L.shopTitle, (mode === 'energy' ? energyInfoHtml() : '') + `
-    <div class="row"><div class="art">${A.icon('heart')}</div><div class="grow">${L.dailyGift} <span class="gstreak">${L.giftStreak(streak)}</span> ${dots}<br>${rwHtml(grew)}
-      <div class="muted" style="font-size:11px;margin-top:2px">${L.giftStreakHint}</div></div>
+    <div class="row"><div class="art">${A.icon('heart')}</div><div class="grow">${infoHead('hint-gift', `${L.dailyGift} <span class="gstreak">${L.giftStreak(streak)}</span>`, L.giftStreakHint)}
+      ${dots}<br>${rwHtml(grew)}</div>
       <button class="btn" id="shGift" ${ready?'':'disabled'}>${ready ? L.take : L.tomorrow}</button></div>
     ${packRow(20)}${packRow(50)}${gemRow}
-    <div class="muted center" style="font-size:12px;margin:2px 0 8px">${L.shopLadderNote}</div>${supplyHtml()}`);
-  energyOpen = mode === 'energy'; wireSupply(() => openShop(mode));
+    <div class="shopSec">${infoHead('hint-packs', L.energyTitle, L.shopLadderNote)}</div>${supplyHtml()}`);
+  energyOpen = mode === 'energy'; wireSupply(() => openShop(mode)); wireInfoDots();
   $('shGift').onclick = () => { if (!claimDailyGift().ok) return; renderTop(); openShop(mode); };
   renderTut();
   const onBuy = pack => {
@@ -2342,5 +2367,5 @@ setInterval(save, 5000);
 document.addEventListener('visibilitychange', () => { if (document.hidden) save(true); else { tick(); renderAll(); refreshContent(false).catch(() => {}); } });
 
 // سىناق ئۈچۈن
-window.__game = { AUDIO, applyAudio, atelier: {open: () => openAtelier(), env: atelierEnv, notes: atelierNotes}, ALL_CHAINS, buyProp, buyColour, equipColour, salonInp, taskCounts, openTasks, tasksFor, get EV(){ return EV; }, energyTimes, ENERGY_CAP, ENERGY_MS, ENERGY_PACKS, GEM_ENERGY, energyOffer, buyEnergy, buyEnergyGems, eshopState, dayKey, weekKey, monthKey, tick, applyLang, buyProducer, placeQueued, producerPrice, equivOf, grantMilestones, claimEvent, newOrder, accessibleChains, deliver: oi => deliver(oi), save: () => save(), get contentInfo(){ return contentInfo; }, refreshContent, get S(){ return S; }, get gate(){ return saveGate; }, get recovery(){ return recovery; }, renderAll, openShop, MSN, MSN_CFG, select: i => { selected = i; renderBoard(); renderInfo(); }, storeSelected, placeInv, expandInv, undoLastSale, get undoSale(){ return undoSale; }, openGenUpgrade, genDropTable, claimDailyGift, giftStreakNext, giftReward, skipTut, tutAdvance, INV_CAPS, INV_EXPAND, INV_EXPAND_GEMS, get fxCoinHold(){ return fxCoinHold; }, get fxEnergyHold(){ return fxEnergyHold; }, get fxGemHold(){ return fxGemHold; }, get fxBits(){ return fxBits; }, fxWalletSnap, fxAfterGive, fxRewardFlight, fxGrantFromCell, drop, sell, produce, give, openBoardBox, collectGem, skipGenCd, genCdLeft, genSkipPrice };
+window.__game = { AUDIO, applyAudio, atelier: {open: () => openAtelier(), env: atelierEnv, notes: atelierNotes}, ALL_CHAINS, buyProp, buyColour, equipColour, salonInp, taskCounts, openTasks, tasksFor, get EV(){ return EV; }, energyTimes, ENERGY_CAP, ENERGY_MS, ENERGY_PACKS, GEM_ENERGY, energyOffer, buyEnergy, buyEnergyGems, eshopState, dayKey, weekKey, monthKey, tick, applyLang, buyProducer, placeQueued, producerPrice, equivOf, grantMilestones, claimEvent, newOrder, accessibleChains, deliver: oi => deliver(oi), save: () => save(), get contentInfo(){ return contentInfo; }, refreshContent, get S(){ return S; }, get gate(){ return saveGate; }, get recovery(){ return recovery; }, renderAll, openShop, MSN, MSN_CFG, select: i => { selected = i; renderBoard(); renderInfo(); }, storeSelected, placeInv, expandInv, undoLastSale, get undoSale(){ return undoSale; }, openGenUpgrade, genDropTable, claimDailyGift, giftStreakNext, giftReward, skipTut, tutAdvance, INV_CAPS, INV_EXPAND, INV_EXPAND_GEMS, get fxCoinHold(){ return fxCoinHold; }, get fxEnergyHold(){ return fxEnergyHold; }, get fxGemHold(){ return fxGemHold; }, get fxBits(){ return fxBits; }, fxWalletSnap, fxAfterGive, fxRewardFlight, fxGrantFromCell, drop, sell, produce, give, openBoardBox, collectGem, skipGenCd, genCdLeft, genSkipPrice, roadReward, addStarsCore, openRoad, openOrder };
 })();

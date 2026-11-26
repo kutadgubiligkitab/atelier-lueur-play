@@ -72,34 +72,44 @@
     if (!CFG) throw new Error('SAVE.configure() was not called');
     const bad = code => ({ ok: false, code });
     if (!isObj(s)) return bad('not-object');
-    const allowed = ['v', 'board', 'energy', 'et', 'coins', 'stars', 'lv', 'orders', 'seen', 'owned', 'road', 'album', 'cnt', 'claimed', 'gift', 'set', 'secretSeen', 'ev', 'queue', 'qid', 'pg', 'pbuy', 'ecap', 'vo', 've', 'atl', 'msn', 'eshop', 'ptcg', 'tut', 'inv', 'gst'];
+    const allowed = ['v', 'board', 'energy', 'et', 'coins', 'stars', 'gems', 'lv', 'orders', 'seen', 'owned', 'road', 'album', 'cnt', 'claimed', 'gift', 'set', 'secretSeen', 'ev', 'queue', 'qid', 'pg', 'pbuy', 'ecap', 'vo', 've', 'atl', 'msn', 'eshop', 'ptcg', 'ptgg', 'tut', 'inv', 'gst'];
     for (const k of Object.keys(s)) if (allowed.indexOf(k) < 0) return bad('unknown-field:' + k);
     if (s.v !== 2) return bad('version');
 
-    // board: 56 cells; item {c,l} | producer {g,l}
+    // board: 56 cells; item {c,l} | producer {g,l,t?} | gift/gem box {box} | loose gem {gem}
     if (!Array.isArray(s.board) || s.board.length !== CFG.N) return bad('board');
     const board = [];
     for (const it of s.board) {
       if (it === null) { board.push(null); continue; }
       if (!isObj(it)) return bad('cell');
       const keys = Object.keys(it);
-      if (it.c !== undefined && it.g === undefined) {
+      if (it.c !== undefined && it.g === undefined && it.box === undefined && it.gem === undefined) {
         if (CFG.CHAINS.indexOf(it.c) < 0 || !isInt(it.l, 1, CFG.MAXLV)) return bad('item');
         if (keys.some(k => k !== 'c' && k !== 'l')) return bad('item-field');
         board.push({ c: it.c, l: it.l });
-      } else if (it.g !== undefined && it.c === undefined) {
+      } else if (it.g !== undefined && it.c === undefined && it.box === undefined && it.gem === undefined) {
         if (CFG.GEN_TYPES.indexOf(it.g) < 0 || !isInt(it.l, 1, CFG.GEN_MAXLV)) return bad('producer');
-        if (keys.some(k => k !== 'g' && k !== 'l' && k !== 'ch' && k !== 't')) return bad('producer-field');
+        if (keys.some(k => k !== 'g' && k !== 'l' && k !== 'ch' && k !== 't' && k !== 'n' && k !== 'rt')) return bad('producer-field');
         const g = { g: it.g, l: it.l };
         if (it.ch !== undefined) { if (!isNum(it.ch, 0, 1e6)) return bad('producer'); g.ch = it.ch; }
         if (it.t !== undefined) { if (!isNum(it.t, 0, 1e15)) return bad('producer'); g.t = it.t; }
+        if (it.n !== undefined) { if (!isInt(it.n, 0, 20)) return bad('producer'); g.n = it.n; }
+        if (it.rt !== undefined) { if (!isNum(it.rt, 0, 1e15)) return bad('producer'); g.rt = it.rt; }
         board.push(g);
+      } else if (it.box === 'gift' || it.box === 'gem') {
+        if (keys.some(k => k !== 'box')) return bad('box-field');
+        board.push({ box: it.box });
+      } else if (it.gem !== undefined) {
+        if (!isInt(it.gem, 1, 20) || keys.some(k => k !== 'gem')) return bad('gem-item');
+        board.push({ gem: it.gem });
       } else return bad('cell');
     }
 
     if (!isNum(s.energy, 0, 1e6)) return bad('energy');
     if (!isNum(s.coins, 0, 1e9)) return bad('coins');
     if (!isNum(s.stars, 0, 1e9)) return bad('stars');
+    const gems = s.gems === undefined ? 0 : s.gems;
+    if (!isInt(gems, 0, 1e9)) return bad('gems');
     if (!isInt(s.lv, 1, 10000)) return bad('level');
     const et = s.et === undefined ? Date.now() : s.et;
     if (!isNum(et, 0, 1e15)) return bad('et');
@@ -232,33 +242,45 @@
 
     let ecap; if (s.ecap !== undefined) { if (!isInt(s.ecap, 1, 100000)) return bad('ecap'); ecap = s.ecap; }   // energy-cap version of this save (absent = written under the old cap)
     let ptcg; if (s.ptcg !== undefined) { if (s.ptcg !== 0 && s.ptcg !== 1) return bad('ptcg'); ptcg = s.ptcg; }   // playtest coin-grant flag (optional; ignored when the grant is off)
+    let ptgg; if (s.ptgg !== undefined) { if (s.ptgg !== 0 && s.ptgg !== 1) return bad('ptgg'); ptgg = s.ptgg; }   // playtest gem-grant flag (optional; once per save)
     let tut; if (s.tut !== undefined) { if (!isInt(s.tut, 0, 5)) return bad('tut'); tut = s.tut; }   // 0-4 first-play tutorial step, 5 = finished (existing saves migrate to 5)
     let inv;
     if (s.inv !== undefined) {
-      const v = s.inv, caps = [4, 8, 12];
+      const v = s.inv, caps = [4, 8, 12, 16];
       if (!isObj(v) || v.v !== 1 || Object.keys(v).some(k => k !== 'v' && k !== 'cap' && k !== 'items') || caps.indexOf(v.cap) < 0 || !Array.isArray(v.items) || v.items.length > v.cap) return bad('inv');
       const items = [];
       for (const it of v.items) {
         if (!isObj(it)) return bad('inv');
         const keys = Object.keys(it);
-        if (it.c !== undefined && it.g === undefined) {
+        if (it.c !== undefined && it.g === undefined && it.box === undefined && it.gem === undefined) {
           if (CFG.CHAINS.indexOf(it.c) < 0 || !isInt(it.l, 1, CFG.MAXLV) || keys.some(k => k !== 'c' && k !== 'l')) return bad('inv');
           items.push({ c: it.c, l: it.l });
-        } else if (it.g !== undefined && it.c === undefined) {
-          if (CFG.GEN_TYPES.indexOf(it.g) < 0 || !isInt(it.l, 1, CFG.GEN_MAXLV) || keys.some(k => k !== 'g' && k !== 'l')) return bad('inv');
-          items.push({ g: it.g, l: it.l });
+        } else if (it.g !== undefined && it.c === undefined && it.box === undefined && it.gem === undefined) {
+          if (CFG.GEN_TYPES.indexOf(it.g) < 0 || !isInt(it.l, 1, CFG.GEN_MAXLV) || keys.some(k => k !== 'g' && k !== 'l' && k !== 'ch' && k !== 't' && k !== 'n' && k !== 'rt')) return bad('inv');
+          const g = { g: it.g, l: it.l };
+          if (it.ch !== undefined) { if (!isNum(it.ch, 0, 1e6)) return bad('inv'); g.ch = it.ch; }
+          if (it.t !== undefined) { if (!isNum(it.t, 0, 1e15)) return bad('inv'); g.t = it.t; }
+          if (it.n !== undefined) { if (!isInt(it.n, 0, 20)) return bad('inv'); g.n = it.n; }
+          if (it.rt !== undefined) { if (!isNum(it.rt, 0, 1e15)) return bad('inv'); g.rt = it.rt; }
+          items.push(g);
+        } else if (it.box === 'gift' || it.box === 'gem') {
+          if (keys.some(k => k !== 'box')) return bad('inv');
+          items.push({ box: it.box });
+        } else if (it.gem !== undefined) {
+          if (!isInt(it.gem, 1, 20) || keys.some(k => k !== 'gem')) return bad('inv');
+          items.push({ gem: it.gem });
         } else return bad('inv');
       }
       inv = { v: 1, cap: v.cap, items };
     }
     let gst;
     if (s.gst !== undefined) {
-      if (!isObj(s.gst) || Object.keys(s.gst).some(k => k !== 'k' && k !== 'n') || typeof s.gst.k !== 'string' || s.gst.k.length > 20 || !isInt(s.gst.n, 1, 3)) return bad('gst');
+      if (!isObj(s.gst) || Object.keys(s.gst).some(k => k !== 'k' && k !== 'n') || typeof s.gst.k !== 'string' || s.gst.k.length > 20 || !isInt(s.gst.n, 1, 7)) return bad('gst');
       gst = { k: s.gst.k, n: s.gst.n };
     }
 
     const out = { ok: true, state: {
-      v: 2, board, energy: s.energy, et, coins: s.coins, stars: s.stars, lv: s.lv, orders, seen, owned, road, album,
+      v: 2, board, energy: s.energy, et, coins: s.coins, stars: s.stars, gems, lv: s.lv, orders, seen, owned, road, album,
       cnt: month ? { day, week, month } : { day, week }, claimed, gift, set: { sound: s.set.sound, music: s.set.music, soundVol: s.set.soundVol, musicVol: s.set.musicVol, vib: s.set.vib, lang: s.set.lang }, secretSeen,
     } };
     if (ev !== undefined) out.state.ev = ev;
@@ -273,6 +295,7 @@
     if (msn !== undefined) out.state.msn = msn;
     if (eshop !== undefined) out.state.eshop = eshop;
     if (ptcg !== undefined) out.state.ptcg = ptcg;
+    if (ptgg !== undefined) out.state.ptgg = ptgg;
     if (tut !== undefined) out.state.tut = tut;
     if (inv !== undefined) out.state.inv = inv;
     if (gst !== undefined) out.state.gst = gst;
@@ -282,7 +305,7 @@
   /* ---------- summary for confirmation screens ---------- */
   function summary(state) {
     const r = {
-      lv: state.lv, coins: state.coins, stars: state.stars, energy: state.energy,
+      lv: state.lv, coins: state.coins, stars: state.stars, energy: state.energy, gems: state.gems || 0,
       seen: Object.keys(state.seen).length, owned: (typeof window !== 'undefined' && window.SALON ? Object.keys(state.owned).filter(id => window.SALON.findProp(id)).length : Object.keys(state.owned).length),
     };
     if (state.ev && CFG && CFG.evSummary) { const e = CFG.evSummary(state.ev); r.evDone = e.evDone; r.evClaimed = e.evClaimed; }

@@ -7,11 +7,11 @@
 const ENGINE_VERSION = 1;                       // bump only when a NEW kind of mechanic ships in the app
 const FORMAT = 'atelier-lueur-content', SCHEMA = 1;
 const LIMITS = {maxBytes: 65536, maxEvents: 6, maxObjectives: 6, maxAssets: 8, maxAssetBytes: 262144, maxSpanDays: 62, maxGraceDays: 7,
-  maxText: 200, fetchTimeoutMs: 6000, claimCap: {coins: 500, energy: 100, stars: 50}};
+  maxText: 200, fetchTimeoutMs: 6000, claimCap: {coins: 500, energy: 100, stars: 50, gems: 30}};
 const OBJECTIVE_TYPES = ['merge', 'order', 'tap', 'coins', 'deco'];   // incremental counters the shipped engine already produces
-const REWARD_KEYS = ['coins', 'energy', 'stars'];
-const BUNDLED = {format: FORMAT, schema: SCHEMA, contentVersion: 2, minClient: 1, publishedAt: '2026-11-26T00:00:00Z', events: [{
-  id: 'week-of-light-2026', revision: 1,
+const REWARD_KEYS = ['coins', 'energy', 'stars', 'gems'];
+const BUNDLED = {format: FORMAT, schema: SCHEMA, contentVersion: 3, minClient: 1, publishedAt: '2026-11-26T00:00:00Z', events: [{
+  id: 'week-of-light-2026', revision: 2,
   title: {ug: 'نۇر ھەپتىسى', en: 'Week of Light'},
   desc: {ug: 'تاختىدا بىرلەشتۈرۈڭ، زاكاز يەتكۈزۈڭ ۋە ئىشلەپچىقارغۇچتىن بۇيۇم ئېلىڭ. ۋاقىتلىق مۇكاپات — ھەقسىز.', en: 'Merge on the board, deliver orders and tap generators. A short free event.'},
   start: '2026-11-20T00:00:00Z', end: '2027-01-20T00:00:00Z',
@@ -21,7 +21,7 @@ const BUNDLED = {format: FORMAT, schema: SCHEMA, contentVersion: 2, minClient: 1
     {id: 'order-8', type: 'order', target: 8, reward: {energy: 20}},
     {id: 'tap-40', type: 'tap', target: 40, reward: {stars: 15}}
   ],
-  completionReward: {coins: 150, energy: 30, stars: 20}
+  completionReward: {coins: 150, energy: 30, stars: 20, gems: 10}
 }], assets: []};
 
 /* ---------------- validation (strict allow-list; any unknown key, wrong type or out-of-range value rejects the whole document) ---------------- */

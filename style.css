@@ -51,16 +51,17 @@ button{font:inherit;color:inherit}
 .bigbtn:active{transform:translateY(3px)}
 
 /* ---------- top bar ---------- */
-.top{display:flex;align-items:center;gap:6px;flex:none}
+.top{display:flex;align-items:center;gap:4px;flex:none;flex-wrap:nowrap}
 .lvbadge{width:48px;height:48px;flex:none;position:relative;cursor:pointer}
 .lvbadge b{position:absolute;inset:0;display:grid;place-items:center;font-size:17px;font-weight:800;color:#fff;text-shadow:0 1px 2px #8a1a5a;padding-top:4px;direction:ltr}
 .lvbadge .bar{position:absolute;bottom:-5px;left:3px;right:3px;height:7px;border-radius:5px;background:#fff;border:1.5px solid var(--pink-dark);overflow:hidden}
 .lvbadge .bar i{display:block;height:100%;background:linear-gradient(90deg,#8fe04a,var(--green));width:0;transition:width .4s}
-.pill{flex:1;min-width:0;height:34px;display:flex;align-items:center;gap:2px;background:#fff;border:2.5px solid var(--panel-edge);border-radius:18px;
-  box-shadow:0 3px 0 var(--panel-edge);position:relative;padding:0 4px;direction:ltr}
-.pill .ic{width:28px;height:28px;flex:none;margin-left:-8px}
-.pill .val{flex:1;text-align:center;font-weight:800;font-size:15px;white-space:nowrap}
-.pill .plus{width:20px;height:20px;flex:none;border-radius:50%;background:var(--green);color:#fff;font-weight:800;font-size:16px;line-height:19px;text-align:center;border:0;padding:0;cursor:pointer}
+.pill{flex:1;min-width:0;height:32px;display:flex;align-items:center;gap:0;background:#fff;border:2.5px solid var(--panel-edge);border-radius:18px;
+  box-shadow:0 3px 0 var(--panel-edge);position:relative;padding:0 3px;direction:ltr}
+.pill .ic{width:22px;height:22px;flex:none;margin-left:-6px}
+.pill .val{flex:1;text-align:center;font-weight:800;font-size:13px;white-space:nowrap}
+.pill .plus{width:18px;height:18px;flex:none;border-radius:50%;background:var(--green);color:#fff;font-weight:800;font-size:14px;line-height:17px;text-align:center;border:0;padding:0;cursor:pointer}
+#tGp.pill{flex:0.9;cursor:pointer}
 .pill .sub{position:absolute;bottom:-13px;left:0;right:0;text-align:center;font-size:10px;font-weight:700;color:var(--ink-soft)}
 .roundbtn{width:40px;height:40px;flex:none;border:0;background:none;padding:2px;cursor:pointer;position:relative}
 .roundbtn:active{transform:scale(.92)}
@@ -75,19 +76,21 @@ button{font:inherit;color:inherit}
   cursor:pointer;position:relative;transition:transform .3s,opacity .3s}
 /* portrait and the requested piece SHARE one row; in RTL the grid mirrors, putting the portrait on the right */
 .order .need{grid-column:2;grid-row:1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;max-width:100%}
+.order .need .art{cursor:pointer;position:relative;z-index:1}
 .order .art{width:var(--nart);height:var(--nart)}
 .order .cnt{font-weight:800;font-size:var(--ocnt);line-height:1.1;direction:ltr}
 .order .rw{grid-column:1 / -1;grid-row:2;display:flex;gap:4px;font-size:var(--orw);font-weight:800;direction:ltr;align-items:center;justify-content:center;white-space:nowrap;line-height:1.2}
 .order .rw span{display:flex;align-items:center;gap:1px}
 .order .rw i{width:calc(var(--orw) + 3px);height:calc(var(--orw) + 3px);display:inline-block}
-.order.ready{border-color:var(--green);box-shadow:0 3px 0 var(--green-dark),0 0 14px rgba(70,195,90,.6);animation:glow 1.2s infinite}
-@keyframes glow{50%{transform:scale(1.04)}}
-.order .ok{position:absolute;top:-8px;left:-6px;width:24px;height:24px}
-.order.leave{transform:translateY(-10px);opacity:0;transition:transform .36s ease-in,opacity .36s ease-in}   /* departure: after the happy frame (delay below) */
-.order.arriving{animation:custIn .45s ease-out both}   /* arrival of the replacement customer */
-.order.arriving .cust{animation:custRise .5s ease-out both}
-@keyframes custIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-@keyframes custRise{from{transform:translateY(6px)}to{transform:none}}
+.order.ready{border-color:var(--green);box-shadow:0 3px 0 var(--green-dark),0 0 0 2px rgba(70,195,90,.3),0 0 16px rgba(70,195,90,.55);animation:glow 1.4s ease-in-out infinite}
+@keyframes glow{50%{transform:scale(1.03)}}
+.order .ok{position:absolute;top:-8px;inset-inline-start:-6px;width:26px;height:26px;padding:3px;border-radius:50%;background:#3ecb5e;box-shadow:0 2px 0 var(--green-dark),0 0 8px rgba(70,195,90,.7);z-index:2}
+.order .deliverCue{position:absolute;left:6px;right:6px;bottom:-7px;height:13px;line-height:13px;padding:0 6px;font-size:9px;font-weight:800;letter-spacing:.01em;text-align:center;color:#fff;background:var(--green);border-radius:8px;box-shadow:0 1px 0 var(--green-dark);pointer-events:none;z-index:2;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.order.leave{animation:none;transform:translateY(16px);opacity:0;transition:transform .38s ease-in,opacity .34s ease-in}   /* departure: slide down / fade after the happy frame */
+.order.arriving{animation:custIn .46s cubic-bezier(.22,.7,.28,1) both;--custInX:22px}   /* arrival from the side; RTL enters from the left */
+html[dir="rtl"] .order.arriving{--custInX:-22px}
+.order.arriving .cust{animation:none}
+@keyframes custIn{from{opacity:0;transform:translateX(var(--custInX, 22px))}to{opacity:1;transform:none}}
 .side{display:flex;flex-direction:column;gap:6px;flex:none}
 .side .roundbtn{width:40px;height:40px;background:#fff;border-radius:14px;border:2.5px solid var(--panel-edge);box-shadow:0 3px 0 var(--panel-edge);padding:5px}
 
@@ -100,18 +103,33 @@ button{font:inherit;color:inherit}
 .cell.want{background:var(--want)}
 .cell.sel::after{content:"";position:absolute;inset:1px;border:3px solid var(--gold);border-radius:8px;pointer-events:none;animation:selp 1s infinite}
 @keyframes selp{50%{opacity:.5}}
-.cell.target{box-shadow:inset 0 0 0 3px var(--pink)}
+.cell.target.mergeOk{box-shadow:inset 0 0 0 2px #fff,0 0 0 2px rgba(255,255,255,.35),0 0 12px rgba(255,255,255,.7);background-image:linear-gradient(rgba(255,255,255,.3),rgba(255,255,255,.08))}
 .cell .it{position:absolute;inset:2px}
 .cell .it.gen{background:radial-gradient(circle,#fff 30%,transparent 72%)}
 .cell .bolt{position:absolute;bottom:0;right:0;width:36%;height:36%}
 .cell .it.drag{opacity:.25}
-.cell .it.pop{animation:pop .45s cubic-bezier(.3,1.8,.5,1)}
-@keyframes pop{0%{transform:scale(.3)}60%{transform:scale(1.25)}100%{transform:scale(1)}}
-.cell .it.fly{animation:fly .35s ease-out;pointer-events:none}   /* the new item starts ON the producer and flies out: it must not catch the next rapid tap meant for the producer (verified: at 40 ms taps 3/5/7 hit the flying item, selected it and produced nothing) */
-@keyframes fly{from{transform:translate(var(--fx),var(--fy)) scale(.4)}}
-.burst{position:absolute;inset:-30%;pointer-events:none;border-radius:50%;background:radial-gradient(circle,#fff8b0 0,#ffd54a88 35%,transparent 70%);animation:burst .5s forwards;z-index:2}
-@keyframes burst{from{transform:scale(.3);opacity:1}to{transform:scale(1.4);opacity:0}}
+.cell .it.pop{animation:pop .38s cubic-bezier(.22,.8,.28,1)}
+@keyframes pop{0%{transform:scale(.96)}40%{transform:scale(1.1)}100%{transform:scale(1)}}
+.cell .it.genSquash{animation:genSquash .2s ease-out}
+@keyframes genSquash{0%{transform:scale(1)}35%{transform:scale(1.06,.86)}100%{transform:scale(1)}}
+.cell .it.fly{animation:fly .42s cubic-bezier(.22,.6,.28,1) both;pointer-events:none}   /* the new item starts ON the producer and flies out: it must not catch the next rapid tap meant for the producer (verified: at 40 ms taps 3/5/7 hit the flying item, selected it and produced nothing) */
+@keyframes fly{
+  0%{transform:translate(var(--fx),var(--fy)) scale(.55)}
+  48%{transform:translate(var(--mx),var(--my)) scale(.92)}
+  78%{transform:translate(0,2px) scale(1.1,.86)}
+  100%{transform:none}
+}
+.burst{position:absolute;inset:-32%;pointer-events:none;border-radius:50%;background:radial-gradient(circle,#fff 0,#fff8 30%,transparent 68%);animation:burst .32s ease-out forwards;z-index:2}
+@keyframes burst{from{transform:scale(.35);opacity:.9}to{transform:scale(1.25);opacity:0}}
+.burst::before,.burst::after{content:"";position:absolute;left:50%;top:50%;width:2px;height:70%;margin:-35% 0 0 -1px;background:linear-gradient(transparent,#fffce8,transparent);pointer-events:none}
+.burst::after{transform:rotate(90deg)}
 #ghost{position:fixed;z-index:60;pointer-events:none;width:calc(var(--cell)*1.15);height:calc(var(--cell)*1.15);transform:translate(-50%,-65%);filter:drop-shadow(0 6px 6px rgba(106,35,80,.35))}
+#fxLayer{position:fixed;inset:0;pointer-events:none;z-index:90;overflow:hidden}
+.fxBit{position:absolute;left:0;top:0;width:22px;height:22px;margin:-11px 0 0 -11px;will-change:transform,opacity;filter:drop-shadow(0 2px 2px rgba(106,35,80,.25))}
+.fxBit svg{width:100%;height:100%;display:block}
+.fxConf{width:8px;height:10px;margin:-5px 0 0 -4px;border-radius:2px;filter:none}
+.fxHeart{width:16px;height:16px;margin:-8px 0 0 -8px;font-size:14px;line-height:16px;text-align:center;filter:none}
+.fxEnergy,.fxGem{filter:drop-shadow(0 2px 2px rgba(40,80,60,.25))}
 
 /* ---------- info strip ---------- */
 .info{position:relative;flex:none;display:grid;grid-template-columns:auto minmax(0,1fr) auto;column-gap:8px;row-gap:2px;align-items:center;min-height:var(--infoH,64px);height:auto;overflow:visible;padding:4px 10px;background:#fffd;border:2.5px solid var(--panel-edge);border-radius:16px}
@@ -192,7 +210,7 @@ button{font:inherit;color:inherit}
 .decoList{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 6px;scroll-snap-type:x mandatory}
 .deco{flex:none;width:86px;background:linear-gradient(#fffaf2,#ffeef5);border:2.5px solid var(--gold);border-radius:14px;padding:4px;text-align:center;scroll-snap-align:start;position:relative}
 .deco .art{height:56px;padding:4px}
-.deco .nm{font-size:11px;font-weight:700;line-height:1.2;max-height:2.5em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;white-space:normal;overflow-wrap:anywhere}
+.deco .nm{font-size:10px;font-weight:700;line-height:1.2;height:1.2em;max-height:1.2em;overflow:hidden;display:block;white-space:nowrap;overflow-wrap:normal}
 .deco.have{border-color:var(--green);opacity:.85}
 .price{display:flex;align-items:center;justify-content:center;gap:2px;margin-top:2px;width:100%;border:0;border-radius:10px;padding:3px;font-weight:800;font-size:13px;color:#fff;cursor:pointer;
   background:linear-gradient(#6fdc7f,var(--green));box-shadow:0 2px 0 var(--green-dark);direction:ltr}
@@ -290,11 +308,25 @@ button{font:inherit;color:inherit}
 
 /* ---------- customer portraits (raster state frames; whole image only, never stretched) ---------- */
 .order .cust{grid-column:1;grid-row:1;position:relative;width:var(--pw);height:var(--pw);border-radius:12px;overflow:hidden;
-  background:linear-gradient(#fff6fa,#ffdbea);pointer-events:none}
+  background:linear-gradient(#fff6fa,#ffdbea);pointer-events:none;
+  animation:custBreathe 3.4s ease-in-out infinite}
+.order .cust[data-slot="1"]{animation-delay:.9s}
+.order .cust[data-slot="2"]{animation-delay:1.8s}
+@keyframes custBreathe{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-1.5px) scale(1.03)}}
 .order .cust img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:50% 100%;opacity:0;
   pointer-events:none;-webkit-user-drag:none;user-select:none}
 .order .cust img.on{opacity:1}
-.order.leave{transition-delay:.18s}   /* lets the happy frame be seen before the card leaves (no game-timer change) */
+.order.readyHop .cust{overflow:visible;animation:custHop .48s cubic-bezier(.2,1.55,.3,1) both}
+.order.readyHop .cust::after{content:"";position:absolute;inset:-18%;pointer-events:none;border-radius:50%;
+  background:radial-gradient(circle,#fff8c8 0%,#ffd76a99 28%,transparent 68%);
+  box-shadow:8px -10px 0 -6px #fff6, -9px -6px 0 -7px #ffe27a, 2px 8px 0 -7px #fff8;
+  animation:readySpark .5s ease-out both}
+@keyframes custHop{0%{transform:translateY(0) scale(1)}40%{transform:translateY(-5px) scale(1.08)}70%{transform:translateY(1px) scale(.98)}100%{transform:translateY(0) scale(1)}}
+@keyframes readySpark{from{transform:scale(.45);opacity:.95}to{transform:scale(1.35);opacity:0}}
+.order.leave .cust{animation:custThanks .42s cubic-bezier(.2,1.4,.3,1) both}
+@keyframes custThanks{0%{transform:none}28%{transform:translateY(-5px) rotate(8deg) scale(1.06)}62%{transform:translateY(-1px) rotate(-5deg) scale(1.02)}100%{transform:none}}
+.order.leave{transition-delay:.18s}   /* lets the happy frame (and thank-you bounce) be seen before the card leaves (no game-timer change) */
+html.tabHidden .order.ready,html.tabHidden .order .cust,html.tabHidden .order .ok{animation-play-state:paused}
 
 /* ---------- compact layouts (layout only; no rules, text stays >= 10.5px) ---------- */
 .side{gap:4px}
@@ -379,9 +411,14 @@ button,.btn,.plus,.roundbtn,.nav,.nav *,.pill,.lvbadge,.cust,.ordersRow,.side,.i
   .roomScene .prop.arrive,.roomScene .prop-chair.arrive,.roomScene .prop-mirror.arrive,.roomScene .prop-lamp.arrive{animation:propFade .2s linear both}
 }
 
-@media (prefers-reduced-motion:reduce){   /* customers: no travel, short fades only */
+@media (prefers-reduced-motion:reduce){   /* customers: no travel, short fades only; no idle/ready/leave motion */
+  .order.ready,.order .ok{animation:none}
+  .order .cust,.order.readyHop .cust,.order.leave .cust{animation:none}
+  .order.readyHop .cust::after,.burst::after{animation:none;opacity:0}
   .order.leave{transform:none;transition:opacity .2s linear}
   .order.arriving,.order.arriving .cust{animation:propFade .2s linear both}
+  .cell .it.pop,.cell .it.fly,.cell .it.genSquash,.burst{animation:none}
+  .fxBit{display:none}
 }
 
 .evCard{border:2px solid var(--gold);border-radius:14px;padding:8px;margin-bottom:8px;background:linear-gradient(#fffaf2,#ffeef5)}
@@ -428,12 +465,31 @@ button,.btn,.plus,.roundbtn,.nav,.nav *,.pill,.lvbadge,.cust,.ordersRow,.side,.i
 
 /* energy: countdown under the pill (always visible: +1 m:ss, or Full) and the details panel */
 .pill .val.ev{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;line-height:1;min-width:0}
-.pill .val.ev #tEv{font-size:15px;line-height:16px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pill .val.ev #tEv{font-size:12px;line-height:13px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .pill .val.ev{padding:0 1px}
-@media (max-width:360px){.pill#tEp{padding:0 2px;gap:0}.pill#tEp .ic{width:24px;height:24px}.pill#tEp .plus{width:18px;height:18px;line-height:17px;font-size:15px}.pill .val.ev #tEv{font-size:13px}}
-.pill .sub{position:static;display:block;font-size:10.5px;line-height:11px;font-weight:800;direction:ltr;font-variant-numeric:tabular-nums;min-width:5.4ch;text-align:center;white-space:nowrap;letter-spacing:0}
+@media (max-width:360px){.pill{height:30px}.pill .ic{width:20px;height:20px}.pill .val{font-size:12px}.pill .plus{width:16px;height:16px;line-height:15px;font-size:13px}.pill .val.ev #tEv{font-size:11px;line-height:12px}}
+.pill .sub{position:static;display:block;font-size:9px;line-height:10px;font-weight:800;direction:ltr;font-variant-numeric:tabular-nums;min-width:0;text-align:center;white-space:nowrap;letter-spacing:0}
 .pill .sub.full{color:var(--green-dark)}
 .pill#tEp{cursor:pointer}
+.pill .gemMini{display:flex;align-items:center;flex:none;gap:0;height:22px;padding:0 1px 0 5px;margin-inline-start:1px;border-inline-start:1.5px solid var(--panel-edge)}
+.pill .gemMini .ic{width:16px;height:16px;margin:0}
+.pill .gemMini .val{flex:none;font-size:12px;font-weight:800;padding:0 2px;font-variant-numeric:tabular-nums}
+.cell .cd{position:absolute;inset:auto 2px 2px 2px;height:16px;border-radius:8px;background:rgba(42,28,40,.72);color:#fff;font-size:10px;font-weight:800;line-height:16px;text-align:center;pointer-events:none;direction:ltr;font-variant-numeric:tabular-nums}
+.cell .it.genRest{opacity:.72}
+.cell .rest{position:absolute;inset:auto 2px 2px 2px;height:15px;border-radius:8px;background:rgba(42,28,40,.78);color:#fff;display:flex;align-items:center;justify-content:center;gap:2px;pointer-events:none;padding:0 3px}
+.cell .rest .clk{display:block;width:9px;height:9px;flex:none}
+.cell .rest .clk svg{display:block;width:100%;height:100%}
+.cell .restT{font-size:9.5px;font-weight:800;line-height:15px;letter-spacing:0;direction:ltr;font-variant-numeric:tabular-nums;unicode-bidi:isolate}
+.cell .stock{position:absolute;top:1px;inset-inline-start:1px;min-width:13px;height:13px;padding:0 3px;border-radius:7px;background:rgba(42,28,40,.78);color:#fff;font-size:9px;font-weight:800;line-height:13px;text-align:center;pointer-events:none;direction:ltr;font-variant-numeric:tabular-nums}
+.info .genHintBtn{grid-column:3;grid-row:1;align-self:center;padding:0;min-width:20px}
+.info .genHintBtn .infoDot{margin-inline-start:0;width:18px;height:18px;font-size:11px}
+.info > .tcDet,.info .txt > .tcDet{grid-column:1 / -1;margin-top:2px;padding:4px 8px;font-size:11px;line-height:1.35}
+.gdots{display:inline-flex;gap:3px;margin-inline-start:4px;vertical-align:middle}
+.gdots i{width:7px;height:7px;border-radius:50%;background:#e8d0dc;display:inline-block}
+.gdots i.on{background:var(--pink-dark)}
+.gdots i.gem{box-shadow:0 0 0 1px #7ed0ea}
+.gdots i.gem.on{background:#3a8eaa}
+.it.box,.it.looseGem{background:none}
 .enInfo .enBig{font-size:34px;font-weight:800;text-align:center;line-height:1.1;color:var(--pink-dark)}
 .enInfo .enBig small{font-size:18px;opacity:.7}
 .enInfo .row b{font-size:16px}
@@ -607,3 +663,23 @@ button.taskTitle:focus-visible{outline:3px solid #ff5fa2;outline-offset:2px;bord
   .tutCard p{font-size:12px}
   #undoBar,#tutLayer{bottom:calc(env(safe-area-inset-bottom) + 50px)}
 }
+
+/* compact info buttons (shop / energy / supply / atelier); quest and event titles keep their own layout */
+.infoBtn:not(.taskTitle):not(.evTitle){display:inline-flex;align-items:center;justify-content:center;gap:2px;margin:0;padding:2px 0;border:0;background:none;font:inherit;font-weight:800;color:inherit;cursor:pointer;font-family:inherit;text-align:inherit;max-width:100%;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.infoBtn:not(.taskTitle):not(.evTitle) .ttxt{min-width:0}
+.infoBtn[aria-expanded=true] .infoDot{background:#b4577f;border-color:#b4577f;color:#fff}
+.infoBtn:not(.taskTitle):not(.evTitle):focus-visible{outline:3px solid #ff5fa2;outline-offset:2px;border-radius:8px}
+.shopSec{margin:4px 0 8px;text-align:center;font-size:13px}
+.shopSec .tcDet,.grow > .tcDet,.hintHead .tcDet,.enInfo .tcDet{margin-top:4px;text-align:start}
+.hintHead{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;margin:8px 0 4px}
+.hintHead .ribbon{margin:0}
+.hintHead .tcDet{flex:1 1 100%}
+.grow .infoBtn .ttxt,.grow .gstreak{white-space:nowrap}
+.opath{margin-top:8px;text-align:center}
+.opathLabel{font-size:11px;font-weight:800;color:#6a3a55;margin-bottom:4px}
+.opathRow{display:flex;align-items:center;justify-content:center;gap:2px;flex-wrap:wrap}
+.opathIt{width:30px;height:30px;flex:none;display:inline-block}
+.opathIt img,.opathIt svg{width:100%;height:100%;display:block}
+.opathArrow{font-size:11px;font-weight:800;color:#c98aa9;padding:0 1px}
+.opathBox{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:6px;font-size:12px;font-weight:700;color:#6a3a55}
+.opathBox .art{width:36px;height:36px;flex:none}

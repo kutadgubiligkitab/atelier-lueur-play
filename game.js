@@ -9,7 +9,7 @@ const COLS = 7, ROWS = 8, N = COLS*ROWS;
 const ENERGY_CAP = 100, ENERGY_MS = 120000;     // ONE shared cap: passive regeneration stops at 100 (rewards may exceed it); +1 energy every 2 minutes
 const INITIAL_ENERGY = 50;                    // a new game still starts with 50 (separate from the cap)
 const LEGACY_ENERGY_CAP = 50;                 // the cap before the 100 cap (used only to settle old saves exactly once)
-const MAXLV = 6, GEN_MAXLV = 3;
+const MAXLV = 6, GEN_MAXLV = 3, GEN_STOCK = 20, GEN_REST_MS = 180000;   // 20 productions, then a 3-minute rest; leftover time counts while away
 const CORE_CHAINS = ['lip','per','cmp','nail'];            // the original four families (album 'all', discover counts and early-game orders use these)
 const CHAINS = CORE_CHAINS.concat(['skn']);                  // + Skincare (unlocked at level 15 by its first Spa Hamper)
 /* Makeup Atelier (atelier.js = the only rule implementation). Brush/bag are COMMISSION-ONLY: they are NOT in CHAINS, so accessibleChains()/order generation never see them.
@@ -34,8 +34,10 @@ const TASKS = {
 };
 const starsNeed = lv => 30 + lv*20;
 function roadReward(lv){
-  if (lv % 5 === 0) return {coins:200, energy:50};
-  return [{coins:120},{energy:30},{coins:80},{energy:20,coins:40}][lv % 4];
+  const r = lv % 5 === 0 ? {coins:200, energy:50} : Object.assign({}, [{coins:120},{energy:30},{coins:80},{energy:20,coins:40}][lv % 4]);
+  if (lv === 10 || lv === 20 || lv === 30) r.gems = 20;      // every 5th level +10 gems; 10/20/30 get +20 instead
+  else if (lv % 5 === 0) r.gems = 10;
+  return r;
 }
 
 /* ---------------- ياردەمچىلەر ---------------- */
@@ -44,7 +46,8 @@ const rnd = n => Math.floor(Math.random()*n);
 const pick = a => a[rnd(a.length)];
 const A = window.ART, C = window.CONFIG;
 document.body.insertAdjacentHTML('afterbegin', A.DEFS);
-const KEY = 'atelierLueur.v2';                       // primary key: unchanged
+const PREVIEW = typeof location !== 'undefined' && /\/preview(?:\/|$)/.test(location.pathname || '');
+const KEY = PREVIEW ? 'atelierLueur.preview.v2' : 'atelierLueur.v2';   // preview play path uses its own save so the main playtest is untouched
 SAVE.configure({N, CHAINS: ALL_CHAINS, CUSTOMERS: ['mira','elara','sora','amina','nila','celine'], MAXLV, GEN_TYPES: GEN_TYPES_ALL, GEN_MAXLV, LANG_KEYS:Object.keys(LANGS),
   validateEv: v => window.CONTENT.strictEventState(v), evSummary: v => window.CONTENT.summaryOf(v), checkVariants: (o, vo, ve) => window.SALON.checkVariants(o, vo, ve)});
 // storage adapter: may throw (blocked storage / quota). save.js reports every failure; nothing is swallowed here.
@@ -62,7 +65,7 @@ function newGame(){
   b[2] = {g:'pink', l:1}; b[4] = {g:'lav', l:1};
   b[16] = {c:'lip', l:1}; b[17] = {c:'lip', l:1};
   b[19] = {c:'per', l:1};
-  const s = {v:2, board:b, energy:INITIAL_ENERGY, et:Date.now(), ecap:ENERGY_CAP, coins:60, stars:0, lv:1, orders:[],
+  const s = {v:2, board:b, energy:INITIAL_ENERGY, et:Date.now(), ecap:ENERGY_CAP, coins:60, gems:0, stars:0, lv:1, orders:[],
     seen:{}, owned:{}, road:{}, album:{},
     cnt:{day:{k:dayKey()}, week:{k:weekKey()}, month:{k:monthKey()}}, claimed:{}, gift:'',
     eshop:{v:1, k:dayKey(), n20:0, n50:0},
@@ -77,6 +80,7 @@ function newGame(){
 let S = null, hasSave = false, recovery = null;
 const saveGate = {blocked: false, memoryOnly: false, warn: null};
 const PLAYTEST_COIN_GRANT_BUILT = 60000;   // play-site public builds rewrite this to 60000; store/release stays 0
+const PLAYTEST_GEM_GRANT_BUILT = 0;    // preview play-site builds may rewrite this to 50; the main play root and store/release stay 0
 function playtestCoinTarget(){
   const live = (typeof window !== 'undefined' && window.CONFIG) ? window.CONFIG.playtestCoinGrant : (C && C.playtestCoinGrant);
   const n = (typeof live === 'number' && isFinite(live) && live > 0) ? live : PLAYTEST_COIN_GRANT_BUILT;
@@ -86,19 +90,29 @@ function applyPlaytestCoinGrant(s){          // play-site builds only (grant > 0
   const n = playtestCoinTarget(); if (!n || !s || s.ptcg) return false;
   if (s.coins < n) s.coins = n; s.ptcg = 1; return true;
 }
+function playtestGemTarget(){
+  const live = (typeof window !== 'undefined' && window.CONFIG) ? window.CONFIG.playtestGemGrant : (C && C.playtestGemGrant);
+  const n = (typeof live === 'number' && isFinite(live) && live > 0) ? live : PLAYTEST_GEM_GRANT_BUILT;
+  return (typeof n === 'number' && isFinite(n) && n > 0 && n <= 1e9) ? Math.floor(n) : 0;
+}
+function applyPlaytestGemGrant(s){           // silent on load, once per save, separate flag from the coin top-up
+  const n = playtestGemTarget(); if (!n || !s || s.ptgg) return false;
+  if ((s.gems || 0) < n) s.gems = n; s.ptgg = 1; return true;
+}
 function isEstablishedSave(s){             // mid-game progress: never re-show the first-play tutorial (ignore coins; playtest grant may raise them)
   return !!(s && (s.lv > 1 || s.stars > 0 || (s.owned && Object.keys(s.owned).length)));
 }
 function settlePlaytestGrant(){            // after load and later migrations, and again when entering the board
   if (!S) return false;
   prepareCalendar(S);
-  if (applyPlaytestCoinGrant(S)) { save(); return true; }
+  const a = applyPlaytestCoinGrant(S), b = applyPlaytestGemGrant(S);
+  if (a || b) { save(); return true; }
   return false;
 }
 function applyBoot(boot){
   hasSave = false; recovery = null; saveGate.blocked = false;
-  if (boot.status === 'ok'){ S = boot.state; hasSave = true; prepareCalendar(S); applyPlaytestCoinGrant(S); return; }
-  S = newGame(); applyPlaytestCoinGrant(S);
+  if (boot.status === 'ok'){ S = boot.state; hasSave = true; prepareCalendar(S); applyPlaytestCoinGrant(S); applyPlaytestGemGrant(S); return; }
+  S = newGame(); applyPlaytestCoinGrant(S); applyPlaytestGemGrant(S);
   if (boot.status === 'fresh') return;
   recovery = boot; saveGate.blocked = true;
   if (boot.status === 'corrupt') recovery.preserved = persist.preserveCorrupt(boot.raw);   // original bytes kept before anything else happens
@@ -144,8 +158,15 @@ function applyLang(){
   document.documentElement.dir = L.dir; document.documentElement.lang = S.set.lang;
   document.querySelectorAll('[data-t]').forEach(el => el.textContent = L[el.dataset.t]);
 }
-const itemName = it => it.g ? L.gens[it.g] : L.items[it.c][it.l-1];
-const itemArt  = it => it.g ? A.gen(it.g, it.l) : A.item(it.c, it.l);
+const itemName = it => it.g ? L.gens[it.g] : it.box === 'gem' ? L.gemBox : it.box ? L.giftBox : it.gem ? L.gemItem : L.items[it.c][it.l-1];
+const itemArt  = it => it.g ? A.gen(it.g, it.l) : it.box === 'gem' ? A.icon('gemBox') : it.box ? A.icon('gift') : it.gem ? A.icon('gem') : A.item(it.c, it.l);
+function cloneItem(it){
+  if (!it) return null;
+  if (it.g){ const o = {g:it.g, l:it.l}; if (it.ch != null) o.ch = it.ch; if (it.t) o.t = it.t; if (it.n != null) o.n = it.n; if (it.rt) o.rt = it.rt; return o; }
+  if (it.box) return {box: it.box};
+  if (it.gem) return {gem: it.gem};
+  return {c:it.c, l:it.l};
+}
 
 /* ---------------- ئېنېرگىيە ---------------- */
 /* Energy rules (all derived from the persisted S.energy + S.et timestamp; timers only REFRESH the display):
@@ -166,6 +187,7 @@ function tick(){
     const n = Math.floor((now - S.et)/ENERGY_MS);
     if (n > 0){ S.energy = Math.min(ENERGY_CAP, S.energy + n); S.et += n*ENERGY_MS; if (S.energy >= ENERGY_CAP) S.et = now; }
   } else S.et = now;
+  settleAllGens(now);
   rolloverTasks();
 }
 /* Daily/weekly reset (existing calendar keys). The OLD day's completions are recorded first; today's assignment is snapshotted ONCE here (deterministic, never re-rolled by reload, language or re-import).
@@ -205,12 +227,20 @@ const CONTENT_CACHE_KEY = 'atelierLueur.content.v1', LEGACY_EVENTS_KEY = 'atelie
 // export/import/backup/restore. Only a device-local clock guard has its own tiny key.
 try { EV = window.CONTENT.createEvents({
   get: () => (S && S.ev) || null, ensure: () => (S.ev || (S.ev = {v: 1, events: {}})),
-  clock: {get: () => window.localStorage.getItem('atelierLueur.clock.v1'), set: v => window.localStorage.setItem('atelierLueur.clock.v1', v)},
+  clock: {get: () => window.localStorage.getItem(PREVIEW ? 'atelierLueur.preview.clock.v1' : 'atelierLueur.clock.v1'), set: v => window.localStorage.setItem(PREVIEW ? 'atelierLueur.preview.clock.v1' : 'atelierLueur.clock.v1', v)},
 }); } catch(e){ EV = null; }
 // One-time move of event state from the earlier separate key (build 90ce0fc) into the save. The old bytes are kept under ".migrated"
 // (never deleted) and the old key is retired so a later import cannot resurrect stale state.
+function migrateEventGems(){               // already-activated Week of Light keeps claims; unclaimed completion gains +10 gems
+  const ev = S && S.ev && S.ev.events && S.ev.events['week-of-light-2026'];
+  if (!ev || !ev.completionReward || (ev.claims && ev.claims['*']) || ev.completionReward.gems) return false;
+  ev.completionReward = Object.assign({}, ev.completionReward, {gems: 10});
+  ev.rev = Math.max(ev.rev || 1, 2);
+  return true;
+}
 function migrateLegacyEvents(){
   try {
+    if (PREVIEW) return false;                     // never touch the main event-migration key from a preview session
     if (!S || S.ev !== undefined || saveGate.blocked) return false;
     const raw = window.localStorage.getItem(LEGACY_EVENTS_KEY); if (!raw) return false;
     const ev = window.CONTENT.migrateLegacy(raw); if (!ev) return false;
@@ -219,7 +249,7 @@ function migrateLegacyEvents(){
   } catch(e){ return false; }
 }
 function loadCachedDef(){ try { const raw = window.localStorage.getItem(CONTENT_CACHE_KEY); if (!raw) return null; const v = window.CONTENT.validateDefinition(JSON.parse(raw)); return v.ok ? v.def : null; } catch(e){ return null; } }
-function applyContent(def){ try { curDef = def; if (EV && (EV.sync(def, S.lv) | EV.prune())) { save(); if ($('nav').children.length) renderNav(); } } catch(e){} }
+function applyContent(def){ try { curDef = def; let ch = false; if (EV) { try { if (EV.sync(def, S.lv) | EV.prune()) ch = true; } catch(e){} } if (migrateEventGems()) ch = true; if (ch) { save(); if ($('nav').children.length) renderNav(); } } catch(e){} }
 async function refreshContent(force){
   if (!EV || !window.CONTENT) return;
   const url = C.contentUrl, t = Date.now();
@@ -238,18 +268,22 @@ async function refreshContent(force){
 function give(r, ups){            // ups (optional): collect level-ups instead of announcing them (used by the atomic event-claim transaction)
   if (r.coins){ S.coins += r.coins; count('coins', r.coins); }
   if (r.energy) S.energy += r.energy;
+  if (r.gems) S.gems = (S.gems || 0) + r.gems;
   if (r.stars){ if (ups) ups.push(...addStarsCore(r.stars)); else addStars(r.stars); }
 }
+const payChip = (n, kind) => `<span class="rw"><i>${A.icon(kind)}</i>${n}</span>`;
+const payAmt = (n, kind) => `<span class="rw"><i>${A.icon(kind)}</i>+${n}</span>`;
 const rwHtml = r => [r.coins && `<span class="rw"><i>${A.icon('coin')}</i>${r.coins}</span>`,
   r.energy && `<span class="rw"><i>${A.icon('bolt')}</i>${r.energy}</span>`,
+  r.gems && `<span class="rw"><i>${A.icon('gem')}</i>${r.gems}</span>`,
   r.stars && `<span class="rw"><i>${A.icon('star')}</i>${r.stars}</span>`].filter(Boolean).join(' ');
 function addStarsCore(n){          // state change only; returns the level-ups so the caller can announce them AFTER the state is safely saved
   const ups = []; S.stars += n;
   while (S.stars >= starsNeed(S.lv)){
     S.stars -= starsNeed(S.lv); S.lv++;
     if (curDef && EV) { try { EV.sync(curDef, S.lv); } catch(e){} }   // level-gated events may become eligible
-    const r = roadReward(S.lv); S.road[S.lv] = 1; give(r);
-    ups.push({lv: S.lv, r}); ups.push(...grantMilestones());      // producer milestone copies (once per save, recorded in S.pg)
+    const r = roadReward(S.lv), paid = !!S.road[S.lv]; S.road[S.lv] = 1; if (!paid) give(r); give({gems: 5});
+    ups.push({lv: S.lv, r: Object.assign({}, r, {gems: (r.gems || 0) + 5})}); ups.push(...grantMilestones());      // producer milestone copies (once per save, recorded in S.pg)
   }
   return ups;
 }
@@ -327,7 +361,7 @@ function supplyHtml(){
         : `<button class="btn pink ${poor ? 'no' : ''}" data-pbuy="${g}" ${poor ? 'aria-label="' + L.supplyBuyNeed + '"' : ''}><span class="rw"><i>${A.icon('coin')}</i>${price}</span></button>`}</div>`; }).join('');
   const tray = (S.queue || []).map(q => `<div class="row prow"><div class="art">${A.gen(q.g, q.l)}</div><div class="grow"><b>${L.gens[q.g]}</b> · ${L.level(q.l)}<div class="muted" style="font-size:12px">${emptyCell() < 0 ? L.trayBoardFull : L.supplyWaiting(L.gens[q.g])}</div></div>
       <button class="btn" data-pplace="${q.id}" ${emptyCell() < 0 ? 'disabled' : ''}>${L.trayPlace}</button></div>`).join('');
-  return (rows ? `<div class="ribbon small">${L.supplyTitle}</div><p class="muted center" style="margin:2px 0 4px;font-size:12px">${L.supplyNote}</p>${rows}` : '') + (tray ? `<div class="ribbon small">${L.trayTitle}</div>${tray}` : '');
+  return (rows ? `<div class="hintHead"><div class="ribbon small">${L.supplyTitle}</div>${infoHead('hint-supply', '', L.supplyNote)}</div>${rows}` : '') + (tray ? `<div class="ribbon small">${L.trayTitle}</div>${tray}` : '');
 }
 const lastBuy = {};
 function wireSupply(reopen){
@@ -362,17 +396,275 @@ function fillOrders(){ migrateCustomers(); for (let i=0;i<3;i++) if (!S.orders[i
 function haveCount(c, l){ return S.board.filter(it => it && it.c===c && it.l===l).length; }
 const needs = o => window.PROGRESSION.reqs(o);
 function ready(o){ return !!o && needs(o).every(r => haveCount(r.c, r.l) >= r.n); }
+
+/* ---------------- Reward / feedback motion (CSS + Web Animations; state commits first) ---------------- */
+function fxReduce(){ return !!(typeof REDUCED !== 'undefined' ? REDUCED : (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)'))).matches; }
+function fxLayer(){
+  let el = $('fxLayer');
+  if (!el){ el = document.createElement('div'); el.id = 'fxLayer'; el.setAttribute('aria-hidden', 'true'); document.body.appendChild(el); }
+  return el;
+}
+function fxPt(el){
+  if (!el || !el.getBoundingClientRect) return {x: innerWidth / 2, y: innerHeight / 3};
+  const r = el.getBoundingClientRect();
+  return {x: r.left + r.width / 2, y: r.top + r.height / 2};
+}
+let fxCoinHold = null, fxCoinRaf = 0, fxStarHold = null, fxEnergyHold = null, fxEnergyRaf = 0, fxGemHold = null, fxGemRaf = 0, fxBits = 0, fxFlightN = 0;
+const FX_BIT_CAP = 28, FX_BURST_CAP = 8;   // concurrent leftover cap, and a soft cap per grant burst
+const FX_GEM_SVG = '<svg viewBox="0 0 100 100" aria-hidden="true"><path d="M50 6L90 38L50 96L10 38Z" fill="#7ec8e8" stroke="#2a6d88" stroke-width="5"/><path d="M50 6L66 38H34Z" fill="#d4f3ff" opacity=".75"/></svg>';
+function fxIcon(kind){ return kind === 'star' ? A.icon('star') : kind === 'energy' ? A.icon('bolt') : kind === 'gem' ? A.icon('gem') : A.icon('coin'); }
+function fxTargetEl(kind){
+  if (kind === 'star') return $('tLv');
+  if (kind === 'energy') return $('tEp');
+  if (kind === 'gem') return $('tGp') || ($('tGv') && ($('tGv').closest('.pill') || $('tGv')));   // the standalone gem pill
+  return $('tCv') && ($('tCv').closest('.pill') || $('tCv'));
+}
+function fxWalletSnap(){
+  return {
+    coins: fxCoinHold != null ? fxCoinHold : (S ? S.coins : 0),
+    energy: fxEnergyHold != null ? fxEnergyHold : (S ? S.energy : 0),
+    gems: fxGemHold != null ? fxGemHold : (S && S.gems) || 0,
+    pct: fxStarHold != null ? fxStarHold : (S ? Math.min(100, S.stars / starsNeed(S.lv) * 100) : 0),
+    lv: S ? S.lv : 1
+  };
+}
+function fxClearBit(el){ if (!el || !el.parentNode) return; el.remove(); fxBits = Math.max(0, fxBits - 1); }
+function fxBounce(el, soft){
+  if (!el || fxReduce() || !el.animate) return;
+  try { el.getAnimations().forEach(a => { if (a._fxBounce) a.cancel(); }); } catch(e){}
+  const peak = soft ? 1.06 : 1.1;
+  const a = el.animate(
+    [{transform:'scale(1)'},{transform:'scale(' + peak + ')'},{transform:'scale(1)'}],
+    {duration: soft ? 180 : 240, easing:'cubic-bezier(.22,.8,.28,1)'}
+  );
+  a._fxBounce = true;
+}
+function fxCountCoins(target, dur){
+  const el = $('tCv');
+  const from = fxCoinHold != null ? fxCoinHold : (el ? (parseInt(el.textContent, 10) || target) : target);
+  if (fxCoinRaf) cancelAnimationFrame(fxCoinRaf);
+  if (fxReduce() || !el){ fxCoinHold = null; if (el) el.textContent = String(S.coins); return; }
+  const t0 = performance.now(), len = dur || 120, dest = target;
+  fxCoinHold = from;
+  const step = now => {
+    const t = Math.min(1, (now - t0) / len);
+    const eased = 1 - Math.pow(1 - t, 3);
+    fxCoinHold = from + (dest - from) * eased;
+    if ($('tCv')) $('tCv').textContent = String(Math.round(fxCoinHold));
+    if (t < 1) fxCoinRaf = requestAnimationFrame(step);
+    else {
+      fxCoinHold = dest === S.coins ? null : dest;
+      fxCoinRaf = 0;
+      if ($('tCv')) $('tCv').textContent = String(Math.round(dest === S.coins ? S.coins : dest));
+    }
+  };
+  fxCoinRaf = requestAnimationFrame(step);
+}
+function fxCountEnergy(target, dur){
+  const el = $('tEv');
+  const from = fxEnergyHold != null ? fxEnergyHold : (el ? (parseInt(el.textContent, 10) || target) : target);
+  if (fxEnergyRaf) cancelAnimationFrame(fxEnergyRaf);
+  if (fxReduce() || !el){ fxEnergyHold = null; if (el) el.textContent = S.energy + '/' + ENERGY_CAP; return; }
+  const t0 = performance.now(), len = dur || 120, dest = target;
+  fxEnergyHold = from;
+  const step = now => {
+    const t = Math.min(1, (now - t0) / len);
+    const eased = 1 - Math.pow(1 - t, 3);
+    fxEnergyHold = from + (dest - from) * eased;
+    if ($('tEv')) $('tEv').textContent = Math.round(fxEnergyHold) + '/' + ENERGY_CAP;
+    if (t < 1) fxEnergyRaf = requestAnimationFrame(step);
+    else {
+      fxEnergyHold = dest === S.energy ? null : dest;
+      fxEnergyRaf = 0;
+      if ($('tEv')) $('tEv').textContent = Math.round(dest === S.energy ? S.energy : dest) + '/' + ENERGY_CAP;
+    }
+  };
+  fxEnergyRaf = requestAnimationFrame(step);
+}
+function fxCountGems(target, dur){
+  const el = $('tGv'); if (!el){ fxGemHold = null; return; }
+  const from = fxGemHold != null ? fxGemHold : (parseInt(el.textContent, 10) || target);
+  if (fxGemRaf) cancelAnimationFrame(fxGemRaf);
+  if (fxReduce()){ fxGemHold = null; el.textContent = String((S && S.gems) || 0); return; }
+  const t0 = performance.now(), len = dur || 120, dest = target, live = () => (S && S.gems) || 0;
+  fxGemHold = from;
+  const step = now => {
+    const t = Math.min(1, (now - t0) / len);
+    fxGemHold = from + (dest - from) * (1 - Math.pow(1 - t, 3));
+    if ($('tGv')) $('tGv').textContent = String(Math.round(fxGemHold));
+    if (t < 1) fxGemRaf = requestAnimationFrame(step);
+    else { const g = live(); const done = Math.round(dest) === g || Math.abs(dest - g) <= 0.5; fxGemHold = done ? null : dest; fxGemRaf = 0; if ($('tGv')) $('tGv').textContent = String(Math.round(done ? g : dest)); }
+  };
+  fxGemRaf = requestAnimationFrame(step);
+}
+function fxTweenStarBar(fromPct, toPct, dur){
+  const bar = $('tLvB'); if (!bar) return;
+  if (fxReduce()){ fxStarHold = null; bar.style.width = toPct + '%'; return; }
+  const start = fromPct;
+  const t0 = performance.now(), len = dur || 160;
+  fxStarHold = start;
+  const step = now => {
+    const t = Math.min(1, (now - t0) / len);
+    const eased = 1 - Math.pow(1 - t, 3);
+    fxStarHold = start + (toPct - start) * eased;
+    if ($('tLvB')) $('tLvB').style.width = fxStarHold + '%';
+    if (t < 1) requestAnimationFrame(step);
+    else {
+      const done = Math.min(100, S.stars / starsNeed(S.lv) * 100);
+      fxStarHold = Math.abs(toPct - done) < 0.2 ? null : toPct;
+      if ($('tLvB')) $('tLvB').style.width = (fxStarHold == null ? done : toPct) + '%';
+    }
+  };
+  requestAnimationFrame(step);
+}
+function fxBezier(p0, p1, p2, p3, t){
+  const u = 1 - t, uu = u * u, tt = t * t;
+  return {
+    x: uu * u * p0.x + 3 * uu * t * p1.x + 3 * u * tt * p2.x + tt * t * p3.x,
+    y: uu * u * p0.y + 3 * uu * t * p1.y + 3 * u * tt * p2.y + tt * t * p3.y
+  };
+}
+function fxFlyBits(kind, from, to, n, stagger, onLand){
+  n = Math.max(0, Math.min(8, n | 0));
+  if (!n || fxReduce() || !from || !to) { if (onLand) onLand(true); return 0; }
+  const layer = fxLayer();
+  const html = fxIcon(kind);
+  const klass = kind === 'star' ? 'Star' : kind === 'energy' ? 'Energy' : kind === 'gem' ? 'Gem' : 'Coin';
+  const dur = 760, gap = 36;
+  const ang = Math.atan2(to.y - from.y, to.x - from.x);
+  const perp = ang + Math.PI / 2;
+  let spawned = 0;
+  for (let i = 0; i < n; i++){
+    let d = null;
+    const last = i === n - 1;
+    const finish = () => { if (onLand) onLand(last); if (d) fxClearBit(d); };
+    if (fxBits >= FX_BIT_CAP) { finish(); continue; }
+    d = document.createElement('div');
+    d.className = 'fxBit fx' + klass;
+    d.innerHTML = html;
+    layer.appendChild(d); fxBits++; spawned++;
+    const fan = n === 1 ? 0 : (i - (n - 1) / 2) / ((n - 1) / 2);           // -1..1
+    const fanAng = ang + Math.PI * 0.72 + fan * 0.95;                     // burst outward, then curve in
+    const fanDist = 34 + Math.abs(fan) * 20;
+    const p1 = {x: from.x + Math.cos(fanAng) * fanDist, y: from.y + Math.sin(fanAng) * fanDist};
+    const p2 = {
+      x: from.x + (to.x - from.x) * 0.55 + Math.cos(perp) * fan * 22,
+      y: Math.min(from.y, to.y) - (26 + Math.abs(fan) * 16)
+    };
+    const frames = [0, 0.14, 0.3, 0.5, 0.7, 0.88, 1].map(t => {
+      const p = fxBezier(from, p1, p2, to, t);
+      const sc = t < 0.14 ? 0.4 + t * 3 : t > 0.88 ? 0.5 : 1;
+      const op = t === 0 ? 0 : (t > 0.94 ? 0 : 1);
+      return {transform:'translate(' + p.x + 'px,' + p.y + 'px) scale(' + sc + ')', opacity:op, offset:t};
+    });
+    const delay = (stagger || 0) + i * gap;
+    const anim = d.animate(frames, {duration:dur, delay:delay, easing:'cubic-bezier(.22,.6,.2,1)', fill:'forwards'});
+    if (anim && anim.finished) anim.finished.then(finish).catch(finish); else setTimeout(finish, delay + dur + 40);
+    setTimeout(() => fxClearBit(d), delay + dur + 200);
+  }
+  return spawned;
+}
+function fxRewardFlight(opts){
+  opts = opts || {};
+  if (opts.silent) return;                                  // load-time / regen grants stay quiet
+  const fromEl = opts.from;
+  const src = fromEl && fromEl.getBoundingClientRect ? fxPt(fromEl) : (fromEl && fromEl.x != null ? fromEl : fxPt(fromEl));
+  const coins = Math.max(0, opts.coins || 0), energy = Math.max(0, opts.energy || 0), stars = Math.max(0, opts.stars || 0), gems = Math.max(0, opts.gems || 0);
+  const fromCoins = opts.fromCoins != null ? opts.fromCoins : (fxCoinHold != null ? fxCoinHold : (S ? S.coins - coins : 0));
+  const toCoins = opts.toCoins != null ? opts.toCoins : (S ? S.coins : fromCoins);
+  const fromEnergy = opts.fromEnergy != null ? opts.fromEnergy : (fxEnergyHold != null ? fxEnergyHold : (S ? S.energy - energy : 0));
+  const toEnergy = opts.toEnergy != null ? opts.toEnergy : (S ? S.energy : fromEnergy);
+  const fromGems = opts.fromGems != null ? opts.fromGems : (fxGemHold != null ? fxGemHold : ((S && S.gems) || 0) - gems);
+  const toGems = opts.toGems != null ? opts.toGems : ((S && S.gems) || 0);
+  const fromPct = opts.fromPct != null ? opts.fromPct : null;
+  const toPct = opts.toPct != null ? opts.toPct : (S ? Math.min(100, S.stars / starsNeed(S.lv) * 100) : 0);
+  if (fxReduce()){
+    fxCoinHold = null; if ($('tCv')) $('tCv').textContent = String(S.coins);
+    fxEnergyHold = null; if ($('tEv')) $('tEv').textContent = S.energy + '/' + ENERGY_CAP;
+    fxStarHold = null; if ($('tLvB')) $('tLvB').style.width = toPct + '%';
+    fxGemHold = null; if ($('tGv')) $('tGv').textContent = String((S && S.gems) || 0);
+    return;
+  }
+  // Hold displayed wallets at the pre-payout values until pieces land (renderTop would otherwise jump)
+  const flight = ++fxFlightN;
+  if (coins && fxCoinHold == null){ fxCoinHold = fromCoins; if ($('tCv')) $('tCv').textContent = String(Math.round(fromCoins)); }
+  if (energy && fxEnergyHold == null){ fxEnergyHold = fromEnergy; if ($('tEv')) $('tEv').textContent = Math.round(fromEnergy) + '/' + ENERGY_CAP; }
+  if (gems && fxTargetEl('gem') && fxGemHold == null){ fxGemHold = fromGems; if ($('tGv')) $('tGv').textContent = String(Math.round(fromGems)); }
+  const parts = [];
+  if (coins) parts.push({kind:'coin', amount:coins, from:fromCoins, to:toCoins});
+  if (energy) parts.push({kind:'energy', amount:energy, from:fromEnergy, to:toEnergy});
+  if (stars) parts.push({kind:'star', amount:stars, from:fromPct, to:toPct});
+  if (gems && fxTargetEl('gem')) parts.push({kind:'gem', amount:gems, from:fromGems, to:toGems});
+  let slots = FX_BURST_CAP;
+  parts.forEach((p, i) => {
+    const remain = parts.length - i;
+    p.n = Math.min(slots - (remain - 1), Math.max(1, Math.min(FX_BURST_CAP, Math.round(2 + Math.min(p.amount, 80) / 20))));
+    slots -= p.n;
+  });
+  const done = {};
+  const land = (p, last) => {
+    if (flight !== fxFlightN) return;
+    if (done[p.kind]) return;
+    p.landed = (p.landed || 0) + 1;
+    const fin = last || p.landed >= p.n;
+    if (fin) done[p.kind] = true;
+    const shown = fin ? p.to : p.from + (p.to - p.from) * (p.landed / p.n);
+    fxBounce(fxTargetEl(p.kind), true);
+    if (p.kind === 'coin') fxCountCoins(shown, fin ? 140 : 100);
+    else if (p.kind === 'energy') fxCountEnergy(shown, fin ? 140 : 100);
+    else if (p.kind === 'gem') fxCountGems(shown, fin ? 140 : 100);
+    else if (p.kind === 'star' && fromPct != null) fxTweenStarBar(fxStarHold != null ? fxStarHold : fromPct, shown, fin ? 180 : 120);
+  };
+  if (!parts.length){ if (coins) fxCountCoins(toCoins, 80); if (energy) fxCountEnergy(toEnergy, 80); return; }
+  parts.forEach((p, i) => fxFlyBits(p.kind, src, fxPt(fxTargetEl(p.kind)), p.n, i * 40, last => land(p, last)));
+  setTimeout(() => {
+    if (flight !== fxFlightN) return;
+    parts.forEach(p => { done[p.kind] = true; });
+    if (fxCoinRaf) cancelAnimationFrame(fxCoinRaf);
+    if (fxEnergyRaf) cancelAnimationFrame(fxEnergyRaf);
+    if (fxGemRaf) cancelAnimationFrame(fxGemRaf);
+    fxCoinRaf = fxEnergyRaf = fxGemRaf = 0;
+    if (coins){ fxCoinHold = null; if ($('tCv')) $('tCv').textContent = String(S.coins); }
+    if (energy){ fxEnergyHold = null; if ($('tEv')) $('tEv').textContent = S.energy + '/' + ENERGY_CAP; }
+    if (gems){ fxGemHold = null; if ($('tGv')) $('tGv').textContent = String((S && S.gems) || 0); }
+    if (stars && fromPct != null){ fxStarHold = null; if ($('tLvB')) $('tLvB').style.width = (Math.min(100, S.stars / starsNeed(S.lv) * 100)) + '%'; }
+  }, 1100);
+}
+function fxAfterGive(from, snap, extra){     // wallet already committed; fly the visible delta (spends are ignored)
+  snap = snap || fxWalletSnap(); extra = extra || {};
+  if (extra.silent) return;
+  const toPct = Math.min(100, S.stars / starsNeed(S.lv) * 100);
+  const dCoins = Math.max(0, S.coins - snap.coins);
+  const dEnergy = Math.max(0, S.energy - snap.energy);
+  const dGems = Math.max(0, ((S && S.gems) || 0) - (snap.gems || 0));
+  const dStars = extra.stars != null ? extra.stars : ((snap.lv != null && S.lv > snap.lv) || (snap.pct != null && Math.abs(toPct - snap.pct) > 0.5) ? 4 : 0);
+  if (!dCoins && !dEnergy && !dStars && !dGems) return;
+  fxRewardFlight({from, coins:dCoins, energy:dEnergy, stars:dStars, gems:dGems,
+    fromCoins:snap.coins, toCoins:S.coins, fromEnergy:snap.energy, toEnergy:S.energy,
+    fromGems:snap.gems, toGems:(S && S.gems) || 0, fromPct:snap.pct, toPct});
+}
+function fxGrantFromCell(i, reward){         // future board chests / gem boxes: same helper, source is the cell
+  const el = $('board') && $('board').children[i];
+  const snap = fxWalletSnap();
+  if (reward) give(reward);
+  fxAfterGive(el, snap, {stars: reward && reward.stars});
+}
+
 function deliver(oi){
   const o = S.orders[oi]; if (!ready(o)) { toast(L.notReady); SFX.no(); return; }       // all-or-nothing: nothing is consumed unless EVERY requirement is met
+  const fromEl = $('orders') && $('orders').children[oi];
+  const snap = fxWalletSnap();
+  const payStars = o.stars;
   needs(o).forEach(r => { let left = r.n;
     S.board.forEach((it,i) => { if (left && it && it.c===r.c && it.l===r.l){ S.board[i] = null; if (selected===i) selected=null; left--; } }); });
-  give({coins:o.coins}); addStars(o.stars); count('order');                              // one payout, one generic order count
+  give({coins:o.coins}); addStars(o.stars); count('order');                              // one payout, one generic order count — wallet commits before any animation
   if (o.m){ MSN.countMixedDelivery(S); MSN.sync(S, MSN_CFG); }                             // an ORDINARY mixed-family order (an Atelier commission is counted separately)
   const atl = ATL.onOrdinaryDelivery(S);                                                  // Atelier cadence: ordinary deliveries only (commission deliveries never come through here)
   SFX.deliver(); buzz(20);
   setPortrait(oi, 'happy');   // art reaction after a REAL successful delivery only
   const el = $('orders').children[oi]; if (el) el.classList.add('leave');
   lastWho[oi] = whoOf(o, oi); S.orders[oi] = null; save(); closeModal();
+  fxAfterGive(fromEl || el, snap, {stars: payStars});
   if (atl.created){ setTimeout(() => { toast(L.atl.newCommission); renderSide(); }, 900); }
   if (S.tut === 3) tutAdvance(3);
   setTimeout(() => { S.orders[oi] = newOrder(oi); PSTATE[oi] = 'idle'; orderFx[oi] = 'arrive'; save(); renderOrders(); renderBoard(); renderTut(); }, 420);
@@ -381,7 +673,9 @@ function deliver(oi){
 
 
 /* ---------------- ئامبار، قايتۇرۇش، تەبرىك ۋە قىسقا ئۆگىتىش ---------------- */
-const INV_CAPS = [4, 8, 12], INV_EXPAND = {8: 300, 12: 800}, UNDO_MS = 8000;
+const INV_CAPS = [4, 8, 12, 16], INV_EXPAND = {8: 300, 12: 800}, INV_EXPAND_GEMS = {16: 20}, UNDO_MS = 8000;
+const GEM_ENERGY = {amt: 100, price: 10};
+const GIFT_BOX_RATE = 0.10, GEM_BOX_OF_GIFTS = 0.10;
 function invCapFit(n, used){                         // only 4 / 8 / 12; never auto-upgrade because the player has many coins
   const need = Math.max(used || 0, INV_CAPS[0]);
   let cap = INV_CAPS[0];
@@ -406,7 +700,7 @@ function storeSelected(){
   const r = txn(() => {
     const inv = invState(); if (inv.items.length >= inv.cap) return {ok:false, reason:'full'};
     const cur = S.board[cell]; if (!cur) return {ok:false, reason:'none'};
-    inv.items.push(cur.g ? {g:cur.g, l:cur.l} : {c:cur.c, l:cur.l}); S.board[cell] = null; return {ok:true};
+    inv.items.push(cloneItem(cur)); S.board[cell] = null; return {ok:true};
   });
   if (r.ok){ selected = null; SFX.drop(); renderAll(); } else { SFX.no(); toast(r.reason==='full' ? L.invFull : L.supplyFail); }
   return r;
@@ -415,29 +709,34 @@ function placeInv(i){
   const r = txn(() => {
     const inv = invState(), it = inv.items[i]; if (!it) return {ok:false, reason:'none'};
     const j = emptyCell(); if (j < 0) return {ok:false, reason:'board'};
-    S.board[j] = it.g ? {g:it.g, l:it.l} : {c:it.c, l:it.l}; inv.items.splice(i, 1); return {ok:true, j};
+    S.board[j] = cloneItem(it); inv.items.splice(i, 1); return {ok:true, j};
   });
   if (r.ok){ selected = r.j; SFX.tap(); renderAll(); } else { SFX.no(); toast(r.reason==='board' ? L.boardFull : L.supplyFail); }
   return r;
 }
 let invExpandBusy = false, lastExpandAt = 0;
+function expandPrice(n){ return INV_EXPAND_GEMS[n] ? {gems: INV_EXPAND_GEMS[n]} : {coins: INV_EXPAND[n]}; }
 function commitExpandInv(){
   const now = Date.now();
   if (now - lastExpandAt < 800) return {ok:false, reason:'busy'};
   lastExpandAt = now;
   return txn(() => {
     const inv = invState(), n = INV_CAPS[INV_CAPS.indexOf(inv.cap) + 1]; if (!n) return {ok:false, reason:'max'};
-    const price = INV_EXPAND[n]; if (S.coins < price) return {ok:false, reason:'coins'};
-    S.coins -= price; inv.cap = n; return {ok:true, cap:n};
+    const pr = expandPrice(n);
+    if (pr.gems){ if ((S.gems || 0) < pr.gems) return {ok:false, reason:'gems'}; S.gems -= pr.gems; }
+    else { if (S.coins < pr.coins) return {ok:false, reason:'coins'}; S.coins -= pr.coins; }
+    inv.cap = n; return {ok:true, cap:n};
   });
 }
 function expandInv(){                                 // confirm first; a double tap cannot buy twice
   if (invExpandBusy) return {ok:false, reason:'busy'};
   const inv = invState(), n = INV_CAPS[INV_CAPS.indexOf(inv.cap) + 1]; if (!n) return {ok:false, reason:'max'};
-  const price = INV_EXPAND[n];
-  if (S.coins < price){ SFX.no(); toast(L.noCoins); return {ok:false, reason:'coins'}; }
+  const pr = expandPrice(n);
+  if (pr.gems && (S.gems || 0) < pr.gems){ SFX.no(); toast(L.noGems); return {ok:false, reason:'gems'}; }
+  if (pr.coins && S.coins < pr.coins){ SFX.no(); toast(L.noCoins); return {ok:false, reason:'coins'}; }
   invExpandBusy = true;
-  modal(L.invExpandTitle, `<p class="center">${L.invExpandAsk(price, n)}</p><div style="display:flex;gap:8px"><button type="button" class="btn pink wide" id="invExY">${L.yes}</button><button type="button" class="btn wide" data-close>${L.no}</button></div>`);
+  const ask = pr.gems ? L.invExpandAskGems(payChip(pr.gems, 'gem'), n) : L.invExpandAsk(payChip(pr.coins, 'coin'), n);
+  modal(L.invExpandTitle, `<p class="center">${ask}</p><div style="display:flex;gap:8px"><button type="button" class="btn pink wide" id="invExY">${L.yes}</button><button type="button" class="btn wide" data-close>${L.no}</button></div>`);
   const yes = $('invExY');
   if (yes) yes.onclick = ev => {
     ev.preventDefault(); ev.stopPropagation();
@@ -446,7 +745,24 @@ function expandInv(){                                 // confirm first; a double
     const r = commitExpandInv();
     closeModal();
     if (r.ok){ SFX.shop(); toast(L.invExpanded(r.cap)); renderAll(); }
-    else if (r.reason !== 'busy'){ SFX.no(); toast(r.reason==='coins' ? L.noCoins : L.supplyFail); }
+    else if (r.reason !== 'busy'){ SFX.no(); toast(r.reason==='gems' ? L.noGems : r.reason==='coins' ? L.noCoins : L.supplyFail); }
+  };
+  return {ok:true, reason:'confirm'};
+}
+function confirmGemSpend(title, body, commit, onDone){   // same confirm style as storage; debounce on the Yes button and a short lock
+  if (invExpandBusy) return {ok:false, reason:'busy'};
+  invExpandBusy = true;
+  modal(title, `<p class="center">${body}</p><div style="display:flex;gap:8px"><button type="button" class="btn pink wide" id="gemSpY">${L.yes}</button><button type="button" class="btn wide" data-close>${L.no}</button></div>`);
+  const yes = $('gemSpY');
+  if (yes) yes.onclick = ev => {
+    ev.preventDefault(); ev.stopPropagation();
+    if (yes.dataset.used) return;
+    yes.dataset.used = '1'; yes.disabled = true;
+    if (Date.now() - lastExpandAt < 800){ closeModal(); return; }
+    lastExpandAt = Date.now();
+    const r = commit();
+    closeModal();
+    if (onDone) onDone(r);
   };
   return {ok:true, reason:'confirm'};
 }
@@ -459,7 +775,10 @@ function invPanelHtml(){
     h += `<button type="button" class="invSlot${it ? ' full' : ''}" data-inv="${i}">${it ? itemArt(it) : ''}</button>`;
   }
   h += `</div>`;
-  if (next) h += `<button type="button" class="invExpand${S.coins < INV_EXPAND[next] ? ' no' : ''}" id="invExpand" aria-label="${L.invExpand(INV_EXPAND[next])}"><span class="invPlus">+</span><span class="rw"><i>${A.icon('coin')}</i>${INV_EXPAND[next]}</span></button>`;
+  if (next){
+    const pr = expandPrice(next), cost = pr.gems || pr.coins, ic = pr.gems ? 'gem' : 'coin', poor = pr.gems ? (S.gems || 0) < pr.gems : S.coins < pr.coins;
+    h += `<button type="button" class="invExpand${poor ? ' no' : ''}" id="invExpand" aria-label="${L.invExpand(cost)}"><span class="invPlus">+</span><span class="rw"><i>${A.icon(ic)}</i>${cost}</span></button>`;
+  }
   h += `</div></div>`;
   return h;
 }
@@ -525,12 +844,18 @@ function prevDayKey(k){
   const d = new Date(p[0], p[1] - 1, p[2] - 1);
   return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
 }
-function giftStreakNext(){ const dk = dayKey(); return (S.gst && S.gst.k === prevDayKey(dk)) ? Math.min(3, (S.gst.n || 1) + 1) : 1; }
-function giftReward(n){ const k = Math.max(1, Math.min(3, n)); return {energy: 20 + 10 * k, coins: 20 + 10 * k}; }
+function giftStreakNext(){ const dk = dayKey(); return (S.gst && S.gst.k === prevDayKey(dk)) ? Math.min(7, (S.gst.n || 1) + 1) : 1; }
+function giftReward(n){
+  const k = Math.max(1, Math.min(7, n));
+  const coins = 20 + 10 * Math.min(k, 6), energy = 20 + 10 * Math.min(k, 6);
+  return k === 7 ? {coins, energy, gems: 10} : {coins, energy};
+}
 function claimDailyGift(){
   const dk = dayKey(); if (S.gift === dk) return {ok:false, reason:'already'};
   const n = giftStreakNext(), rew = giftReward(n);
+  const snap = fxWalletSnap();
   S.gift = dk; S.gst = {k: dk, n}; give(rew); SFX.coin(); save();
+  fxAfterGive($('shGift'), snap);
   if (S.tut === 4) tutAdvance(4);
   return {ok:true, n, rew};
 }
@@ -560,21 +885,113 @@ function renderTut(){
 }
 
 /* ---------------- تاختا ھەرىكەتلىرى ---------------- */
+function freshGen(g, l){ return {g, l, n: GEN_STOCK}; }
+function settleGen(it, now){
+  if (!it || !it.g) return it;
+  now = now || Date.now();
+  if (it.rt && it.rt <= now){ it.n = GEN_STOCK; delete it.rt; }
+  return it;
+}
+function settleAllGens(now){
+  now = now || Date.now();
+  (S.board || []).forEach(it => settleGen(it, now));
+  if (S.inv && S.inv.items) S.inv.items.forEach(it => settleGen(it, now));
+}
+function genRestLeft(it, now){
+  settleGen(it, now);
+  return (it && it.g && it.rt && it.rt > (now || Date.now())) ? it.rt - (now || Date.now()) : 0;
+}
+function genStockOf(it){
+  settleGen(it);
+  if (!it || !it.g) return 0;
+  return it.n == null ? GEN_STOCK : it.n;
+}
+const GEN_CLK = '<svg viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="5" fill="none" stroke="#fff" stroke-width="1.4"/><path d="M6 3.2V6.2L8.1 7.5" fill="none" stroke="#fff" stroke-width="1.3" stroke-linecap="round"/></svg>';
 function produce(i){
   const g = S.board[i];
-  if (S.energy < 1){ toast(L.noEnergy); SFX.empty(); openShop(); return; }
+  if (!g || !g.g) return;
+  const left = genRestLeft(g);
+  if (left > 0){ selected = i; toast(L.genResting(fmtDur(left/1000))); SFX.tap(); renderBoard(); renderInfo(); return; }
+  if (S.energy < 1){ toast(L.noEnergy); SFX.empty(); openShop('energy'); return; }
   const gr = Math.floor(i/COLS), gc = i%COLS;
   let best = -1, bd = 1e9;
   S.board.forEach((it,j) => { if (it) return; const d = (Math.floor(j/COLS)-gr)**2 + ((j%COLS)-gc)**2; if (d < bd){ bd = d; best = j; } });
   if (best < 0){ toast(L.boardFull); SFX.no(); return; }
   if (S.energy >= ENERGY_CAP) S.et = Date.now();      // recovery starts when the player drops below the cap (nothing was banked while full)
   S.energy--;
-  const r = Math.random(), l = g.l===3 ? (r<.1?3:r<.4?2:1) : g.l===2 ? (r<.25?2:1) : (r<.1?2:1);
-  const it = {c: pick(GEN_CHAINS[g.g]), l};
-  S.board[best] = it; discover(it); count('tap');
+  if (g.n == null) g.n = GEN_STOCK;
+  g.n--;
+  if (g.n <= 0){ g.n = 0; g.rt = Date.now() + GEN_REST_MS; }
+  let it;
+  if (S.tut >= 5 && Math.random() < GIFT_BOX_RATE){
+    it = {box: Math.random() < GEM_BOX_OF_GIFTS ? 'gem' : 'gift'};
+  } else {
+    const r = Math.random(), l = g.l===3 ? (r<.1?3:r<.4?2:1) : g.l===2 ? (r<.25?2:1) : (r<.1?2:1);
+    it = {c: pick(GEN_CHAINS[g.g]), l};
+    discover(it);
+  }
+  S.board[best] = it; count('tap');
   SFX.spawn(); buzz(8); save();
   if (S.tut === 1) tutAdvance(1);
   renderBoard({fly:{to:best, from:i}}); renderTop(); renderOrders(); renderInfo(); renderNav(); renderTut();
+}
+function openBoardBox(i){
+  const it = S.board[i]; if (!it || !it.box) return;
+  const fromEl = $('board') && $('board').children[i];
+  if (it.box === 'gift'){
+    const rew = {coins: 20 + Math.floor(Math.random() * 21), energy: 5 + Math.floor(Math.random() * 6)};
+    const snap = fxWalletSnap();
+    S.board[i] = null; if (selected === i) selected = null;
+    give(rew); SFX.coin(); save();
+    fxAfterGive(fromEl, snap);
+    renderAll();
+    return;
+  }
+  // gem box: 5–10 loose gems hop onto empty cells; leftovers go to storage, then fly to the pill
+  const n = 5 + Math.floor(Math.random() * 6);
+  S.board[i] = null; if (selected === i) selected = null;
+  const cells = [];
+  for (let k = 0; k < n; k++){
+    const j = emptyCell();
+    if (j >= 0){ S.board[j] = {gem: 1}; cells.push(j); }
+    else if (invFree() > 0){ invState().items.push({gem: 1}); }
+    else {
+      const left = n - k;
+      const snap = fxWalletSnap();
+      give({gems: left}); SFX.coin(); save();
+      fxAfterGive(fromEl, snap);
+      break;
+    }
+  }
+  SFX.spawn(); save();
+  renderBoard({flies: cells.map(to => ({from: i, to}))}); renderTop(); renderInfo(); renderNav();
+}
+function collectGem(i){
+  const it = S.board[i]; if (!it || !it.gem) return;
+  const fromEl = $('board') && $('board').children[i];
+  const snap = fxWalletSnap(), amt = it.gem;
+  S.board[i] = null; if (selected === i) selected = null;
+  give({gems: amt}); SFX.coin(); save();
+  fxAfterGive(fromEl, snap);
+  renderAll();
+}
+function buyEnergyGems(){
+  if ((S.gems || 0) < GEM_ENERGY.price){ SFX.no(); toast(L.noGems); return {ok:false, reason:'gems'}; }
+  const from = fxPt($('shEGem') || $('tGp') || $('tEp'));
+  return confirmGemSpend(L.gemEnergyTitle, L.gemEnergyAsk(payChip(GEM_ENERGY.price, 'gem'), payAmt(GEM_ENERGY.amt, 'bolt')), () => {
+    const snap = fxWalletSnap();
+    const r = txn(() => {
+      if ((S.gems || 0) < GEM_ENERGY.price) return {ok:false, reason:'gems'};
+      S.gems -= GEM_ENERGY.price; S.energy += GEM_ENERGY.amt;
+      if (S.energy >= ENERGY_CAP) S.et = Date.now();
+      return {ok:true, amt: GEM_ENERGY.amt};
+    });
+    if (r.ok) r.snap = snap;
+    return r;
+  }, r => {
+    if (r && r.ok){ SFX.shop(); fxAfterGive(from, r.snap); renderTop(); openShop('energy'); }
+    else if (r && r.reason !== 'busy'){ SFX.no(); toast(r.reason === 'gems' ? L.noGems : L.supplyFail); }
+  });
 }
 function discover(it){
   if (!it.c) return;
@@ -592,7 +1009,7 @@ function drop(from, to){
   const a = S.board[from], b = S.board[to];
   if (canMerge(a, b)){
     const genUp = !!(a.g), genType = a.g, genLv = a.l + 1, lipMerge = !!(a.c && a.c === 'lip');
-    S.board[to] = a.c ? {c:a.c, l:a.l+1} : {g:a.g, l:a.l+1};
+    S.board[to] = a.c ? {c:a.c, l:a.l+1} : freshGen(a.g, a.l+1);
     S.board[from] = null; discover(S.board[to]); count('merge'); if (a.c){ MSN.countMerge(S, a.c, MSN_CFG); MSN.sync(S, MSN_CFG); }   // per-family merge counter (ordinary families only)
     const atl = S.board[to].c && !ATL.hasChapter(S) ? atelierNotes() : [];      // lipstick/powder rank 6 may complete the unlock prerequisites
     selected = to; SFX.merge(a.l+1); buzz(15); save(); if (atl.length) announceLevelUps(atl);
@@ -607,12 +1024,17 @@ function tap(i){
   const it = S.board[i];
   if (!it){ selected = null; renderBoard(); renderInfo(); return; }
   selected = i;
+  if (it.box){ openBoardBox(i); return; }
+  if (it.gem){ collectGem(i); return; }
   if (it.g) produce(i); else { SFX.tap(); renderBoard(); renderInfo(); }
 }
 function sell(){
-  const it = S.board[selected]; if (!it || it.g) return;          // generators stay unsellable
+  const it = S.board[selected]; if (!it || it.g || it.box || it.gem) return;          // generators, boxes and loose gems stay unsellable
   const cell = selected, copy = {c:it.c, l:it.l}, coins = it.l * 2;
+  const fromEl = $('board') && $('board').children[cell];
+  const snap = fxWalletSnap();
   give({coins}); S.board[selected] = null; selected = null; SFX.coin(); save();
+  fxAfterGive(fromEl, snap);
   undoSale = {it:copy, cell, coins, until: Date.now() + UNDO_MS};
   clearInterval(undoTimer); undoTimer = setInterval(() => { if (!undoSale || Date.now() >= undoSale.until) clearUndo(); else renderUndo(); }, 200);
   renderAll(); renderUndo();
@@ -628,13 +1050,24 @@ function renderTop(){
     $('top').innerHTML = `
       <div class="lvbadge" id="tLv">${A.icon('star')}<b id="tLvN"></b><div class="bar"><i id="tLvB"></i></div></div>
       <div class="pill" id="tEp"><span class="ic">${A.icon('bolt')}</span><span class="val ev"><span id="tEv"></span><span class="sub" id="tEt"></span></span><button class="plus" id="tE">+</button></div>
-      <div class="pill"><span class="ic">${A.icon('coin')}</span><span class="val" id="tCv"></span><button class="plus" id="tC">+</button></div>
+      <div class="pill" id="tCp"><span class="ic">${A.icon('coin')}</span><span class="val" id="tCv"></span><button class="plus" id="tC">+</button></div>
+      <div class="pill" id="tGp" title="${L.gems}"><span class="ic">${A.icon('gem')}</span><span class="val" id="tGv"></span><button type="button" class="plus" id="tG">+</button></div>
       <button class="roundbtn" id="tSet">${A.icon('gear')}</button>`;
     $('tLv').onclick = openRoad; $('tE').onclick = openShop; $('tEp').onclick = e => { if (!e.target.closest('#tE')) openEnergy(); };   // + keeps opening the Shop; the rest of the pill shows the energy details
     $('tC').onclick = openShop; $('tSet').onclick = openSettings;
+    if ($('tGp')) $('tGp').onclick = () => openShop('energy');   // gem + and the pill open the shop energy/gem row; no real-money shop yet
   }
-  $('tLvN').textContent = S.lv; $('tLvB').style.width = pct + '%';
-  $('tEv').textContent = S.energy + '/' + ENERGY_CAP; $('tEt').textContent = timer; $('tEt').classList.toggle('full', S.energy >= ENERGY_CAP); $('tCv').textContent = S.coins;
+  $('tLvN').textContent = S.lv;
+  if (fxStarHold == null) $('tLvB').style.width = pct + '%';
+  if (fxEnergyHold == null) $('tEv').textContent = S.energy + '/' + ENERGY_CAP;
+  else $('tEv').textContent = Math.round(fxEnergyHold) + '/' + ENERGY_CAP;
+  $('tEt').textContent = timer; $('tEt').classList.toggle('full', S.energy >= ENERGY_CAP);
+  if (fxCoinHold == null) $('tCv').textContent = S.coins;
+  else $('tCv').textContent = String(Math.round(fxCoinHold));
+  if ($('tGv')){
+    if (fxGemHold == null) $('tGv').textContent = String((S && S.gems) || 0);
+    else $('tGv').textContent = String(Math.round(fxGemHold));
+  }
 }
 const ATL_PREVIEW_LEVEL = 20;              // UI only: from this level the locked Atelier tile (with its requirements) is shown; its single sprite loads only then
 function renderSide(){                                 // the level star opens the road; no duplicate crown beside the orders
@@ -731,7 +1164,11 @@ function scheduleBlink(slot, first){
 }
 function startBlinks(){ [0,1,2].forEach(i => scheduleBlink(i, true)); }
 function stopBlinks(){ blinkTimers.forEach(clearTimeout); [0,1,2].forEach(i => { if (PSTATE[i] === 'blink') setPortrait(i, 'idle'); }); }
-document.addEventListener('visibilitychange', () => { if (document.hidden){ stopBlinks(); endSalonFx(); endCustomerFx(); } else startBlinks(); });   // no backlog on return
+document.documentElement.classList.toggle('tabHidden', document.hidden);
+document.addEventListener('visibilitychange', () => {
+  document.documentElement.classList.toggle('tabHidden', document.hidden);
+  if (document.hidden){ stopBlinks(); endSalonFx(); endCustomerFx(); } else startBlinks();
+});   // no backlog on return; looping portrait motion pauses while the tab is hidden
 if (REDUCED.addEventListener) REDUCED.addEventListener('change', () => { REDUCED.matches ? stopBlinks() : startBlinks(); });
 
 const orderReadyBit = [false, false, false];
@@ -743,15 +1180,16 @@ function renderOrders(){
     if (orderFx[oi] === 'arrive'){ d.classList.add('arriving'); armCustomerFx(); }   // one-shot: consumed here, never replayed
     orderFx[oi] = null;
     const rq = needs(o).map(q => ({q, have: Math.min(q.n, haveCount(q.c, q.l))})), r = rq.every(x => x.have >= x.q.n);
-    if (r){ d.classList.add('ready'); if (!orderReadyBit[oi]){ orderReadyBit[oi] = true; SFX.ready(); } }
+    if (r){ d.classList.add('ready'); if (!orderReadyBit[oi]){ orderReadyBit[oi] = true; SFX.ready(); d.classList.add('readyHop'); setTimeout(() => d.classList.remove('readyHop'), 560); } }
     else orderReadyBit[oi] = false;
     if (rq.length > 1) d.classList.add('mixed');
-    d.innerHTML = `${r ? `<span class="ok">${A.icon('check')}</span>` : ''}
+    d.innerHTML = `${r ? `<span class="ok">${A.icon('check')}</span><span class="deliverCue">${L.deliver}</span>` : ''}
       ${portraitHtml(oi)}
       ${rq.length > 1 ? `<div class="need mixedNeed">${rq.map(x => `<div class="nd${x.have >= x.q.n ? ' got' : ''}"><div class="art">${A.item(x.q.c, x.q.l)}</div><div class="cnt">${x.have}/${x.q.n}</div></div>`).join('')}</div>`
         : `<div class="need"><div class="art">${A.item(o.c, o.l)}</div><div class="cnt">${rq[0].have}/${rq[0].q.n}</div></div>`}
       <div class="rw"><span><i>${A.icon('coin')}</i>${o.coins}</span><span><i>${A.icon('star')}</i>${o.stars}</span></div>`;
     d.onclick = () => r ? deliver(oi) : openOrder(oi);
+    d.querySelectorAll('.need .art').forEach(art => art.addEventListener('click', ev => { ev.stopPropagation(); openOrder(oi); }));
     box.appendChild(d);
   });
 }
@@ -775,17 +1213,33 @@ function renderBoard(fx={}){
     const it = S.board[i];
     c.classList.toggle('want', want.has(i));
     c.classList.toggle('sel', selected === i);
-    const key = it ? (it.g ? 'g'+it.g+it.l : it.c+it.l) : '';
-    if (c.dataset.k !== key || fx.pop===i || (fx.fly && fx.fly.to===i)){
+    const rest = it && it.g ? genRestLeft(it) : 0, stock = it && it.g ? genStockOf(it) : 0;
+    const key = it ? (it.g ? 'g'+it.g+it.l+(rest?'r':'n'+stock) : it.box ? 'box'+it.box : it.gem ? 'gem'+it.gem : it.c+it.l) : '';
+    const flies = fx.flies || (fx.fly ? [fx.fly] : []);
+    const flyTo = flies.find(f => f.to === i), flyFrom = flies.find(f => f.from === i);
+    if (c.dataset.k !== key || fx.pop===i || flyTo){
       c.dataset.k = key;
-      c.innerHTML = it ? `<div class="it${it.g?' gen':''}">${itemArt(it)}${it.g ? `<span class="bolt">${A.icon('bolt')}</span>` : ''}</div>` : '';
+      let extra = '';
+      if (it && it.g){
+        if (rest) extra = `<span class="rest"><i class="clk">${GEN_CLK}</i><b class="restT">${fmtDur(rest/1000)}</b></span>`;
+        else extra = `<span class="bolt">${A.icon('bolt')}</span>` + (stock <= 5 ? `<span class="stock">${stock}</span>` : '');
+      }
+      c.innerHTML = it ? `<div class="it${it.g?' gen':''}${rest?' genRest':''}${it.box?' box':''}${it.gem?' looseGem':''}">${itemArt(it)}${extra}</div>` : '';
     }
     const el = c.firstElementChild; if (!el) return;
     el.classList.toggle('drag', !!(drag && drag.moved && drag.i === i));
-    if (fx.pop === i){ el.classList.add('pop'); c.insertAdjacentHTML('beforeend', '<div class="burst"></div>'); setTimeout(()=>c.querySelector('.burst')?.remove(), 600); }
-    if (fx.fly && fx.fly.to === i){
-      const a = bd.children[fx.fly.from].getBoundingClientRect(), b = c.getBoundingClientRect();
-      el.style.setProperty('--fx', (a.left-b.left)+'px'); el.style.setProperty('--fy', (a.top-b.top)+'px'); el.classList.add('fly');
+    if (fx.pop === i){ el.classList.add('pop'); c.insertAdjacentHTML('beforeend', '<div class="burst"></div>'); setTimeout(()=>c.querySelector('.burst')?.remove(), 500); }
+    if (flyFrom){
+      el.classList.remove('genSquash'); void el.offsetWidth; el.classList.add('genSquash');
+      setTimeout(() => el.classList.remove('genSquash'), 240);
+    }
+    if (flyTo){
+      const a = bd.children[flyTo.from].getBoundingClientRect(), b = c.getBoundingClientRect();
+      const dx = a.left-b.left, dy = a.top-b.top;
+      el.style.setProperty('--fx', dx+'px'); el.style.setProperty('--fy', dy+'px');
+      el.style.setProperty('--mx', (dx*0.5)+'px'); el.style.setProperty('--my', (dy*0.5-16)+'px');
+      el.classList.add('fly');
+      setTimeout(() => el.classList.remove('fly'), 450);   // drop pointer-events:none after the landing squash
     }
   });
   refreshAtelierBadge();
@@ -817,18 +1271,29 @@ function renderInfoInner(){
   box.classList.remove('invMode');
   box.innerHTML = infoItemHtml(it);
   if ($('bStore')) $('bStore').onclick = storeSelected;
-  if (!it.g && $('bSell')) $('bSell').onclick = sell;
+  if (!it.g && !it.box && !it.gem && $('bSell')) $('bSell').onclick = sell;
+  const gBtn = box.querySelector('[data-info="hint-gen"]');
+  if (gBtn) gBtn.onclick = ev => { ev.preventDefault(); ev.stopPropagation(); const d = $('td-hint-gen'); const open = gBtn.getAttribute('aria-expanded') !== 'true'; gBtn.setAttribute('aria-expanded', open ? 'true' : 'false'); if (d) d.hidden = !open; };
 }
 function infoItemHtml(it){                  // markup of the selected-item panel (also used, off-screen, to measure the tallest possible content)
+  if (it.box || it.gem){
+    const store = `<button type="button" class="invStoreBtn" id="bStore"${invFree() < 1 ? ' disabled' : ''} aria-label="${L.invStore}">${INV_MARK}</button>`;
+    return `${store}<div class="art">${itemArt(it)}</div><div class="txt"><div class="ttl">${itemName(it)}</div><div class="hint">${it.box === 'gem' ? L.gemBoxHint : it.box ? L.giftBoxHint : L.gemItemHint}</div></div>`;
+  }
   const max = it.g ? GEN_MAXLV : MAXLV;
   const next = it.l < max ? (it.g ? {g:it.g, l:it.l+1} : {c:it.c, l:it.l+1}) : null;
   let hint;
-  if (it.g) hint = `${L.genHint}. ${next ? L.genMerge : L.genMax}`;
+  if (it.g){
+    const left = genRestLeft(it);
+    hint = left ? L.genResting(fmtDur(left/1000)) : `${L.genHint}. ${next ? L.genMerge : L.genMax}`;
+  }
   else hint = next ? `${L.mergeInto} <i>${itemArt(next)}</i> ${itemName(next)}` : L.maxLevel;
   const store = `<button type="button" class="invStoreBtn" id="bStore"${invFree() < 1 ? ' disabled' : ''} aria-label="${L.invStore}">${INV_MARK}</button>`;
   const sellBtn = it.g ? '' : `<button class="btn pink" id="bSell">${L.sell} <span class="rw"><i>${A.icon('coin')}</i>${it.l*2}</span></button>`;
-  return `${store}<div class="art">${itemArt(it)}</div><div class="txt"><div class="ttl">${itemName(it)} · ${L.level(it.l)}</div><div class="hint">${hint}</div></div>
-    ${sellBtn}`;
+  const genInfo = it.g ? `<button type="button" class="infoBtn genHintBtn" data-info="hint-gen" aria-expanded="false" aria-controls="td-hint-gen" aria-label="${L.genRestHint}"><i class="infoDot" aria-hidden="true">!</i></button>` : '';
+  const genDet = it.g ? `<div class="tcDet" id="td-hint-gen" hidden>${L.genRestHint}</div>` : '';
+  return `${store}<div class="art">${itemArt(it)}</div><div class="txt"><div class="ttl">${itemName(it)} · ${L.level(it.l)}</div><div class="hint">${hint}</div>${genDet}</div>
+    ${genInfo}${sellBtn}`;
 }
 /* Height the panel needs for the LONGEST content in the current language and width (every item rank, every producer, the delivery-tray row), measured off-screen once per width/language.
    The panel always reserves this height, so selecting a long-named item never resizes the panel or the board (geometry stays stable) and nothing is ever cut off. */
@@ -882,7 +1347,7 @@ function endSalonFx(){
   r.classList.remove('enter'); r.querySelectorAll('.arrive').forEach(el => el.classList.remove('arrive'));
 }
 /* ---- salon rooms (salon-data.js is the canonical registry; gate state is derived on every render, never stored) ---- */
-let salonArea = 'studio', salonPicked = false, salonStagePick = {}; const SALON_PREF = 'atelierLueur.salonArea', ROOM_PRELOADED = {};
+let salonArea = 'studio', salonPicked = false, salonStagePick = {}; const SALON_PREF = PREVIEW ? 'atelierLueur.preview.salonArea' : 'atelierLueur.salonArea', ROOM_PRELOADED = {};
 try { salonArea = localStorage.getItem(SALON_PREF) || 'studio'; } catch(e){}
 const salonInp = () => ({lv: S.lv, owned: S.owned, core: coreSeen(), skn: SALON.sknDiscovered(S.seen), vo: S.vo, ve: S.ve, com: SALON.commissionsDone(S.atl), chap: SALON.chapterDiscovered(S.seen)});   // com = lifetime completed Atelier commissions (S.atl.d), chap = Brush/Bag ranks DISCOVERED (never the album claim)
 function salonView(){
@@ -912,7 +1377,8 @@ function propCard(d, st){        // d = registry prop, st = evaluated prop state
   if (st.state === 'owned' && st.variants) return `<div class="deco have var" data-var="${d.id}" role="button" tabindex="0" aria-label="${L.decos[d.id]} · ${L.colourNames[colour]}"><div class="art">${A.deco(d.id, colour)}</div><div class="nm">${L.decos[d.id]}</div>${opt}<div class="price" style="background:none;box-shadow:none;color:var(--green)">✓ ${L.colourNames[colour]}</div>${swatchDots(d.id, st.colours)}</div>`;
   if (st.state === 'owned') return `<div class="deco have"><div class="art">${A.deco(d.id)}</div><div class="nm">${L.decos[d.id]}</div>${opt}<div class="price" style="background:none;box-shadow:none;color:var(--green)">✓ ${L.owned}</div></div>`;
   if (st.state === 'locked') return `<div class="deco lock" data-lock="${d.id}"><div class="art">${A.deco(d.id, colour)}</div><div class="nm">${L.decos[d.id]}</div>${opt}<div class="lockTxt"><i>${A.icon('lock')}</i><span>${reasonText(st.reasons[0])}</span></div></div>`;
-  const btn = st.variants ? `<button class="price ${S.coins<d.price?'no':''}" data-var="${d.id}"><i>${A.icon('coin')}</i>${d.price}</button>` : `<button class="price ${S.coins<d.price?'no':''}" data-id="${d.id}"><i>${A.icon('coin')}</i>${d.price}</button>`;
+  const gemCost = d.gems || st.gems, poor = gemCost ? (S.gems || 0) < gemCost : S.coins < d.price;
+  const btn = st.variants ? `<button class="price ${S.coins<d.price?'no':''}" data-var="${d.id}"><i>${A.icon('coin')}</i>${d.price}</button>` : `<button class="price ${poor?'no':''}" data-id="${d.id}"><i>${A.icon(gemCost ? 'gem' : 'coin')}</i>${gemCost || d.price}</button>`;
   return `<div class="deco"><div class="art">${A.deco(d.id, colour)}</div><div class="nm">${L.decos[d.id]}</div>${opt}${btn}</div>`;
 }
 /* ---- colour preview / choice sheet (Spa colour slots). The previewed colour lives ONLY in this closure: Cancel, closing, switching rooms or reloading never saves it. ---- */
@@ -931,7 +1397,7 @@ function openColourSheet(slot, startColour){
     if (locked) action = `<button class="btn" disabled>${L.stLocked}</button>`;
     else if (pvOwned && pv === eq) action = `<button class="btn" disabled id="cAct">${L.btnEquippedNow}</button>`;
     else if (pvOwned) action = `<button class="btn pink" id="cAct" data-act="apply">${L.btnApply}</button>`;
-    else action = `<button class="btn pink ${S.coins < price(pv) ? 'no' : ''}" id="cAct" data-act="${owns ? 'buyColour' : 'buy'}">${owns ? L.btnBuyColour(price(pv)) : L.btnBuy(price(pv))}</button>`;
+    else action = `<button class="btn pink ${S.coins < price(pv) ? 'no' : ''}" id="cAct" data-act="${owns ? 'buyColour' : 'buy'}">${owns ? L.btnBuyColour(payChip(price(pv), 'coin')) : L.btnBuy(payChip(price(pv), 'coin'))}</button>`;
     modal(L.decos[slot], `<div class="room sheetRoom">${room}</div><div class="pvTag">${L.previewHint}</div>
       <div class="swatches" role="radiogroup" aria-label="${L.colourPickTitle}">${pal.map(c => { const st = colourState(c); return `<button class="sw ${c === pv ? 'on' : ''} s-${st}" role="radio" aria-checked="${c === pv}" data-col="${c}"><i class="cdot c-${c}"></i><span class="swn">${L.colourNames[c]}</span><em>${st === 'equipped' ? L.stEquipped : st === 'owned' ? L.stOwned : price(c) + ' ' + A.icon('coin')}</em></button>`; }).join('')}</div>
       <div class="sheetNote">${owns ? L.hintOwned + ' ' + L.hintExtra(SALON.colourPrice(slot)) : L.hintFirst}</div>
@@ -1036,10 +1502,12 @@ function buyProp(id, colour){            // FIRST purchase of a prop / slot. Var
   const variant = SALON.isVariantSlot(id);
   if (variant ? SALON.paletteOf(id).indexOf(colour) < 0 : colour !== undefined) return {ok: false, reason: 'colour'};
   const g = SALON.canBuy(salonInp(), id); if (!g.ok) return {ok: false, reason: g.code === 'inactive' ? 'inactive' : 'locked'};
-  if (S.coins < p.price) return {ok: false, reason: 'coins'};
+  if (p.gems){ if ((S.gems || 0) < p.gems) return {ok: false, reason: 'gems'}; }
+  else if (S.coins < p.price) return {ok: false, reason: 'coins'};
   let ups = [];
   const r = txn(() => {
-    S.coins -= p.price; S.owned[id] = 1;
+    if (p.gems) S.gems -= p.gems; else S.coins -= p.price;
+    S.owned[id] = 1;
     if (variant){ (S.vo || (S.vo = {}))[SALON.voKey(id, colour)] = 1; (S.ve || (S.ve = {}))[id] = colour; }   // chosen colour is owned and equipped
     count('deco'); ups = addStarsCore(starsFor(id));                                          // one real decoration purchase: +10 stars, counters, level-up and its rewards in the SAME write
     return {ok: true};
@@ -1061,10 +1529,25 @@ function equipColour(slot, colour){      // FREE switch between owned colours: n
   return txn(() => { (S.ve || (S.ve = {}))[slot] = colour; return {ok: true}; });
 }
 function buyDeco(id, colour){            // UI wrapper: feedback only; all state changes happened inside buyProp
+  const p = SALON.findProp(id);
+  if (p && p.gems && !S.owned[id]){
+    if ((S.gems || 0) < p.gems){ toast(L.noGems); SFX.no(); return {ok:false, reason:'gems'}; }
+    return confirmGemSpend(L.decos[id], L.gemDecoAsk(L.decos[id], payChip(p.gems, 'gem')), () => buyProp(id, colour), r => {
+      if (!r || !r.ok){
+        if (r && r.reason === 'locked'){ toast(L.salonLocked); SFX.no(); }
+        else if (r && r.reason === 'gems'){ toast(L.noGems); SFX.no(); }
+        else if (r && (r.reason === 'storage' || r.reason === 'error')){ toast(L.errWrite); SFX.no(); renderTop(); renderSalon(); }
+        return;
+      }
+      SFX.unlock(); confetti();
+      renderTop(); renderSalon(id); renderNav(); announceLevelUps(r.ups);
+    });
+  }
   const r = buyProp(id, colour);
   if (!r.ok){
     if (r.reason === 'locked'){ toast(L.salonLocked); SFX.no(); }
     else if (r.reason === 'coins'){ toast(L.noCoins); SFX.no(); }
+    else if (r.reason === 'gems'){ toast(L.noGems); SFX.no(); }
     else if (r.reason === 'storage' || r.reason === 'error'){ toast(L.errWrite); SFX.no(); renderTop(); renderSalon(); }
     return r;
   }
@@ -1093,6 +1576,32 @@ function closeModal(){
 }
 $('overlay').addEventListener('click', e => { if (e.target.id==='overlay' || e.target.closest('[data-close]')) closeModal(); });
 
+function infoHead(id, titleHtml, detailHtml){
+  const open = taskOpenKey === id;
+  return `<button type="button" class="infoBtn" data-info="${id}" aria-expanded="${open ? 'true' : 'false'}" aria-controls="td-${id}">${titleHtml ? `<span class="ttxt">${titleHtml}</span>` : ''}<i class="infoDot" aria-hidden="true">!</i></button>
+    <div class="tcDet" id="td-${id}" role="region"${open ? '' : ' hidden'}>${detailHtml}</div>`;
+}
+function wireInfoDots(){                                         // one expanded section at a time; used by quests, shop, energy, atelier
+  const box = $('modal'); if (!box) return;
+  box.querySelectorAll('[data-info]').forEach(btn => btn.onclick = ev => {
+    ev.preventDefault(); ev.stopPropagation();
+    const open = btn.getAttribute('aria-expanded') !== 'true';
+    box.querySelectorAll('[data-info]').forEach(x => { x.setAttribute('aria-expanded', 'false'); const d = document.getElementById(x.getAttribute('aria-controls')); if (d) d.hidden = true; });
+    taskOpenKey = open ? btn.dataset.info : '';
+    if (open){ const d = document.getElementById(btn.getAttribute('aria-controls')); btn.setAttribute('aria-expanded', 'true'); if (d){ d.hidden = false; d.scrollIntoView({block: 'nearest'}); } }
+  });
+}
+function genForChain(c){
+  for (const g of Object.keys(GEN_CHAINS)) if (GEN_CHAINS[g].indexOf(c) >= 0) return g;
+  return null;
+}
+function orderPathHtml(c, l){
+  const steps = [];
+  for (let i = 1; i <= l; i++){ if (i > 1) steps.push('<span class="opathArrow" aria-hidden="true">→</span>'); steps.push(`<span class="opathIt">${A.item(c, i)}</span>`); }
+  const g = genForChain(c);
+  const box = g ? `<div class="opathBox"><span class="art">${A.gen(g, 1)}</span><span>${L.orderBox} · ${L.gens[g]}</span></div>` : '';
+  return `<div class="opath"><div class="opathLabel">${L.orderPath}</div><div class="opathRow ltr">${steps.join('')}</div>${box}</div>`;
+}
 function openOrder(oi){
   const o = S.orders[oi]; if (!o) return;
   const rq = needs(o).map(q => ({q, have: Math.min(q.n, haveCount(q.c, q.l))})), ok = rq.every(x => x.have >= x.q.n);
@@ -1100,7 +1609,7 @@ function openOrder(oi){
   modal(L.orderTitle, (mixed ? `<div class="center muted" style="font-weight:800">${L.mixedOrder}</div>` : '') +
     rq.map(x => `<div class="${mixed ? 'ordReq' : ''}"><div class="bigart">${A.item(x.q.c, x.q.l)}</div>
     <div class="center" style="font-weight:800">${L.items[x.q.c][x.q.l-1]} (${L.level(x.q.l)})</div>
-    <div class="center ltr" style="font-size:22px;font-weight:800;color:${x.have>=x.q.n?'var(--green-dark)':'var(--pink-dark)'}">${x.have}/${x.q.n}</div></div>`).join('') +
+    <div class="center ltr" style="font-size:22px;font-weight:800;color:${x.have>=x.q.n?'var(--green-dark)':'var(--pink-dark)'}">${x.have}/${x.q.n}</div>${orderPathHtml(x.q.c, x.q.l)}</div>`).join('') +
     `<div class="center" style="font-weight:800;margin-top:8px">${L.reward}</div>
     <div class="center" style="font-size:18px;margin:4px 0">${rwHtml({coins:o.coins, stars:o.stars})}</div>
     <button class="btn wide" id="mDeliver" ${ok?'':'disabled'}>${L.deliver}</button>
@@ -1171,7 +1680,7 @@ function eventsHtml(){
     const bonus = ev.completion ? `<div class="row is-${ev.completion.claimed ? 'claimed' : ev.completion.ready ? 'ready' : 'progress'}"><div class="art">${A.icon('star')}</div><div class="grow">${L.eventBonus}</div><div class="center" style="min-width:70px">${ev.completion.claimed ? `<span class="stlab claimed"><span style="width:20px;display:inline-block;vertical-align:middle">${A.icon('check')}</span> ${L.claimed}</span>` :
       `${ev.completion.ready ? `<div class="stlab ready">${L.taskReady}</div>` : ''}<div style="font-size:12px">${rwHtml(ev.completion.reward)}</div><button class="btn" data-evclaim="${esc(ev.id)}|*" ${ev.completion.ready?'':'disabled'}>${L.claim}</button>`}</div></div>` : '';
     const ekey = 'events|' + ev.id, eopen = taskOpenKey === ekey, eid = 'td-events-' + ev.id;
-    const title = `<button type="button" class="evTitle infoBtn" data-info="${esc(ekey)}" aria-expanded="${eopen}" aria-controls="${eid}"><span class="ttxt">${esc(evCopy(ev.title))}</span><i class="infoDot" aria-hidden="true">i</i></button>`;
+    const title = `<button type="button" class="evTitle infoBtn" data-info="${esc(ekey)}" aria-expanded="${eopen}" aria-controls="${eid}"><span class="ttxt">${esc(evCopy(ev.title))}</span><i class="infoDot" aria-hidden="true">!</i></button>`;
     const det = evCopy(ev.desc) ? `<div class="tcDet" id="${eid}" role="region"${eopen ? '' : ' hidden'}><p>${esc(evCopy(ev.desc))}</p></div>` : '';
     return `<div class="evCard">${title}<div class="evWhen">${esc(when)}</div>${det}${rows}${bonus}</div>`;
   }).join('');
@@ -1214,7 +1723,7 @@ function openTasks(opts){
     if (t.a && t.k === 'coins'){ const s4 = MSN.altProgress(S, taskTab === 'daily' ? 'daily' : 'weekly', t); sub = `<div class="taskSub orSub"><span>${L.task.coinsRoute(s4.coins, s4.n)}</span> <span class="orWord">${L.task.orWord}</span> <span>${L.task.atlRoute(s4.atl, 1)}</span></div>`; }
     const text = t.a && t.k === 'coins' ? L.task.coinsAlt(t.n) : t.k === 'fam' ? L.task.fam(t.per) : (t.k === 'days' && taskTab === 'month' ? L.task.daysMonth(t.n) : L.task[t.k](t.n));
     const det = taskDetail(t), key = dkey(t), open = !!det && taskOpenKey === key, did = 'td-' + taskTab + '-' + t.id;
-    const title = det ? `<button type="button" class="taskTitle infoBtn" data-info="${esc(key)}" aria-expanded="${open}" aria-controls="${did}"><span class="ttxt">${text}</span><i class="infoDot" aria-hidden="true">i</i></button>` : `<div class="taskTitle">${text}</div>`;
+    const title = det ? `<button type="button" class="taskTitle infoBtn" data-info="${esc(key)}" aria-expanded="${open}" aria-controls="${did}"><span class="ttxt">${text}</span><i class="infoDot" aria-hidden="true">!</i></button>` : `<div class="taskTitle">${text}</div>`;
     const rew = `<div class="tcRew">${state === 'claimed' ? `<span class="stlab claimed"><span class="ck">${A.icon('check')}</span> ${L.claimed}</span>` : state === 'ready' ? `<div class="stlab ready">${L.taskReady}</div>` : ''}<div class="tcChips">${rwHtml(t.r)}</div></div>`;
     const btn = state === 'claimed' ? '' : `<button class="btn" data-claim="${t.id}" ${done ? '' : 'disabled'}>${L.claim}</button>`;
     return `<div class="row taskCard is-${state}" data-state="${state}"><div class="tcHead"><div class="art">${A.icon(icons[t.k])}</div>${title}</div>${sub}
@@ -1226,21 +1735,19 @@ function openTasks(opts){
   const mb = $('modal').querySelector('.mbody');
   if (auto){ const first = $('modal').querySelector('.row.is-ready'); if (first) first.scrollIntoView({block: 'nearest'}); } else if (prevScroll && mb) mb.scrollTop = prevScroll;
   $('modal').querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { taskTab = b.dataset.tab; openTasks(); });
-  $('modal').querySelectorAll('[data-info]').forEach(btn => btn.onclick = () => {      // toggles one inline details section in place: no re-render, no claim, scroll untouched unless the new content is out of view
-    const open = btn.getAttribute('aria-expanded') !== 'true';
-    $('modal').querySelectorAll('[data-info]').forEach(x => { x.setAttribute('aria-expanded', 'false'); const d = document.getElementById(x.getAttribute('aria-controls')); if (d) d.hidden = true; });
-    taskOpenKey = open ? btn.dataset.info : '';
-    if (open){ const d = document.getElementById(btn.getAttribute('aria-controls')); btn.setAttribute('aria-expanded', 'true'); d.hidden = false; d.scrollIntoView({block: 'nearest'}); }
-  });
+  wireInfoDots();
   $('modal').querySelectorAll('[data-claim]').forEach(b => b.onclick = () => {
     const t = tasksFor(taskTab).find(x => x.id===b.dataset.claim); if (!t) return;
+    const snap = fxWalletSnap();
     const r = claimTask(taskTab, t);
     if (!r.ok){ if (r.reason === 'storage' || r.reason === 'error'){ toast(L.errWrite); SFX.no(); } openTasks(); return; }
+    fxAfterGive(b, snap, {stars: t.r && t.r.stars});
     sfxReward(t.r); announceLevelUps(r.ups); renderTop(); renderNav(); openTasks();
   });
   $('modal').querySelectorAll('[data-evclaim]').forEach(b => b.onclick = () => {
-    const [eid, oid] = b.dataset.evclaim.split('|'); const r = claimEvent(eid, oid);
+    const [eid, oid] = b.dataset.evclaim.split('|'); const snap = fxWalletSnap(); const r = claimEvent(eid, oid);
     if (!r.ok){ toast(L.eventClaimFail); SFX.no(); openTasks(); return; }
+    fxAfterGive(b, snap, {stars: r.reward && r.reward.stars});
     sfxReward(r.reward); renderTop(); renderNav(); openTasks();
   });
 }
@@ -1309,15 +1816,15 @@ function openAlbum(){
   albumChains().forEach(c => {
     const got = [1,2,3,4,5,6].filter(l => S.seen[c+l]).length;
     h += `<div class="set"><h4>${L.chains[c]} <span class="prog">${got}/6</span>
-      ${S.album[c] ? `<span style="width:24px;margin-inline-start:auto">${A.icon('check')}</span>` : got===6 ? `<button class="btn" data-set="${c}">${L.claim} 100</button>` : ''}</h4>
+      ${S.album[c] ? `<span style="width:24px;margin-inline-start:auto">${A.icon('check')}</span>` : got===6 ? `<button class="btn" data-set="${c}">${L.claim} ${payChip(100, 'coin')}</button>` : ''}</h4>
       <div class="cards">${[1,2,3,4,5,6].map(l => `<div class="card6 ${S.seen[c+l]?'':'no'}">${A.item(c,l)}</div>`).join('')}</div></div>`;
   });
   modal(L.albumTitle, h);
   $('modal').querySelectorAll('[data-set]').forEach(b => b.onclick = () => {
-    const k = b.dataset.set;
-    if (ATL.FAMILIES.indexOf(k) >= 0){ const r = ATL.claimChapter(atelierEnv(), k); if (!r.ok){ SFX.no(); toast(L.atl.fail); return; } SFX.level(); confetti(); renderTop(); renderNav(); openAlbum(); return; }
+    const k = b.dataset.set, snap = fxWalletSnap();
+    if (ATL.FAMILIES.indexOf(k) >= 0){ const r = ATL.claimChapter(atelierEnv(), k); if (!r.ok){ SFX.no(); toast(L.atl.fail); return; } fxAfterGive(b, snap); SFX.level(); confetti(); renderTop(); renderNav(); openAlbum(); return; }
     S.album[k] = 1;
-    const rew = k==='all' ? {coins:500, energy:50} : {coins:100, energy:20}; give(rew); SFX.coin(); confetti(); save(); renderTop(); renderNav(); openAlbum();
+    const rew = k==='all' ? {coins:500, energy:50} : {coins:100, energy:20}; give(rew); SFX.coin(); confetti(); save(); fxAfterGive(b, snap); renderTop(); renderNav(); openAlbum();
   });
 }
 
@@ -1355,9 +1862,9 @@ function atelierHtml(reward){
     body = `<div class="center atlHead"><b>${L.atl.title}</b></div>
       <div class="center atlWait" role="status"><div class="atlWaitMain" id="atlRemain">${L.atl.waitRemaining(left)}</div>
       <div class="atlProg" id="atlProg">${L.atl.progress(done, N)}</div></div>
-      <p class="muted center" style="font-size:12px">${L.atl.separateNote}</p>`;
+      <div class="center">${infoHead('hint-atl-wait', '', L.atl.separateNote)}</div>`;
   }
-  const foot = rec ? `<p class="muted center" style="font-size:11px;margin:4px 0">${L.atl.cells} · ${L.atl.pickNote}</p>
+  const foot = rec ? `<div class="center">${infoHead('hint-atl-foot', '', L.atl.cells + ' · ' + L.atl.pickNote)}</div>
     <div class="atlFoot"><button class="btn pink wide" id="atlGo" ${req && req.ready ? '' : 'disabled'}>${L.atl.deliver}</button><button class="btn wide" data-close>${L.atl.close}</button></div>`
     : `<div class="atlFoot"><button class="btn pink wide" id="atlBack">${L.atl.backToBoard}</button></div>`;    // no commission: no Deliver button and no ingredient instructions
   return `${rewardCard}${station}${body}${foot}`;
@@ -1365,14 +1872,16 @@ function atelierHtml(reward){
 function openAtelier(reward){          // reward (optional) is passed ONLY by the delivery that just committed: it is shown once and never replayed on reopen/reload
   if (!ATL.hasChapter(S)){ modal(L.atl.title, atelierLockedHtml()); return; }
   preloadSprites();
-  modal(L.atl.title, atelierHtml(reward));
+  modal(L.atl.title, atelierHtml(reward)); wireInfoDots();
   const back = $('atlBack'); if (back) back.onclick = () => { closeModal(); go('board'); };       // view change only: no state is touched
   const goBtn = $('atlGo'); if (!goBtn) return;
   goBtn.onclick = () => {
     if (goBtn.disabled) return; goBtn.disabled = true;                                           // a second tap cannot start a second delivery (the rule also refuses it: no active commission)
+    const snap = fxWalletSnap();
     const r = ATL.deliverCommission(atelierEnv());
     if (r.ok){
       SFX.deliver(); buzz(20); selected = null;
+      fxAfterGive(goBtn, snap, {stars: r.stars});
       announceLevelUps(r.ups.concat(r.grants.map(g => ({supply: {g: ATL.PRODUCER, where: g.where}}))), true);    // the level-up is shown inside the reward card below
       renderTop(); renderBoard(); renderOrders(); renderInfo(); renderNav(); renderSide();
       openAtelier({recipe: r.recipe, coins: r.coins, stars: r.stars, levels: r.ups.filter(u => u.lv)});       // the ACTUAL credited (frozen) values, shown only because the write committed
@@ -1391,9 +1900,8 @@ function energyInfoHtml(){
     : `<div class="row"><div class="grow">${L.energyNextIn}</div><b class="ltr" id="enNext">${fmtDur(t.next)}</b></div>
     <div class="row"><div class="grow">${L.energyFullIn}</div><b class="ltr" id="enFull">${fmtDur(t.full)}</b></div>`;
   return `<div class="enInfo" id="enInfo"><div class="enBig ltr">${S.energy}<small>/${ENERGY_CAP}</small></div>
-    <div class="row"><div class="grow">${L.energyInterval(ENERGY_MS/1000)}</div></div>
-    ${timers}
-    <div class="muted center" id="enNote" style="font-size:12px;margin:2px 0 6px">${S.energy > ENERGY_CAP ? L.energyAbove(ENERGY_CAP) : L.energyKept}</div></div>`;
+    <div class="row"><div class="grow">${infoHead('hint-energy', L.energyInterval(ENERGY_MS/1000), S.energy > ENERGY_CAP ? L.energyAbove(ENERGY_CAP) : L.energyKept)}</div></div>
+    ${timers}</div>`;
 }
 function refreshEnergyInfo(){                // display only: recomputed from S.energy/S.et every second while the panel is open
   if (!energyOpen || !$('enInfo')) return; const t = energyTimes(Date.now()), full = S.energy >= ENERGY_CAP;
@@ -1404,7 +1912,7 @@ function refreshEnergyInfo(){                // display only: recomputed from S.
   if (!!full !== !$('enFullNow') && !!full !== !!(next || fullEl)) { openShop('energy'); return; }
   if (full && !$('enFullNow')) { openShop('energy'); return; }
   if (!full && $('enFullNow')) { openShop('energy'); return; }
-  $('enInfo').querySelector('.enBig').firstChild.textContent = S.energy; $('enNote').textContent = S.energy > ENERGY_CAP ? L.energyAbove(ENERGY_CAP) : L.energyKept;
+  $('enInfo').querySelector('.enBig').firstChild.textContent = S.energy; const enDet = $('td-hint-energy'); if (enDet) enDet.textContent = S.energy > ENERGY_CAP ? L.energyAbove(ENERGY_CAP) : L.energyKept;
 }
 function eshopState(){
   const k = dayKey();
@@ -1427,7 +1935,7 @@ function buyEnergy(pack){
   });
 }
 function packRow(pack){
-  const off = energyOffer(pack), label = '+' + pack + ' ' + L.energy;
+  const off = energyOffer(pack), label = payAmt(pack, 'bolt');
   if (off.sold) return `<div class="row" id="shE${pack}row"><div class="art">${A.icon('bolt')}</div><div class="grow">${label}<div class="muted" style="font-size:12px">${L.shopSoldOut}</div></div>
       <button class="btn pink" id="shE${pack}" disabled>${L.tomorrow}</button></div>`;
   return `<div class="row" id="shE${pack}row"><div class="art">${A.icon('bolt')}</div><div class="grow">${label}<div class="muted" style="font-size:12px">${L.shopLeft(off.left)}</div></div>
@@ -1439,24 +1947,29 @@ function openShop(mode){
   const ready = S.gift !== dayKey();
   const streak = ready ? giftStreakNext() : (S.gst && S.gst.k === dayKey() ? S.gst.n : 1);
   const grew = giftReward(ready ? streak : (S.gst && S.gst.n) || 1);
-  const dots = [1,2,3].map(i => `<i class="gdot${i <= streak ? ' on' : ''}"></i>`).join('');
+  const dots = '<span class="gdots">' + [1,2,3,4,5,6,7].map(i => `<i class="gdot${i <= streak ? ' on' : ''}${i===7?' gem':''}"></i>`).join('') + '</span>';
   eshopState();
+  const gemPoor = (S.gems || 0) < GEM_ENERGY.price;
+  const gemRow = `<div class="row" id="shEGemRow"><div class="art">${A.icon('bolt')}</div><div class="grow">${L.gemEnergyTitle}</div>
+      <button class="btn pink" id="shEGem" ${gemPoor ? 'disabled' : ''}>${payAmt(GEM_ENERGY.amt, 'bolt')} · ${payChip(GEM_ENERGY.price, 'gem')}</button></div>`;
   modal(mode === 'energy' ? L.energyTitle : L.shopTitle, (mode === 'energy' ? energyInfoHtml() : '') + `
-    <div class="row"><div class="art">${A.icon('heart')}</div><div class="grow">${L.dailyGift} <span class="gstreak">${L.giftStreak(streak)}</span> ${dots}<br>${rwHtml(grew)}
-      <div class="muted" style="font-size:11px;margin-top:2px">${L.giftStreakHint}</div></div>
+    <div class="row"><div class="art">${A.icon('heart')}</div><div class="grow">${infoHead('hint-gift', `${L.dailyGift} <span class="gstreak">${L.giftStreak(streak)}</span>`, L.giftStreakHint)}
+      ${dots}<br>${rwHtml(grew)}</div>
       <button class="btn" id="shGift" ${ready?'':'disabled'}>${ready ? L.take : L.tomorrow}</button></div>
-    ${packRow(20)}${packRow(50)}
-    <div class="muted center" style="font-size:12px;margin:2px 0 8px">${L.shopLadderNote}</div>${supplyHtml()}`);
-  energyOpen = mode === 'energy'; wireSupply(() => openShop(mode));
+    ${packRow(20)}${packRow(50)}${gemRow}
+    <div class="shopSec">${infoHead('hint-packs', L.energyTitle, L.shopLadderNote)}</div>${supplyHtml()}`);
+  energyOpen = mode === 'energy'; wireSupply(() => openShop(mode)); wireInfoDots();
   $('shGift').onclick = () => { if (!claimDailyGift().ok) return; renderTop(); openShop(mode); };
   renderTut();
   const onBuy = pack => {
+    const btn = $('shE' + pack), snap = fxWalletSnap();
     const r = buyEnergy(pack);
     if (!r.ok){ SFX.no(); toast(r.reason === 'coins' ? L.noCoins : L.shopSoldOut); openShop(mode); return; }
-    SFX.shop(); renderTop(); openShop(mode);
+    SFX.shop(); fxAfterGive(btn, snap); renderTop(); openShop(mode);
   };
   $('shE20').onclick = () => onBuy(20);
   $('shE50').onclick = () => onBuy(50);
+  if ($('shEGem')) $('shEGem').onclick = () => buyEnergyGems();
 }
 
 function openSettings(){
@@ -1550,7 +2063,7 @@ function adoptState(state){                                // only after a succe
   S = state; saveGate.blocked = false; saveGate.memoryOnly = false; recovery = null; hasSave = true;
   selected = null; [0,1,2].forEach(i => { PSTATE[i] = 'idle'; });
   prepareCalendar(S);
-  migrateEnergy(); applyLang(); applyAudio(); tick(); fillOrders(); setSaveWarn(null); migrateLegacyEvents(); migrateSupply(); if (curDef) applyContent(curDef);
+  migrateEnergy(); applyLang(); applyAudio(); tick(); fillOrders(); setSaveWarn(null); migrateLegacyEvents(); migrateEventGems(); migrateSupply(); if (curDef) applyContent(curDef);
   settlePlaytestGrant(); save();
   $('recovery').classList.remove('on');
   if ($('start').classList.contains('on')) showStart();
@@ -1732,15 +2245,30 @@ const esc = s => String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'
 /* ---------------- ئۈنۈم ---------------- */
 let tt;
 function toast(t){ const el = $('toast'); el.textContent = t; el.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => el.classList.remove('on'), 1600); }
-function confetti(hearts){
+function confetti(hearts, origin){
+  if (fxReduce()) return;
   const cols = ['#ff5fa2','#ffc83d','#b79bff','#6fdc7f','#7fd3f0'];
-  for (let i=0;i<36;i++){
-    const d = document.createElement('div'); d.className = 'confetti';
-    d.style.left = Math.random()*100 + 'vw';
-    d.style.animationDelay = Math.random()*.6 + 's';
-    if (hearts){ d.textContent = '❤'; d.style.color = pick(cols); d.style.fontSize = '18px'; d.style.background = 'none'; }
+  const layer = fxLayer();
+  const src = origin || fxPt($('tLv')) || {x: innerWidth / 2, y: innerHeight * 0.28};
+  const n = hearts ? 16 : 14;
+  for (let i = 0; i < n; i++){
+    if (fxBits >= FX_BIT_CAP) break;
+    const d = document.createElement('div');
+    d.className = 'fxBit ' + (hearts ? 'fxHeart' : 'fxConf');
+    if (hearts){ d.textContent = '❤'; d.style.color = pick(cols); }
     else d.style.background = pick(cols);
-    document.body.appendChild(d); setTimeout(() => d.remove(), 2600);
+    layer.appendChild(d); fxBits++;
+    const ang = (Math.PI * 2 * i) / n + Math.random() * 0.5;
+    const dist = 46 + Math.random() * 70;
+    const x2 = src.x + Math.cos(ang) * dist, y2 = src.y + Math.sin(ang) * dist + 18;
+    const dur = 480 + rnd(220);
+    const anim = d.animate([
+      {transform:'translate(' + src.x + 'px,' + src.y + 'px) scale(1) rotate(0deg)', opacity:1},
+      {transform:'translate(' + x2 + 'px,' + y2 + 'px) scale(.65) rotate(' + (rnd(240) - 120) + 'deg)', opacity:0}
+    ], {duration:dur, easing:'cubic-bezier(.15,.75,.3,1)', fill:'forwards'});
+    const done = () => fxClearBit(d);
+    if (anim && anim.finished) anim.finished.then(done).catch(done); else setTimeout(done, dur + 40);
+    setTimeout(() => fxClearBit(d), dur + 200);
   }
 }
 
@@ -1765,8 +2293,11 @@ bd.addEventListener('pointermove', e => {
     const c = document.elementFromPoint(e.clientX, e.clientY)?.closest('.cell');
     const t = c ? +c.dataset.i : null;
     if (t !== drag.target){
-      if (drag.target != null) bd.children[drag.target].classList.remove('target');
-      if (t != null && t !== drag.i) bd.children[t].classList.add('target');
+      if (drag.target != null) bd.children[drag.target].classList.remove('target', 'mergeOk');
+      if (t != null && t !== drag.i){
+        bd.children[t].classList.add('target');
+        if (canMerge(S.board[drag.i], S.board[t])) bd.children[t].classList.add('mergeOk');
+      }
       drag.target = t;
     }
   }
@@ -1775,7 +2306,7 @@ function endDrag(cancel){
   if (!drag) return;
   const d = drag; drag = null;
   $('ghost')?.remove();
-  if (d.target != null) bd.children[d.target].classList.remove('target');
+  if (d.target != null) bd.children[d.target].classList.remove('target', 'mergeOk');
   if (cancel){ renderBoard(); return; }
   if (!d.moved) tap(d.i); else drop(d.i, d.target);
 }
@@ -1836,14 +2367,30 @@ $('btnNew').onclick = () => {
 };
 
 migrateEnergy(); applyLang(); applyAudio(); tick(); fillOrders(); settlePlaytestGrant(); save(); preloadPortraits(); preloadSprites(); showStart(); startBlinks(); if (recovery) showRecovery();
-migrateLegacyEvents(); migrateSupply(); settlePlaytestGrant();
+migrateLegacyEvents(); migrateEventGems(); migrateSupply(); settlePlaytestGrant();
 refreshContent(true).catch(e => console.warn('[content]', e && e.message));   // async; never blocks or breaks start-up
 window.__atelierBooted = true; if (window.__atelierStartupOk) window.__atelierStartupOk();   // startup finished: hide the safety-net message if it was shown
 document.fonts && document.fonts.ready.then(() => { layout(); });
-setInterval(() => { tick(); if ($('game').classList.contains('on')){ renderTop(); checkTaskBadges(); refreshEnergyInfo(); } }, 1000);
+function refreshGenClocks(){
+  const bd = $('board'); if (!bd) return;
+  const now = Date.now();
+  let dirty = false;
+  [...bd.children].forEach((c, i) => {
+    const it = S.board[i]; if (!it || !it.g) return;
+    const was = !!c.querySelector('.rest');
+    settleGen(it, now);
+    const left = genRestLeft(it, now);
+    const el = c.querySelector('.restT');
+    if (left > 0 && el) el.textContent = fmtDur(left/1000);
+    else if (!!left !== was) dirty = true;
+  });
+  if (S.inv && S.inv.items) S.inv.items.forEach(it => settleGen(it, now));
+  if (dirty){ renderBoard(); if (selected != null && S.board[selected] && S.board[selected].g) renderInfo(); }
+}
+setInterval(() => { tick(); if ($('game').classList.contains('on')){ renderTop(); checkTaskBadges(); refreshEnergyInfo(); refreshGenClocks(); } }, 1000);
 setInterval(save, 5000);
 document.addEventListener('visibilitychange', () => { if (document.hidden) save(true); else { tick(); renderAll(); refreshContent(false).catch(() => {}); } });
 
 // سىناق ئۈچۈن
-window.__game = { AUDIO, applyAudio, atelier: {open: () => openAtelier(), env: atelierEnv, notes: atelierNotes}, ALL_CHAINS, buyProp, buyColour, equipColour, salonInp, taskCounts, openTasks, tasksFor, get EV(){ return EV; }, energyTimes, ENERGY_CAP, ENERGY_MS, ENERGY_PACKS, energyOffer, buyEnergy, eshopState, dayKey, weekKey, monthKey, tick, applyLang, buyProducer, placeQueued, producerPrice, equivOf, grantMilestones, claimEvent, newOrder, accessibleChains, deliver: oi => deliver(oi), save: () => save(), get contentInfo(){ return contentInfo; }, refreshContent, get S(){ return S; }, get gate(){ return saveGate; }, get recovery(){ return recovery; }, renderAll, openShop, MSN, MSN_CFG, select: i => { selected = i; renderBoard(); renderInfo(); }, storeSelected, placeInv, expandInv, undoLastSale, get undoSale(){ return undoSale; }, openGenUpgrade, genDropTable, claimDailyGift, giftStreakNext, giftReward, skipTut, tutAdvance, INV_CAPS, INV_EXPAND };
+window.__game = { AUDIO, applyAudio, atelier: {open: () => openAtelier(), env: atelierEnv, notes: atelierNotes}, ALL_CHAINS, buyProp, buyColour, equipColour, salonInp, taskCounts, openTasks, tasksFor, get EV(){ return EV; }, energyTimes, ENERGY_CAP, ENERGY_MS, ENERGY_PACKS, GEM_ENERGY, energyOffer, buyEnergy, buyEnergyGems, eshopState, dayKey, weekKey, monthKey, tick, applyLang, buyProducer, placeQueued, producerPrice, equivOf, grantMilestones, claimEvent, newOrder, accessibleChains, deliver: oi => deliver(oi), save: () => save(), get contentInfo(){ return contentInfo; }, refreshContent, get S(){ return S; }, get gate(){ return saveGate; }, get recovery(){ return recovery; }, renderAll, openShop, MSN, MSN_CFG, select: i => { selected = i; renderBoard(); renderInfo(); }, storeSelected, placeInv, expandInv, undoLastSale, get undoSale(){ return undoSale; }, openGenUpgrade, genDropTable, claimDailyGift, giftStreakNext, giftReward, skipTut, tutAdvance, INV_CAPS, INV_EXPAND, INV_EXPAND_GEMS, get fxCoinHold(){ return fxCoinHold; }, get fxEnergyHold(){ return fxEnergyHold; }, get fxGemHold(){ return fxGemHold; }, get fxBits(){ return fxBits; }, fxWalletSnap, fxAfterGive, fxRewardFlight, fxGrantFromCell, drop, sell, produce, give, openBoardBox, collectGem, roadReward, addStarsCore, openRoad, openOrder, GEN_STOCK, GEN_REST_MS, settleAllGens, settleGen, genRestLeft, genStockOf, freshGen };
 })();

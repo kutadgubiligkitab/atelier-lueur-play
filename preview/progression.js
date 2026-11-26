@@ -49,7 +49,7 @@ function makeOrder(level, open, rnd, chains, maxLv, profileId){
   return {c, l, n, coins: n * payCoins(P, l), stars: n * payStars(P, l)};
 }
 // the requirements of an order as a list: single orders have one, mixed orders two ({c,l,n} each)
-const reqs = o => o.m ? [{c: o.c, l: o.l, n: o.n}, {c: o.m.c, l: o.m.l, n: o.m.n}] : [{c: o.c, l: o.l, n: o.n}];
+const reqs = o => { const r = o.m ? [{c: o.c, l: o.l, n: o.n}, {c: o.m.c, l: o.m.l, n: o.m.n}] : [{c: o.c, l: o.l, n: o.n}]; if (o.m2) r.push({c: o.m2.c, l: o.m2.l, n: o.m2.n}); return r; };
 /* Producer supply (data). Each milestone grants ONE rank-1 copy of a producer, exactly once per save (recorded in S.pg). Rank 2 needs 2 copies,
    rank 3 needs 4 copies (merge). Coin purchases: the k-th purchase of one producer type costs min(cap, round50(base * growth^k)); purchases stop being
    offered once the type already holds `usefulEquiv` rank-1 equivalents (enough for rank 3). Values chosen with tools/producer-sim.js (docs/producers/SIMULATION.md). */

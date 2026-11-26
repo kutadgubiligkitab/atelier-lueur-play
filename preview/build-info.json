@@ -1,14 +1,14 @@
 {
- "sourceCommit": "a1db3fdb51ac49a9659e86213f678d76ad76a0b2",
+ "sourceCommit": "73a57fa6c0e2eb6cbcc83d1d89de7d0786d7ef7a",
  "sourceHasUncommittedChanges": false,
- "cacheBust": "a1db3fdb51ac",
- "fileCount": 456,
- "totalBytes": 97678078,
+ "cacheBust": "73a57fa6c0e2",
+ "fileCount": 462,
+ "totalBytes": 98889629,
  "files": [
   {
    "path": "art.js",
-   "bytes": 42544,
-   "sha256": "279df88ab7d7c4e29e106cb0b5935ce041fd744b6f1fbbaddf49e5d67358768c"
+   "bytes": 42684,
+   "sha256": "98e41396f0da639b6df3c2766419c2b9f16ac93ec517a90af591de33157ffcb6"
   },
   {
    "path": "assets/atelier-v1/generators/gen_atl_1.png",
@@ -2206,6 +2206,36 @@
    "sha256": "39184ee1684c5551464a028d2d5c32423b9e0856287cc4969494eb49379002ed"
   },
   {
+   "path": "assets/sprites-v1/items/wrap_box.png",
+   "bytes": 50781,
+   "sha256": "79df89af1dbc627722c47ac23d2024b081ee99093a90c1f29baac2b954e82715"
+  },
+  {
+   "path": "assets/sprites-v1/items/wrap_box@2x.png",
+   "bytes": 173312,
+   "sha256": "b80e85413ff600663e176a400ae22d076c623759ead84952433a347613a67587"
+  },
+  {
+   "path": "assets/sprites-v1/items/wrap_box@3x.png",
+   "bytes": 350527,
+   "sha256": "6ed515ce4a08893049d3bb0da9864a9e969a546a1d47ee59d998d7664429d0e5"
+  },
+  {
+   "path": "assets/sprites-v1/items/wrap_table.png",
+   "bytes": 57468,
+   "sha256": "823cc635649a7c49c2ce58a11026072a8ddc8f3fdf3d42a7ac73aeb3c7e19aa8"
+  },
+  {
+   "path": "assets/sprites-v1/items/wrap_table@2x.png",
+   "bytes": 184167,
+   "sha256": "4f9df43dfbbc0a4455c66a19841716a6b27d88e13d8eb9edc04cfd129a414625"
+  },
+  {
+   "path": "assets/sprites-v1/items/wrap_table@3x.png",
+   "bytes": 373853,
+   "sha256": "51eb5ee90d51a7e6ff130d5dadc92f530f01d279d047e82f866bd6fba54df47f"
+  },
+  {
    "path": "assets/ui/salon-tall.webp",
    "bytes": 111570,
    "sha256": "2d408390170e9b7b24b844d9bd2ab221e981478905a3e441efa1b8b4fad972b6"
@@ -2217,8 +2247,8 @@
   },
   {
    "path": "audio.js",
-   "bytes": 6317,
-   "sha256": "07b6f128ff65eed24d333b7dceeeb7eab896b08aaef0dba66d8d08400009b1b9"
+   "bytes": 6562,
+   "sha256": "5e57dbb7ec5150d3d6387765d83e7aae6cdfd92acf1db3452210a7262a974b1c"
   },
   {
    "path": "config.js",
@@ -2237,13 +2267,13 @@
   },
   {
    "path": "game.js",
-   "bytes": 181096,
-   "sha256": "59d579a469776685a3fd48cb8c24a932e5f55c4914ba0d9446d8089994e42678"
+   "bytes": 190029,
+   "sha256": "afc9a92af3c6642448bc1247a5824829956db46e6d2d64751f0336f687af89a2"
   },
   {
    "path": "i18n.js",
-   "bytes": 238356,
-   "sha256": "f77b54c6bd1efea0916966a6593319716f3941f4006a985c86e7d193e43f72d8"
+   "bytes": 244516,
+   "sha256": "968e7a7b2896568079bf0ed73dfb5d0fdf25c86cf3968fe3e256c50d61393097"
   },
   {
    "path": "icon.png",
@@ -2253,7 +2283,7 @@
   {
    "path": "index.html",
    "bytes": 9154,
-   "sha256": "b6f7948c5b8b5fde6009a238f87366d76bacb13ebb71b29a7bcf119af8f3ccbc"
+   "sha256": "2edcda8d6f86d41f7f9346073ed5f73feaa5bd61ea938c40618d6a3805f345ed"
   },
   {
    "path": "manifest.json",
@@ -2267,8 +2297,8 @@
   },
   {
    "path": "progression.js",
-   "bytes": 5059,
-   "sha256": "23093e1892283e7549ab2e43270ef1b01a71d14336fa76246612ba2de9793de8"
+   "bytes": 5137,
+   "sha256": "7b004b83ddec014fa55a63051380b15fc704beb92c761bed30b62da887fa7328"
   },
   {
    "path": "salon-data.js",
@@ -2277,13 +2307,13 @@
   },
   {
    "path": "save.js",
-   "bytes": 31191,
-   "sha256": "879a7a660624b66862ca5363ba00e25af58f1d90c2b1b46fceb7e6ea861e920d"
+   "bytes": 33865,
+   "sha256": "985b9fddb596b56ca6a28b6db9eaf363e0a238dbab252a2aa70eadb0bded609c"
   },
   {
    "path": "style.css",
-   "bytes": 67587,
-   "sha256": "3c19c5b4832c5b4ad3eccb31073b9595a1f650e145689a51a9244524a18da2d2"
+   "bytes": 70800,
+   "sha256": "b44de155b920f8cb27dc588aa31d844093f521d46804d604ed3dd85210f787fa"
   }
  ]
 }

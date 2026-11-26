@@ -10,6 +10,7 @@ const ENERGY_CAP = 100, ENERGY_MS = 120000;     // ONE shared cap: passive regen
 const INITIAL_ENERGY = 50;                    // a new game still starts with 50 (separate from the cap)
 const LEGACY_ENERGY_CAP = 50;                 // the cap before the 100 cap (used only to settle old saves exactly once)
 const MAXLV = 6, GEN_MAXLV = 3, GEN_STOCK = 20, GEN_REST_MS = 180000;   // 20 productions, then a 3-minute rest; leftover time counts while away
+const WRAP_LEVEL = 5, WRAP_MS = 10000;   // wrapping table unlocks at level 5 (preview grants it early so it can be tried)
 const CORE_CHAINS = ['lip','per','cmp','nail'];            // the original four families (album 'all', discover counts and early-game orders use these)
 const CHAINS = CORE_CHAINS.concat(['skn']);                  // + Skincare (unlocked at level 15 by its first Spa Hamper)
 /* Makeup Atelier (atelier.js = the only rule implementation). Brush/bag are COMMISSION-ONLY: they are NOT in CHAINS, so accessibleChains()/order generation never see them.
@@ -148,7 +149,7 @@ function save(forceBackup){
 const AUDIO = window.AUDIO;
 function audio(){ if (AUDIO) AUDIO.unlock(); }
 function applyAudio(){ if (AUDIO && S && S.set) AUDIO.applySettings(S.set); }
-const SFX = AUDIO && AUDIO.sfx ? AUDIO.sfx : { tap(){}, spawn(){}, merge(){}, coin(){}, level(){}, no(){}, drop(){}, ready(){}, deliver(){}, quest(){}, claim(){}, shop(){}, open(){}, close(){}, unlock(){}, empty(){} };
+const SFX = AUDIO && AUDIO.sfx ? AUDIO.sfx : { tap(){}, spawn(){}, merge(){}, coin(){}, level(){}, no(){}, drop(){}, ready(){}, deliver(){}, quest(){}, claim(){}, shop(){}, open(){}, close(){}, unlock(){}, empty(){}, wrap(){}, wrapDone(){} };
 function sfxReward(r, alt){ if (r && r.coins) SFX.coin(); else if (typeof alt === 'function') alt(); else SFX.claim(); }
 const buzz = ms => { if (S.set.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch(e){} };
 
@@ -159,13 +160,15 @@ function applyLang(){
   document.querySelectorAll('[data-t]').forEach(el => el.textContent = L[el.dataset.t]);
   if ($('home') && $('home').classList.contains('on')) renderHome();
 }
-const itemName = it => it.g ? L.gens[it.g] : it.box === 'gem' ? L.gemBox : it.box ? L.giftBox : it.gem ? L.gemItem : L.items[it.c][it.l-1];
-const itemArt  = it => it.g ? A.gen(it.g, it.l) : it.box === 'gem' ? A.icon('gemBox') : it.box ? A.icon('gift') : it.gem ? A.icon('gem') : A.item(it.c, it.l);
+const itemName = it => it.tbl ? L.wrapTable : it.wrap ? L.wrapBox : it.g ? L.gens[it.g] : it.box === 'gem' ? L.gemBox : it.box ? L.giftBox : it.gem ? L.gemItem : L.items[it.c][it.l-1];
+const itemArt  = it => it.tbl ? A.wrapTable() : it.wrap ? A.wrapBox() : it.g ? A.gen(it.g, it.l) : it.box === 'gem' ? A.icon('gemBox') : it.box ? A.icon('gift') : it.gem ? A.icon('gem') : A.item(it.c, it.l);
 function cloneItem(it){
   if (!it) return null;
   if (it.g){ const o = {g:it.g, l:it.l}; if (it.ch != null) o.ch = it.ch; if (it.t) o.t = it.t; if (it.n != null) o.n = it.n; if (it.rt) o.rt = it.rt; return o; }
   if (it.box) return {box: it.box};
   if (it.gem) return {gem: it.gem};
+  if (it.tbl) return {tbl: 1};
+  if (it.wrap) return {wrap: 1};
   return {c:it.c, l:it.l};
 }
 
@@ -189,6 +192,7 @@ function tick(){
     if (n > 0){ S.energy = Math.min(ENERGY_CAP, S.energy + n); S.et += n*ENERGY_MS; if (S.energy >= ENERGY_CAP) S.et = now; }
   } else S.et = now;
   settleAllGens(now);
+  tickWrap(now);
   rolloverTasks();
 }
 /* Daily/weekly reset (existing calendar keys). The OLD day's completions are recorded first; today's assignment is snapshotted ONCE here (deterministic, never re-rolled by reload, language or re-import).
@@ -282,6 +286,7 @@ function addStarsCore(n){          // state change only; returns the level-ups s
   const ups = []; S.stars += n;
   while (S.stars >= starsNeed(S.lv)){
     S.stars -= starsNeed(S.lv); S.lv++;
+    if (S.lv >= WRAP_LEVEL && S.gwt !== 1){ S.gwt = 1; ensureWrapTable(); toast(L.wrapUnlocked); }
     if (curDef && EV) { try { EV.sync(curDef, S.lv); } catch(e){} }   // level-gated events may become eligible
     const r = roadReward(S.lv), paid = !!S.road[S.lv]; S.road[S.lv] = 1; if (!paid) give(r); give({gems: 5});
     ups.push({lv: S.lv, r: Object.assign({}, r, {gems: (r.gems || 0) + 5})}); ups.push(...grantMilestones());      // producer milestone copies (once per save, recorded in S.pg)
@@ -383,7 +388,12 @@ function wireSupply(reopen){
 
 /* ---------------- زاكازلار ---------------- */
 function newOrder(slot){          // data-driven (progression.js, profile v1 = the original rules; verify/progression.js proves parity)
-  const o = window.PROGRESSION.makeOrder(S.lv, S.orders, Math.random, accessibleChains(), MAXLV, C.progressionProfile);
+  let o;
+  if (shouldGiftOrder(slot)){ o = makeGiftOrder(); S.gwn = 0; }
+  else {
+    o = window.PROGRESSION.makeOrder(S.lv, S.orders, Math.random, accessibleChains(), MAXLV, C.progressionProfile);
+    if (tableUnlocked()) S.gwn = Math.min(4, (S.gwn || 0) + 1);
+  }
   o.who = pickCustomer(slot);                 // customer identity is independent of the order (separate randomness; order generation is unchanged)
   return o;
 }
@@ -393,10 +403,129 @@ function accessibleChains(){
   const fam = CHAINS.filter(c => Object.keys(types).some(t => (GEN_CHAINS[t] || []).indexOf(c) >= 0));
   return fam.length ? fam : CHAINS.slice();
 }
-function fillOrders(){ migrateCustomers(); for (let i=0;i<3;i++) if (!S.orders[i]) S.orders[i] = newOrder(i); seedTutorialOrder(); }
+function fillOrders(){ migrateCustomers(); ensureWrapTable(); for (let i=0;i<3;i++) if (!S.orders[i]) S.orders[i] = newOrder(i); seedTutorialOrder(); }
 function haveCount(c, l){ return S.board.filter(it => it && it.c===c && it.l===l).length; }
 const needs = o => window.PROGRESSION.reqs(o);
-function ready(o){ return !!o && needs(o).every(r => haveCount(r.c, r.l) >= r.n); }
+function ready(o){ return !!o && (o.gift ? S.board.some(isWrap) : needs(o).every(r => haveCount(r.c, r.l) >= r.n)); }
+
+const isTable = it => !!(it && it.tbl);
+const isWrap = it => !!(it && it.wrap);
+function tableUnlocked(){ return !!(S && (S.gwt === 1 || S.lv >= WRAP_LEVEL || PREVIEW)); }
+function findTable(){ return S.board.findIndex(isTable); }
+function giftOrder(){ return (S.orders || []).find(o => o && o.gift) || null; }
+function stagedCount(c, l){ return ((S.gww && S.gww.have) || []).filter(it => it.c === c && it.l === l).length; }
+function giftHave(c, l){ return haveCount(c, l) + stagedCount(c, l); }
+function wrapNeedLeft(){
+  const o = giftOrder(); if (!o) return [];
+  const left = [];
+  needs(o).forEach(r => { let n = r.n - stagedCount(r.c, r.l); while (n-- > 0) left.push({c: r.c, l: r.l}); });
+  return left;
+}
+function canStage(it){
+  if (!it || !it.c) return false;
+  if (S.gww && (S.gww.st === 'wrap' || S.gww.st === 'done')) return false;
+  return wrapNeedLeft().some(r => r.c === it.c && r.l === it.l);
+}
+function ensureWrapTable(){
+  if (!S || !tableUnlocked()) return;
+  if (S.gwt !== 1) S.gwt = 1;
+  if (PREVIEW && !giftOrder() && (S.gwn == null || S.gwn < 4)) S.gwn = 4;
+  if (findTable() >= 0) return;
+  if (S.inv && S.inv.items && S.inv.items.some(isTable)) return;
+  const i = emptyCell();
+  if (i >= 0) S.board[i] = {tbl: 1};
+  else if (invFree() > 0) invState().items.push({tbl: 1});
+}
+function shouldGiftOrder(slot){
+  if (!tableUnlocked()) return false;
+  if (giftOrder()) return false;
+  if (S.tut != null && S.tut < 5) return false;
+  return (S.gwn || 0) >= 4;
+}
+function makeGiftOrder(){
+  const chains = accessibleChains();
+  const P = (window.PROGRESSION.PROFILES[(C && C.progressionProfile) || 'v1'] || window.PROGRESSION.PROFILES.v1);
+  const payC = l => l * l * P.payout.coinsA + P.payout.coinsB;
+  const payS = l => l * P.payout.starsA + P.payout.starsB;
+  let parts = [];
+  if (S.lv <= 5 && chains.indexOf('lip') >= 0 && chains.indexOf('per') >= 0)
+    parts = [{c:'lip', l:1, n:1}, {c:'per', l:1, n:1}];
+  else {
+    const maxL = Math.min(MAXLV, window.PROGRESSION.bandFor(P, S.lv).maxItemLevel);
+    const lo = Math.max(1, maxL - 3), hi = Math.max(lo, maxL - 2);
+    const nParts = (chains.length >= 3 && Math.random() < 0.5) ? 3 : Math.min(2, Math.max(2, chains.length));
+    const pool = chains.slice();
+    for (let k = 0; k < nParts && pool.length; k++){
+      const c = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
+      const l = lo + Math.floor(Math.random() * (hi - lo + 1));
+      parts.push({c, l, n:1});
+    }
+  }
+  if (parts.length < 2) parts = [{c: chains[0] || 'lip', l:1, n:1}, {c: chains[1] || chains[0] || 'per', l:1, n:1}];
+  const coins = 2 * parts.reduce((s, p) => s + p.n * payC(p.l), 0);
+  const stars = parts.reduce((s, p) => s + p.n * payS(p.l), 0);
+  const o = {c: parts[0].c, l: parts[0].l, n: parts[0].n, coins, stars, gift: 1, m: {c: parts[1].c, l: parts[1].l, n: parts[1].n}};
+  if (parts[2]) o.m2 = {c: parts[2].c, l: parts[2].l, n: parts[2].n};
+  return o;
+}
+function stageItem(it){
+  if (!S.gww) S.gww = {st: 'load', have: []};
+  S.gww.st = 'load';
+  (S.gww.have || (S.gww.have = [])).push({c: it.c, l: it.l});
+  if (!wrapNeedLeft().length){
+    S.gww.st = 'wrap';
+    S.gww.t = Date.now();
+    SFX.wrap(); buzz(10);
+  }
+}
+function wrapLeft(now){
+  if (!S.gww || S.gww.st !== 'wrap') return 0;
+  return Math.max(0, (S.gww.t + WRAP_MS) - (now || Date.now()));
+}
+function finishWrap(){
+  if (!S.gww || S.gww.st === 'load') return;
+  const i = emptyCell();
+  if (i < 0){
+    if (invFree() > 0){ invState().items.push({wrap: 1}); S.gww = undefined; toast(L.wrapDoneToast); SFX.wrapDone(); save(); renderAll(); return; }
+    S.gww.st = 'done'; save(); return;
+  }
+  S.board[i] = {wrap: 1}; S.gww = undefined; toast(L.wrapDoneToast); SFX.wrapDone(); save();
+  renderBoard({pop: i}); renderOrders(); renderInfo(); renderTop(); renderInv();
+}
+function tickWrap(now){
+  if (!S) return;
+  ensureWrapTable();
+  if (!S.gww) return;
+  if (S.gww.st === 'wrap' && wrapLeft(now) <= 0) finishWrap();
+  else if (S.gww.st === 'done') finishWrap();
+}
+function tryWrapDrop(from, to){
+  const a = S.board[from], b = S.board[to];
+  if (isTable(a) && !b) return false;          // moving the table to an empty cell is a normal drop
+  if (isTable(b) && !a) return false;
+  const tableAt = isTable(b) ? to : isTable(a) ? from : -1;
+  const itemAt = tableAt === to ? from : tableAt === from ? to : -1;
+  if (tableAt < 0 || itemAt < 0) return false;
+  const it = S.board[itemAt];
+  if (!it || isTable(it) || isWrap(it)) return true;
+  if (S.gww && (S.gww.st === 'wrap' || S.gww.st === 'done')){ toast(L.wrapBusy); SFX.no(); return true; }
+  if (!giftOrder()){ toast(L.wrapNoOrder); SFX.no(); return true; }
+  if (!canStage(it)){ toast(L.wrapNeed); SFX.no(); return true; }
+  S.board[itemAt] = null;
+  if (selected === itemAt) selected = tableAt;
+  stageItem(it);
+  SFX.drop(); save(); renderAll();
+  return true;
+}
+function wrapFxHtml(){
+  if (!S.gww) return '';
+  const left = wrapLeft();
+  const ring = S.gww.st === 'wrap' ? Math.max(0, Math.min(1, 1 - left / WRAP_MS)) : (S.gww.st === 'done' ? 1 : 0);
+  const offset = (113 * (1 - ring)).toFixed(1);
+  const staged = (S.gww.have || []).map(it => `<i>${A.item(it.c, it.l)}</i>`).join('');
+  const time = S.gww.st === 'wrap' ? `<b class="wrapTime">${fmtDur(left/1000)}</b>` : (S.gww.st === 'done' ? `<b class="wrapTime">${L.wrapReady}</b>` : '');
+  return `<span class="wrapFx"><svg class="wrapRing" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18" style="stroke-dashoffset:${offset}"></circle></svg><span class="wrapPaper"></span><span class="wrapRib"></span><span class="wrapBow"></span><span class="wrapStaged">${staged}</span>${time}</span>`;
+}
 
 /* ---------------- Reward / feedback motion (CSS + Web Animations; state commits first) ---------------- */
 function fxReduce(){ return !!(typeof REDUCED !== 'undefined' ? REDUCED : (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)'))).matches; }
@@ -652,14 +781,23 @@ function fxGrantFromCell(i, reward){         // future board chests / gem boxes:
 }
 
 function deliver(oi){
-  const o = S.orders[oi]; if (!ready(o)) { toast(L.notReady); SFX.no(); return; }       // all-or-nothing: nothing is consumed unless EVERY requirement is met
+  const o = S.orders[oi]; if (!ready(o)) { toast(o && o.gift ? L.wrapFirst : L.notReady); SFX.no(); return; }       // all-or-nothing: nothing is consumed unless EVERY requirement is met
   const fromEl = $('orders') && $('orders').children[oi];
   const snap = fxWalletSnap();
   const payStars = o.stars;
+  if (o.gift){
+    let wi = S.board.findIndex(isWrap);
+    if (wi >= 0){ S.board[wi] = null; if (selected === wi) selected = null; }
+    else if (S.inv && S.inv.items){ const k = S.inv.items.findIndex(isWrap); if (k >= 0) S.inv.items.splice(k, 1); else { toast(L.wrapFirst); SFX.no(); return; } }
+    else { toast(L.wrapFirst); SFX.no(); return; }
+    const gemBonus = Math.random() < 0.5 ? (Math.random() < 0.4 ? 2 : 1) : 0;
+    give({coins: o.coins, gems: gemBonus}); addStars(o.stars); count('order');
+  } else {
   needs(o).forEach(r => { let left = r.n;
     S.board.forEach((it,i) => { if (left && it && it.c===r.c && it.l===r.l){ S.board[i] = null; if (selected===i) selected=null; left--; } }); });
   give({coins:o.coins}); addStars(o.stars); count('order');                              // one payout, one generic order count — wallet commits before any animation
   if (o.m){ MSN.countMixedDelivery(S); MSN.sync(S, MSN_CFG); }                             // an ORDINARY mixed-family order (an Atelier commission is counted separately)
+  }
   const atl = ATL.onOrdinaryDelivery(S);                                                  // Atelier cadence: ordinary deliveries only (commission deliveries never come through here)
   SFX.deliver(); buzz(20);
   setPortrait(oi, 'happy');   // art reaction after a REAL successful delivery only
@@ -698,6 +836,7 @@ function showIdleHint(){                             // first-play tutorial and 
 function invFree(){ const inv = invState(); return inv.cap - inv.items.length; }
 function storeSelected(){
   const cell = selected, it = cell != null ? S.board[cell] : null; if (!it) return {ok:false, reason:'none'};
+  if (it.tbl){ SFX.no(); return {ok:false, reason:'table'}; }
   if (invFree() < 1){ toast(L.invFull); SFX.no(); return {ok:false, reason:'full'}; }
   const r = txn(() => {
     const inv = invState(); if (inv.items.length >= inv.cap) return {ok:false, reason:'full'};
@@ -1009,6 +1148,7 @@ function canMerge(a, b){
 }
 function drop(from, to){
   if (to == null || to === from) return;
+  if (tryWrapDrop(from, to)) return;
   const a = S.board[from], b = S.board[to];
   if (canMerge(a, b)){
     const genUp = !!(a.g), genType = a.g, genLv = a.l + 1, lipMerge = !!(a.c && a.c === 'lip');
@@ -1032,7 +1172,7 @@ function tap(i){
   if (it.g) produce(i); else { SFX.tap(); renderBoard(); renderInfo(); }
 }
 function sell(){
-  const it = S.board[selected]; if (!it || it.g || it.box || it.gem) return;          // generators, boxes and loose gems stay unsellable
+  const it = S.board[selected]; if (!it || it.g || it.box || it.gem || it.tbl || it.wrap) return;          // generators, boxes, loose gems, the wrapping table and wrapped gifts stay unsellable
   const cell = selected, copy = {c:it.c, l:it.l}, coins = it.l * 2;
   const fromEl = $('board') && $('board').children[cell];
   const snap = fxWalletSnap();
@@ -1202,15 +1342,17 @@ function renderOrders(){
     if (!o){ d.style.visibility = 'hidden'; box.appendChild(d); orderReadyBit[oi] = false; return; }
     if (orderFx[oi] === 'arrive'){ d.classList.add('arriving'); armCustomerFx(); }   // one-shot: consumed here, never replayed
     orderFx[oi] = null;
-    const rq = needs(o).map(q => ({q, have: Math.min(q.n, haveCount(q.c, q.l))})), r = rq.every(x => x.have >= x.q.n);
+    const rq = needs(o).map(q => ({q, have: Math.min(q.n, o.gift ? giftHave(q.c, q.l) : haveCount(q.c, q.l))})), r = ready(o);
     if (r){ d.classList.add('ready'); if (!orderReadyBit[oi]){ orderReadyBit[oi] = true; SFX.ready(); d.classList.add('readyHop'); setTimeout(() => d.classList.remove('readyHop'), 560); } }
     else orderReadyBit[oi] = false;
     if (rq.length > 1) d.classList.add('mixed');
+    if (o.gift) d.classList.add('gift');
     d.innerHTML = `${r ? `<span class="ok">${A.icon('check')}</span><span class="deliverCue">${L.deliver}</span>` : ''}
+      ${o.gift ? `<span class="giftBadge"><i></i>${L.wrapBadge}</span>` : ''}
       ${portraitHtml(oi)}
       ${rq.length > 1 ? `<div class="need mixedNeed">${rq.map(x => `<div class="nd${x.have >= x.q.n ? ' got' : ''}"><div class="slot"><div class="art">${A.item(x.q.c, x.q.l)}</div></div><div class="cnt">${x.have}/${x.q.n}</div></div>`).join('')}</div>`
         : `<div class="need"><div class="slot"><div class="art">${A.item(o.c, o.l)}</div></div><div class="cnt">${rq[0].have}/${rq[0].q.n}</div></div>`}
-      <div class="rw"><span><i>${A.icon('coin')}</i>${o.coins}</span><span><i>${A.icon('star')}</i>${o.stars}</span></div>`;
+      <div class="rw"><span><i>${A.icon('coin')}</i>${o.coins}${o.gift ? `<b class="x2">×2</b>` : ''}</span><span><i>${A.icon('star')}</i>${o.stars}</span></div>`;
     d.onclick = () => r ? deliver(oi) : openOrder(oi);
     d.querySelectorAll('.need .art').forEach(art => art.addEventListener('click', ev => { ev.stopPropagation(); openOrder(oi); }));
     box.appendChild(d);
@@ -1218,7 +1360,15 @@ function renderOrders(){
 }
 function wanted(){
   const s = new Set();
-  S.orders.forEach(o => { if (!o) return; needs(o).forEach(r => { let n = r.n; S.board.forEach((it,i) => { if (n && it && it.c===r.c && it.l===r.l){ s.add(i); n--; } }); }); });
+  S.orders.forEach(o => {
+    if (!o) return;
+    if (o.gift){
+      if (ready(o)){ S.board.forEach((it, i) => { if (isWrap(it)) s.add(i); }); return; }
+      needs(o).forEach(r => { let n = r.n - stagedCount(r.c, r.l); S.board.forEach((it, i) => { if (n && it && it.c===r.c && it.l===r.l){ s.add(i); n--; } }); });
+      return;
+    }
+    needs(o).forEach(r => { let n = r.n; S.board.forEach((it,i) => { if (n && it && it.c===r.c && it.l===r.l){ s.add(i); n--; } }); });
+  });
   return s;
 }
 function refreshAtelierBadge(){            // the tile's ready dot follows the board (display only)
@@ -1237,7 +1387,7 @@ function renderBoard(fx={}){
     c.classList.toggle('want', want.has(i));
     c.classList.toggle('sel', selected === i);
     const rest = it && it.g ? genRestLeft(it) : 0, stock = it && it.g ? genStockOf(it) : 0;
-    const key = it ? (it.g ? 'g'+it.g+it.l+(rest?'r':'n'+stock) : it.box ? 'box'+it.box : it.gem ? 'gem'+it.gem : it.c+it.l) : '';
+    const key = it ? (it.tbl ? 'tbl'+(S.gww ? S.gww.st + (S.gww.have||[]).length : '0') : it.wrap ? 'wrap' : it.g ? 'g'+it.g+it.l+(rest?'r':'n'+stock) : it.box ? 'box'+it.box : it.gem ? 'gem'+it.gem : it.c+it.l) : '';
     const flies = fx.flies || (fx.fly ? [fx.fly] : []);
     const flyTo = flies.find(f => f.to === i), flyFrom = flies.find(f => f.from === i);
     if (c.dataset.k !== key || fx.pop===i || flyTo){
@@ -1247,7 +1397,9 @@ function renderBoard(fx={}){
         if (rest) extra = `<span class="rest"><i class="clk">${GEN_CLK}</i><b class="restT">${fmtDur(rest/1000)}</b></span>`;
         else extra = `<span class="bolt">${A.icon('bolt')}</span>` + (stock <= 5 ? `<span class="stock">${stock}</span>` : '');
       }
-      c.innerHTML = it ? `<div class="it${it.g?' gen':''}${rest?' genRest':''}${it.box?' box':''}${it.gem?' looseGem':''}">${itemArt(it)}${extra}</div>` : '';
+      if (it && it.tbl) extra += wrapFxHtml();
+      const wrapSt = it && it.tbl && S.gww ? ' ' + (S.gww.st === 'wrap' ? 'wrapping' : S.gww.st === 'done' ? 'wrapDone' : 'loading') : '';
+      c.innerHTML = it ? `<div class="it${it.g?' gen':''}${rest?' genRest':''}${it.box?' box':''}${it.gem?' looseGem':''}${it.tbl?' tbl':''}${it.wrap?' wrap':''}${wrapSt}">${itemArt(it)}${extra}</div>` : '';
     }
     const el = c.firstElementChild; if (!el) return;
     el.classList.toggle('drag', !!(drag && drag.moved && drag.i === i));
@@ -1300,6 +1452,14 @@ function renderInfoInner(){
   if (gBtn) gBtn.onclick = ev => { ev.preventDefault(); ev.stopPropagation(); const d = $('td-hint-gen'); const open = gBtn.getAttribute('aria-expanded') !== 'true'; gBtn.setAttribute('aria-expanded', open ? 'true' : 'false'); if (d) d.hidden = !open; };
 }
 function infoItemHtml(it){                  // markup of the selected-item panel (also used, off-screen, to measure the tallest possible content)
+  if (it.tbl){
+    const hint = S.gww && S.gww.st === 'wrap' ? L.wrapProgress(fmtDur(wrapLeft()/1000)) : (S.gww && S.gww.st === 'done' ? L.wrapReady : L.wrapTableHint);
+    return `<div class="art">${itemArt(it)}</div><div class="txt"><div class="ttl">${L.wrapTable}</div><div class="hint">${hint}</div></div>`;
+  }
+  if (it.wrap){
+    const store = `<button type="button" class="invStoreBtn" id="bStore"${invFree() < 1 ? ' disabled' : ''} aria-label="${L.invStore}">${INV_MARK}</button>`;
+    return `${store}<div class="art">${itemArt(it)}</div><div class="txt"><div class="ttl">${L.wrapBox}</div><div class="hint">${L.wrapBoxHint}</div></div>`;
+  }
   if (it.box || it.gem){
     const store = `<button type="button" class="invStoreBtn" id="bStore"${invFree() < 1 ? ' disabled' : ''} aria-label="${L.invStore}">${INV_MARK}</button>`;
     return `${store}<div class="art">${itemArt(it)}</div><div class="txt"><div class="ttl">${itemName(it)}</div><div class="hint">${it.box === 'gem' ? L.gemBoxHint : it.box ? L.giftBoxHint : L.gemItemHint}</div></div>`;
@@ -1630,18 +1790,18 @@ function orderPathHtml(c, l){
 }
 function openOrder(oi){
   const o = S.orders[oi]; if (!o) return;
-  const rq = needs(o).map(q => ({q, have: Math.min(q.n, haveCount(q.c, q.l))})), ok = rq.every(x => x.have >= x.q.n);
+  const rq = needs(o).map(q => ({q, have: Math.min(q.n, o.gift ? giftHave(q.c, q.l) : haveCount(q.c, q.l))})), ok = ready(o);
   const mixed = rq.length > 1;
   const say = custLine('order', o, oi), whoName = custName(whoOf(o, oi));
   const quote = say ? `<div class="custSay">${whoName ? `<b>${whoName}</b>` : ''}${say}</div>` : '';
-  modal(L.orderTitle, quote + (mixed ? `<div class="center muted" style="font-weight:800">${L.mixedOrder}</div>` : '') +
+  modal(L.orderTitle, quote + (o.gift ? `<div class="center muted" style="font-weight:800">${L.wrapBadge}</div>` : mixed ? `<div class="center muted" style="font-weight:800">${L.mixedOrder}</div>` : '') +
     rq.map(x => `<div class="${mixed ? 'ordReq' : ''}"><div class="bigart">${A.item(x.q.c, x.q.l)}</div>
     <div class="center" style="font-weight:800">${L.items[x.q.c][x.q.l-1]} (${L.level(x.q.l)})</div>
     <div class="center ltr" style="font-size:22px;font-weight:800;color:${x.have>=x.q.n?'var(--green-dark)':'var(--pink-dark)'}">${x.have}/${x.q.n}</div>${orderPathHtml(x.q.c, x.q.l)}</div>`).join('') +
     `<div class="center" style="font-weight:800;margin-top:8px">${L.reward}</div>
     <div class="center" style="font-size:18px;margin:4px 0">${rwHtml({coins:o.coins, stars:o.stars})}</div>
     <button class="btn wide" id="mDeliver" ${ok?'':'disabled'}>${L.deliver}</button>
-    ${ok ? '' : `<div class="center muted" style="margin-top:6px">${L.notReady}</div>`}`);
+    ${ok ? '' : `<div class="center muted" style="margin-top:6px">${o.gift ? L.wrapFirst : L.notReady}</div>`}`);
   $('mDeliver').onclick = () => deliver(oi);
 }
 
@@ -2555,6 +2715,13 @@ function refreshGenClocks(){
     else if (!!left !== was) dirty = true;
   });
   if (S.inv && S.inv.items) S.inv.items.forEach(it => settleGen(it, now));
+  if (S.gww && S.gww.st === 'wrap'){
+    const el = bd.querySelector('.it.tbl .wrapTime');
+    if (el) el.textContent = fmtDur(wrapLeft()/1000);
+    const ring = bd.querySelector('.it.tbl .wrapRing circle');
+    if (ring) ring.style.strokeDashoffset = (113 * wrapLeft() / WRAP_MS).toFixed(1);
+    if (selected != null && S.board[selected] && S.board[selected].tbl) renderInfo();
+  }
   if (dirty){ renderBoard(); if (selected != null && S.board[selected] && S.board[selected].g) renderInfo(); }
 }
 setInterval(() => { tick(); if ($('game').classList.contains('on')){ renderTop(); checkTaskBadges(); refreshEnergyInfo(); refreshGenClocks(); } else if ($('home') && $('home').classList.contains('on')){ renderTop(); checkTaskBadges(); renderHome(); } }, 1000);

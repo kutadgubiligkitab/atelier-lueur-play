@@ -740,3 +740,31 @@ button.taskTitle:focus-visible{outline:3px solid #ff5fa2;outline-offset:2px;bord
 #genPeek .gpTile svg,#genPeek .gpTile img{width:24px;height:24px;display:block}
 #genPeek .gpTile.lock{background:#f4e6ee;color:var(--ink-soft);font:800 14px/1 Nunito,sans-serif}
 .info .hint .peekHint{color:var(--pink-dark);font-weight:800}
+
+/* Gift-wrap table, gift-order badge, and the 10s wrap motion (CSS only). */
+.order.gift{position:relative}
+.order .giftBadge{position:absolute;top:-7px;inset-inline-end:-5px;z-index:3;display:flex;align-items:center;gap:3px;height:16px;padding:0 6px 0 5px;border-radius:8px;background:linear-gradient(#f4c14a,#e09a2e);color:#6a3a00;font-size:9px;font-weight:800;line-height:16px;box-shadow:0 1px 0 #c4841d;pointer-events:none;white-space:nowrap}
+.order .giftBadge i{width:9px;height:9px;border-radius:50%;background:radial-gradient(circle at 30% 30%,#fff6,#fff0),#e85a7a;box-shadow:6px 0 0 #e85a7a;position:relative;flex:none}
+.order .rw .x2{color:#c4841d;font-size:9px;font-weight:800;margin-inline-start:1px}
+.it.tbl,.it.wrap{position:relative}
+.it.tbl .wrapFx{position:absolute;inset:0;pointer-events:none;overflow:visible}
+.it.tbl .wrapRing{position:absolute;inset:4%;width:92%;height:92%}
+.it.tbl .wrapRing circle{fill:none;stroke:#e8c56a;stroke-width:5;stroke-linecap:round;transform:rotate(-90deg);transform-origin:50% 50%;stroke-dasharray:113;stroke-dashoffset:113}
+.it.tbl.wrapping .wrapRing circle{animation:wrapRing 10s linear forwards}
+.it.tbl .wrapPaper{position:absolute;left:18%;right:18%;top:28%;height:38%;background:linear-gradient(180deg,#f7c9c4,#f3b3b0);border-radius:3px;box-shadow:0 1px 0 rgba(160,70,80,.25);transform-origin:50% 100%;opacity:0}
+.it.tbl.wrapping .wrapPaper{animation:wrapPaper 10s ease-in-out both}
+.it.tbl .wrapRib{position:absolute;left:46%;top:18%;width:8%;bottom:22%;background:linear-gradient(90deg,#e8c56a,#f4d27a,#d4a53a);border-radius:2px;transform:scaleY(0);transform-origin:50% 0;opacity:0}
+.it.tbl.wrapping .wrapRib{animation:wrapRib 10s ease-in-out both}
+.it.tbl .wrapBow{position:absolute;left:50%;top:16%;width:22%;height:14%;margin-left:-11%;background:radial-gradient(circle at 30% 50%,#f4d27a 0 42%,transparent 43%),radial-gradient(circle at 70% 50%,#f4d27a 0 42%,transparent 43%);opacity:0}
+.it.tbl.wrapping .wrapBow{animation:wrapBow 10s ease-in-out both}
+.it.tbl .wrapStaged{position:absolute;left:6%;right:6%;bottom:6%;display:flex;justify-content:center;gap:2px;pointer-events:none}
+.it.tbl .wrapStaged i{width:28%;aspect-ratio:1;display:block;filter:drop-shadow(0 1px 1px rgba(80,30,40,.3))}
+.it.tbl .wrapStaged i .sprite{width:100%;height:100%}
+.it.tbl .wrapTime{position:absolute;left:0;right:0;bottom:-2px;text-align:center;font-size:9px;font-weight:800;color:#6a3a00;text-shadow:0 1px 0 #fff8;pointer-events:none;direction:ltr;line-height:1}
+@keyframes wrapRing{to{stroke-dashoffset:0}}
+@keyframes wrapPaper{0%{opacity:0;transform:scale(.6) rotate(-8deg)}12%{opacity:1;transform:scale(1) rotate(0)}70%{opacity:1;transform:scale(1)}100%{opacity:.15;transform:scale(.85)}}
+@keyframes wrapRib{0%,18%{opacity:0;transform:scaleY(0)}32%{opacity:1;transform:scaleY(1)}100%{opacity:1;transform:scaleY(1)}}
+@keyframes wrapBow{0%,55%{opacity:0;transform:scale(.3)}70%{opacity:1;transform:scale(1.1)}100%{opacity:1;transform:scale(1)}}
+@media (prefers-reduced-motion: reduce){
+  .it.tbl.wrapping .wrapRing circle,.it.tbl.wrapping .wrapPaper,.it.tbl.wrapping .wrapRib,.it.tbl.wrapping .wrapBow{animation:none;opacity:1;transform:none;stroke-dashoffset:0}
+}

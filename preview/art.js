@@ -249,6 +249,7 @@ const SPRITE_DIR = 'assets/sprites-v1/';
 const SPRITE_IDS = [];
 ['lip','per','cmp','nail'].forEach(c => { for (let l = 1; l <= 6; l++) SPRITE_IDS.push(c + '_' + l); });
 ['pink','lav'].forEach(t => { for (let l = 1; l <= 3; l++) SPRITE_IDS.push('gen_' + t + '_' + l); });
+['wrap_box','wrap_table'].forEach(id => SPRITE_IDS.push(id));
 /* Skincare Art v1 (installed, NOT activated: no family "skn" exists in the game rules yet). Explicit stable mapping, kept out of SPRITE_IDS (no preload). */
 const SKINCARE_DIR = 'assets/skincare-v1/';
 const SKINCARE_IDS = [1,2,3,4,5,6].map(l => 'skn_' + l).concat([1,2,3].map(l => 'gen_skn_' + l));
@@ -393,6 +394,8 @@ window.ART = {
   DEFS,
   item: (c,l) => sprite(c + '_' + l),
   gen: (type,l) => sprite('gen_' + type + '_' + l),
+  wrapTable: () => sprite('wrap_table'),
+  wrapBox: () => sprite('wrap_box'),
   // the previous code-drawn vector versions are kept ONLY for reference/rollback; the game no longer calls them
   itemSvg: (c,l) => svg(ITEMS[c][l-1]()),
   genSvg: (type,l) => svg(giftBox(l, type==='pink'?'gPinkBox':'gLav', type==='pink'?'gGoldH':'gPinkB')),

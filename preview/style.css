@@ -475,6 +475,15 @@ button,.btn,.plus,.roundbtn,.nav,.nav *,.pill,.lvbadge,.cust,.ordersRow,.side,.i
 .pill .gemMini .ic{width:16px;height:16px;margin:0}
 .pill .gemMini .val{flex:none;font-size:12px;font-weight:800;padding:0 2px;font-variant-numeric:tabular-nums}
 .cell .cd{position:absolute;inset:auto 2px 2px 2px;height:16px;border-radius:8px;background:rgba(42,28,40,.72);color:#fff;font-size:10px;font-weight:800;line-height:16px;text-align:center;pointer-events:none;direction:ltr;font-variant-numeric:tabular-nums}
+.cell .it.genRest{opacity:.72}
+.cell .rest{position:absolute;inset:auto 2px 2px 2px;height:15px;border-radius:8px;background:rgba(42,28,40,.78);color:#fff;display:flex;align-items:center;justify-content:center;gap:2px;pointer-events:none;padding:0 3px}
+.cell .rest .clk{display:block;width:9px;height:9px;flex:none}
+.cell .rest .clk svg{display:block;width:100%;height:100%}
+.cell .restT{font-size:9.5px;font-weight:800;line-height:15px;letter-spacing:0;direction:ltr;font-variant-numeric:tabular-nums;unicode-bidi:isolate}
+.cell .stock{position:absolute;top:1px;inset-inline-start:1px;min-width:13px;height:13px;padding:0 3px;border-radius:7px;background:rgba(42,28,40,.78);color:#fff;font-size:9px;font-weight:800;line-height:13px;text-align:center;pointer-events:none;direction:ltr;font-variant-numeric:tabular-nums}
+.info .genHintBtn{grid-column:3;grid-row:1;align-self:center;padding:0;min-width:20px}
+.info .genHintBtn .infoDot{margin-inline-start:0;width:18px;height:18px;font-size:11px}
+.info > .tcDet,.info .txt > .tcDet{grid-column:1 / -1;margin-top:2px;padding:4px 8px;font-size:11px;line-height:1.35}
 .gdots{display:inline-flex;gap:3px;margin-inline-start:4px;vertical-align:middle}
 .gdots i{width:7px;height:7px;border-radius:50%;background:#e8d0dc;display:inline-block}
 .gdots i.on{background:var(--pink-dark)}

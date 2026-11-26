@@ -89,10 +89,12 @@
         board.push({ c: it.c, l: it.l });
       } else if (it.g !== undefined && it.c === undefined && it.box === undefined && it.gem === undefined) {
         if (CFG.GEN_TYPES.indexOf(it.g) < 0 || !isInt(it.l, 1, CFG.GEN_MAXLV)) return bad('producer');
-        if (keys.some(k => k !== 'g' && k !== 'l' && k !== 'ch' && k !== 't')) return bad('producer-field');
+        if (keys.some(k => k !== 'g' && k !== 'l' && k !== 'ch' && k !== 't' && k !== 'n' && k !== 'rt')) return bad('producer-field');
         const g = { g: it.g, l: it.l };
         if (it.ch !== undefined) { if (!isNum(it.ch, 0, 1e6)) return bad('producer'); g.ch = it.ch; }
         if (it.t !== undefined) { if (!isNum(it.t, 0, 1e15)) return bad('producer'); g.t = it.t; }
+        if (it.n !== undefined) { if (!isInt(it.n, 0, 20)) return bad('producer'); g.n = it.n; }
+        if (it.rt !== undefined) { if (!isNum(it.rt, 0, 1e15)) return bad('producer'); g.rt = it.rt; }
         board.push(g);
       } else if (it.box === 'gift' || it.box === 'gem') {
         if (keys.some(k => k !== 'box')) return bad('box-field');
@@ -254,10 +256,12 @@
           if (CFG.CHAINS.indexOf(it.c) < 0 || !isInt(it.l, 1, CFG.MAXLV) || keys.some(k => k !== 'c' && k !== 'l')) return bad('inv');
           items.push({ c: it.c, l: it.l });
         } else if (it.g !== undefined && it.c === undefined && it.box === undefined && it.gem === undefined) {
-          if (CFG.GEN_TYPES.indexOf(it.g) < 0 || !isInt(it.l, 1, CFG.GEN_MAXLV) || keys.some(k => k !== 'g' && k !== 'l' && k !== 'ch' && k !== 't')) return bad('inv');
+          if (CFG.GEN_TYPES.indexOf(it.g) < 0 || !isInt(it.l, 1, CFG.GEN_MAXLV) || keys.some(k => k !== 'g' && k !== 'l' && k !== 'ch' && k !== 't' && k !== 'n' && k !== 'rt')) return bad('inv');
           const g = { g: it.g, l: it.l };
           if (it.ch !== undefined) { if (!isNum(it.ch, 0, 1e6)) return bad('inv'); g.ch = it.ch; }
           if (it.t !== undefined) { if (!isNum(it.t, 0, 1e15)) return bad('inv'); g.t = it.t; }
+          if (it.n !== undefined) { if (!isInt(it.n, 0, 20)) return bad('inv'); g.n = it.n; }
+          if (it.rt !== undefined) { if (!isNum(it.rt, 0, 1e15)) return bad('inv'); g.rt = it.rt; }
           items.push(g);
         } else if (it.box === 'gift' || it.box === 'gem') {
           if (keys.some(k => k !== 'box')) return bad('inv');

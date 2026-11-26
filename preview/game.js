@@ -9,7 +9,7 @@ const COLS = 7, ROWS = 8, N = COLS*ROWS;
 const ENERGY_CAP = 100, ENERGY_MS = 120000;     // ONE shared cap: passive regeneration stops at 100 (rewards may exceed it); +1 energy every 2 minutes
 const INITIAL_ENERGY = 50;                    // a new game still starts with 50 (separate from the cap)
 const LEGACY_ENERGY_CAP = 50;                 // the cap before the 100 cap (used only to settle old saves exactly once)
-const MAXLV = 6, GEN_MAXLV = 3;
+const MAXLV = 6, GEN_MAXLV = 3, GEN_STOCK = 20, GEN_REST_MS = 180000;   // 20 productions, then a 3-minute rest; leftover time counts while away
 const CORE_CHAINS = ['lip','per','cmp','nail'];            // the original four families (album 'all', discover counts and early-game orders use these)
 const CHAINS = CORE_CHAINS.concat(['skn']);                  // + Skincare (unlocked at level 15 by its first Spa Hamper)
 /* Makeup Atelier (atelier.js = the only rule implementation). Brush/bag are COMMISSION-ONLY: they are NOT in CHAINS, so accessibleChains()/order generation never see them.
@@ -162,7 +162,7 @@ const itemName = it => it.g ? L.gens[it.g] : it.box === 'gem' ? L.gemBox : it.bo
 const itemArt  = it => it.g ? A.gen(it.g, it.l) : it.box === 'gem' ? A.icon('gemBox') : it.box ? A.icon('gift') : it.gem ? A.icon('gem') : A.item(it.c, it.l);
 function cloneItem(it){
   if (!it) return null;
-  if (it.g){ const o = {g:it.g, l:it.l}; if (it.ch != null) o.ch = it.ch; if (it.t) o.t = it.t; return o; }
+  if (it.g){ const o = {g:it.g, l:it.l}; if (it.ch != null) o.ch = it.ch; if (it.t) o.t = it.t; if (it.n != null) o.n = it.n; if (it.rt) o.rt = it.rt; return o; }
   if (it.box) return {box: it.box};
   if (it.gem) return {gem: it.gem};
   return {c:it.c, l:it.l};
@@ -187,6 +187,7 @@ function tick(){
     const n = Math.floor((now - S.et)/ENERGY_MS);
     if (n > 0){ S.energy = Math.min(ENERGY_CAP, S.energy + n); S.et += n*ENERGY_MS; if (S.energy >= ENERGY_CAP) S.et = now; }
   } else S.et = now;
+  settleAllGens(now);
   rolloverTasks();
 }
 /* Daily/weekly reset (existing calendar keys). The OLD day's completions are recorded first; today's assignment is snapshotted ONCE here (deterministic, never re-rolled by reload, language or re-import).
@@ -884,9 +885,33 @@ function renderTut(){
 }
 
 /* ---------------- تاختا ھەرىكەتلىرى ---------------- */
+function freshGen(g, l){ return {g, l, n: GEN_STOCK}; }
+function settleGen(it, now){
+  if (!it || !it.g) return it;
+  now = now || Date.now();
+  if (it.rt && it.rt <= now){ it.n = GEN_STOCK; delete it.rt; }
+  return it;
+}
+function settleAllGens(now){
+  now = now || Date.now();
+  (S.board || []).forEach(it => settleGen(it, now));
+  if (S.inv && S.inv.items) S.inv.items.forEach(it => settleGen(it, now));
+}
+function genRestLeft(it, now){
+  settleGen(it, now);
+  return (it && it.g && it.rt && it.rt > (now || Date.now())) ? it.rt - (now || Date.now()) : 0;
+}
+function genStockOf(it){
+  settleGen(it);
+  if (!it || !it.g) return 0;
+  return it.n == null ? GEN_STOCK : it.n;
+}
+const GEN_CLK = '<svg viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="5" fill="none" stroke="#fff" stroke-width="1.4"/><path d="M6 3.2V6.2L8.1 7.5" fill="none" stroke="#fff" stroke-width="1.3" stroke-linecap="round"/></svg>';
 function produce(i){
   const g = S.board[i];
   if (!g || !g.g) return;
+  const left = genRestLeft(g);
+  if (left > 0){ selected = i; toast(L.genResting(fmtDur(left/1000))); SFX.tap(); renderBoard(); renderInfo(); return; }
   if (S.energy < 1){ toast(L.noEnergy); SFX.empty(); openShop('energy'); return; }
   const gr = Math.floor(i/COLS), gc = i%COLS;
   let best = -1, bd = 1e9;
@@ -894,6 +919,9 @@ function produce(i){
   if (best < 0){ toast(L.boardFull); SFX.no(); return; }
   if (S.energy >= ENERGY_CAP) S.et = Date.now();      // recovery starts when the player drops below the cap (nothing was banked while full)
   S.energy--;
+  if (g.n == null) g.n = GEN_STOCK;
+  g.n--;
+  if (g.n <= 0){ g.n = 0; g.rt = Date.now() + GEN_REST_MS; }
   let it;
   if (S.tut >= 5 && Math.random() < GIFT_BOX_RATE){
     it = {box: Math.random() < GEM_BOX_OF_GIFTS ? 'gem' : 'gift'};
@@ -981,7 +1009,7 @@ function drop(from, to){
   const a = S.board[from], b = S.board[to];
   if (canMerge(a, b)){
     const genUp = !!(a.g), genType = a.g, genLv = a.l + 1, lipMerge = !!(a.c && a.c === 'lip');
-    S.board[to] = a.c ? {c:a.c, l:a.l+1} : {g:a.g, l:a.l+1};
+    S.board[to] = a.c ? {c:a.c, l:a.l+1} : freshGen(a.g, a.l+1);
     S.board[from] = null; discover(S.board[to]); count('merge'); if (a.c){ MSN.countMerge(S, a.c, MSN_CFG); MSN.sync(S, MSN_CFG); }   // per-family merge counter (ordinary families only)
     const atl = S.board[to].c && !ATL.hasChapter(S) ? atelierNotes() : [];      // lipstick/powder rank 6 may complete the unlock prerequisites
     selected = to; SFX.merge(a.l+1); buzz(15); save(); if (atl.length) announceLevelUps(atl);
@@ -1185,13 +1213,18 @@ function renderBoard(fx={}){
     const it = S.board[i];
     c.classList.toggle('want', want.has(i));
     c.classList.toggle('sel', selected === i);
-    const key = it ? (it.g ? 'g'+it.g+it.l : it.box ? 'box'+it.box : it.gem ? 'gem'+it.gem : it.c+it.l) : '';
+    const rest = it && it.g ? genRestLeft(it) : 0, stock = it && it.g ? genStockOf(it) : 0;
+    const key = it ? (it.g ? 'g'+it.g+it.l+(rest?'r':'n'+stock) : it.box ? 'box'+it.box : it.gem ? 'gem'+it.gem : it.c+it.l) : '';
     const flies = fx.flies || (fx.fly ? [fx.fly] : []);
     const flyTo = flies.find(f => f.to === i), flyFrom = flies.find(f => f.from === i);
     if (c.dataset.k !== key || fx.pop===i || flyTo){
       c.dataset.k = key;
-      const extra = it && it.g ? `<span class="bolt">${A.icon('bolt')}</span>` : '';
-      c.innerHTML = it ? `<div class="it${it.g?' gen':''}${it.box?' box':''}${it.gem?' looseGem':''}">${itemArt(it)}${extra}</div>` : '';
+      let extra = '';
+      if (it && it.g){
+        if (rest) extra = `<span class="rest"><i class="clk">${GEN_CLK}</i><b class="restT">${fmtDur(rest/1000)}</b></span>`;
+        else extra = `<span class="bolt">${A.icon('bolt')}</span>` + (stock <= 5 ? `<span class="stock">${stock}</span>` : '');
+      }
+      c.innerHTML = it ? `<div class="it${it.g?' gen':''}${rest?' genRest':''}${it.box?' box':''}${it.gem?' looseGem':''}">${itemArt(it)}${extra}</div>` : '';
     }
     const el = c.firstElementChild; if (!el) return;
     el.classList.toggle('drag', !!(drag && drag.moved && drag.i === i));
@@ -1239,6 +1272,8 @@ function renderInfoInner(){
   box.innerHTML = infoItemHtml(it);
   if ($('bStore')) $('bStore').onclick = storeSelected;
   if (!it.g && !it.box && !it.gem && $('bSell')) $('bSell').onclick = sell;
+  const gBtn = box.querySelector('[data-info="hint-gen"]');
+  if (gBtn) gBtn.onclick = ev => { ev.preventDefault(); ev.stopPropagation(); const d = $('td-hint-gen'); const open = gBtn.getAttribute('aria-expanded') !== 'true'; gBtn.setAttribute('aria-expanded', open ? 'true' : 'false'); if (d) d.hidden = !open; };
 }
 function infoItemHtml(it){                  // markup of the selected-item panel (also used, off-screen, to measure the tallest possible content)
   if (it.box || it.gem){
@@ -1249,13 +1284,16 @@ function infoItemHtml(it){                  // markup of the selected-item panel
   const next = it.l < max ? (it.g ? {g:it.g, l:it.l+1} : {c:it.c, l:it.l+1}) : null;
   let hint;
   if (it.g){
-    hint = `${L.genHint}. ${next ? L.genMerge : L.genMax}`;
+    const left = genRestLeft(it);
+    hint = left ? L.genResting(fmtDur(left/1000)) : `${L.genHint}. ${next ? L.genMerge : L.genMax}`;
   }
   else hint = next ? `${L.mergeInto} <i>${itemArt(next)}</i> ${itemName(next)}` : L.maxLevel;
   const store = `<button type="button" class="invStoreBtn" id="bStore"${invFree() < 1 ? ' disabled' : ''} aria-label="${L.invStore}">${INV_MARK}</button>`;
   const sellBtn = it.g ? '' : `<button class="btn pink" id="bSell">${L.sell} <span class="rw"><i>${A.icon('coin')}</i>${it.l*2}</span></button>`;
-  return `${store}<div class="art">${itemArt(it)}</div><div class="txt"><div class="ttl">${itemName(it)} · ${L.level(it.l)}</div><div class="hint">${hint}</div></div>
-    ${sellBtn}`;
+  const genInfo = it.g ? `<button type="button" class="infoBtn genHintBtn" data-info="hint-gen" aria-expanded="false" aria-controls="td-hint-gen" aria-label="${L.genRestHint}"><i class="infoDot" aria-hidden="true">!</i></button>` : '';
+  const genDet = it.g ? `<div class="tcDet" id="td-hint-gen" hidden>${L.genRestHint}</div>` : '';
+  return `${store}<div class="art">${itemArt(it)}</div><div class="txt"><div class="ttl">${itemName(it)} · ${L.level(it.l)}</div><div class="hint">${hint}</div>${genDet}</div>
+    ${genInfo}${sellBtn}`;
 }
 /* Height the panel needs for the LONGEST content in the current language and width (every item rank, every producer, the delivery-tray row), measured off-screen once per width/language.
    The panel always reserves this height, so selecting a long-named item never resizes the panel or the board (geometry stays stable) and nothing is ever cut off. */
@@ -2333,10 +2371,26 @@ migrateLegacyEvents(); migrateEventGems(); migrateSupply(); settlePlaytestGrant(
 refreshContent(true).catch(e => console.warn('[content]', e && e.message));   // async; never blocks or breaks start-up
 window.__atelierBooted = true; if (window.__atelierStartupOk) window.__atelierStartupOk();   // startup finished: hide the safety-net message if it was shown
 document.fonts && document.fonts.ready.then(() => { layout(); });
-setInterval(() => { tick(); if ($('game').classList.contains('on')){ renderTop(); checkTaskBadges(); refreshEnergyInfo(); } }, 1000);
+function refreshGenClocks(){
+  const bd = $('board'); if (!bd) return;
+  const now = Date.now();
+  let dirty = false;
+  [...bd.children].forEach((c, i) => {
+    const it = S.board[i]; if (!it || !it.g) return;
+    const was = !!c.querySelector('.rest');
+    settleGen(it, now);
+    const left = genRestLeft(it, now);
+    const el = c.querySelector('.restT');
+    if (left > 0 && el) el.textContent = fmtDur(left/1000);
+    else if (!!left !== was) dirty = true;
+  });
+  if (S.inv && S.inv.items) S.inv.items.forEach(it => settleGen(it, now));
+  if (dirty){ renderBoard(); if (selected != null && S.board[selected] && S.board[selected].g) renderInfo(); }
+}
+setInterval(() => { tick(); if ($('game').classList.contains('on')){ renderTop(); checkTaskBadges(); refreshEnergyInfo(); refreshGenClocks(); } }, 1000);
 setInterval(save, 5000);
 document.addEventListener('visibilitychange', () => { if (document.hidden) save(true); else { tick(); renderAll(); refreshContent(false).catch(() => {}); } });
 
 // سىناق ئۈچۈن
-window.__game = { AUDIO, applyAudio, atelier: {open: () => openAtelier(), env: atelierEnv, notes: atelierNotes}, ALL_CHAINS, buyProp, buyColour, equipColour, salonInp, taskCounts, openTasks, tasksFor, get EV(){ return EV; }, energyTimes, ENERGY_CAP, ENERGY_MS, ENERGY_PACKS, GEM_ENERGY, energyOffer, buyEnergy, buyEnergyGems, eshopState, dayKey, weekKey, monthKey, tick, applyLang, buyProducer, placeQueued, producerPrice, equivOf, grantMilestones, claimEvent, newOrder, accessibleChains, deliver: oi => deliver(oi), save: () => save(), get contentInfo(){ return contentInfo; }, refreshContent, get S(){ return S; }, get gate(){ return saveGate; }, get recovery(){ return recovery; }, renderAll, openShop, MSN, MSN_CFG, select: i => { selected = i; renderBoard(); renderInfo(); }, storeSelected, placeInv, expandInv, undoLastSale, get undoSale(){ return undoSale; }, openGenUpgrade, genDropTable, claimDailyGift, giftStreakNext, giftReward, skipTut, tutAdvance, INV_CAPS, INV_EXPAND, INV_EXPAND_GEMS, get fxCoinHold(){ return fxCoinHold; }, get fxEnergyHold(){ return fxEnergyHold; }, get fxGemHold(){ return fxGemHold; }, get fxBits(){ return fxBits; }, fxWalletSnap, fxAfterGive, fxRewardFlight, fxGrantFromCell, drop, sell, produce, give, openBoardBox, collectGem, roadReward, addStarsCore, openRoad, openOrder };
+window.__game = { AUDIO, applyAudio, atelier: {open: () => openAtelier(), env: atelierEnv, notes: atelierNotes}, ALL_CHAINS, buyProp, buyColour, equipColour, salonInp, taskCounts, openTasks, tasksFor, get EV(){ return EV; }, energyTimes, ENERGY_CAP, ENERGY_MS, ENERGY_PACKS, GEM_ENERGY, energyOffer, buyEnergy, buyEnergyGems, eshopState, dayKey, weekKey, monthKey, tick, applyLang, buyProducer, placeQueued, producerPrice, equivOf, grantMilestones, claimEvent, newOrder, accessibleChains, deliver: oi => deliver(oi), save: () => save(), get contentInfo(){ return contentInfo; }, refreshContent, get S(){ return S; }, get gate(){ return saveGate; }, get recovery(){ return recovery; }, renderAll, openShop, MSN, MSN_CFG, select: i => { selected = i; renderBoard(); renderInfo(); }, storeSelected, placeInv, expandInv, undoLastSale, get undoSale(){ return undoSale; }, openGenUpgrade, genDropTable, claimDailyGift, giftStreakNext, giftReward, skipTut, tutAdvance, INV_CAPS, INV_EXPAND, INV_EXPAND_GEMS, get fxCoinHold(){ return fxCoinHold; }, get fxEnergyHold(){ return fxEnergyHold; }, get fxGemHold(){ return fxGemHold; }, get fxBits(){ return fxBits; }, fxWalletSnap, fxAfterGive, fxRewardFlight, fxGrantFromCell, drop, sell, produce, give, openBoardBox, collectGem, roadReward, addStarsCore, openRoad, openOrder, GEN_STOCK, GEN_REST_MS, settleAllGens, settleGen, genRestLeft, genStockOf, freshGen };
 })();

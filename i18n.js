@@ -110,7 +110,7 @@ window.LANGS = {
     hintExtra: p => 'قوشۇمچە رەڭ ' + p + ' تەڭگە، سېتىۋالغاندا ئاپتوماتىك قوللىنىلىدۇ؛ ئۆي تولۇقلىنىشى، يۇلتۇز ۋە ۋەزىپە ساناقلىرىغا تەسىر قىلمايدۇ.', toastColourAdded: 'رەڭ قوشۇلدى ۋە ئىشلىتىلدى', toastColourApplied: 'رەڭ ئىشلىتىلدى',
     previewHint: 'ئالدىن كۆرۈش — ساقلانمىدى', slotsTitle: 'بۇيۇملار',
     decos: { rug:'گىلەم', flowers:'گۈلدەستە', table:'گىرىم ئۈستىلى', mirror:'ئەينەك', chair:'سالون ئورۇندۇقى', lamp:'چىراغ', curtain:'پەردە', shelf:'تەكچە',
-      rcprunner:'يول گىلەمى', rcpdesk:'قوبۇل قىلىش ئۈستىلى', rcpsign:'خۇش كەپسىز بەلگىسى', rcptea:'چاي ئۈستىلى', rcpplant:'چوڭ ئۆسۈملۈك', rcpsofa:'سوفا', rcpwall:'ئاساسىي تام بېزىكى', rcplights:'ئېسىلما چىراغ', rcpcase:'كۆرگەزمە ئىشكاپى',
+      rcprunner:'يول گىلەمى', rcpdesk:'قوبۇل قىلىش ئۈستىلى', rcpsign:'خۇش كەلدىڭىز بەلگىسى', rcptea:'چاي ئۈستىلى', rcpplant:'چوڭ ئۆسۈملۈك', rcpsofa:'سوفا', rcpwall:'ئاساسىي تام بېزىكى', rcplights:'ئېسىلما چىراغ', rcpcase:'كۆرگەزمە ئىشكاپى',
       spabed:'داۋالاش كارىۋىتى', spascreen:'قاتلانما پەردە', spatowels:'لۆڭگە ئېسىلمىسى', sparug:'سپا گىلىمى', spatrolley:'داۋالاش ھارۋىسى', spasteam:'يۈز بۇغلىغۇچ', spachair:'ئارام ئورۇندۇقى', spabasin:'يۇيۇنۇش ئۈستىلى',
       spadrape:'دېرىزە پەردىسى', spaplant:'ئېگىز ئۆسۈملۈك', spalamp:'پول چىرىغى', spapouf:'يۇمشاق ئورۇندۇق جۈپى', spashelf:'مەھسۇلات تەكچىسى', spafountain:'تاش فونتان', spacandles:'شام ئۈستىلى', spaorchid:'ئوركىدىيە',
       /* PROVISIONAL UG (Makeup Studio), owner/native review needed */

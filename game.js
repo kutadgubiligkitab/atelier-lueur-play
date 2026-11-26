@@ -1456,9 +1456,14 @@ function openSettings(){
     <div class="row"><div class="art" style="width:32px;height:32px">${A.icon('music')}</div><div class="grow">${L.music}</div><button class="toggle ${S.set.music?'on':''}" id="stM" aria-pressed="${S.set.music?'true':'false'}"></button></div>
     <div class="volRow"><label class="muted" for="stMV">${L.musicVol}</label><input class="vol" id="stMV" type="range" min="0" max="1" step="0.01" value="${mv}"></div>
     <div class="row"><div class="art" style="width:32px;height:32px">${A.icon('vibrate')}</div><div class="grow">${L.vibrate}</div><button class="toggle ${S.set.vib?'on':''}" id="stV"></button></div>
-    <div class="row" style="margin-bottom:2px"><div class="art" style="width:32px;height:32px">${A.icon('globe')}</div><div class="grow">${L.language}</div></div>
-    ${Object.keys(LANGS).map(k => `<div class="lang ${S.set.lang===k?'on':''}" data-lang="${k}"><span>${S.set.lang===k?'✓ ':''}${LANGS[k].label}</span><code>${k.toUpperCase()}</code></div>`).join('')}
-    ${LANGS_SOON.map(([k,n]) => `<div class="lang soon"><span>${n} · ${L.soon}</span><code>${k.toUpperCase()}</code></div>`).join('')}
+    <div class="row langRow" id="stLang" role="button" tabindex="0" aria-expanded="false" aria-haspopup="listbox" aria-controls="langSheet">
+      <div class="art" style="width:32px;height:32px">${A.icon('globe')}</div>
+      <div class="grow">${L.language}</div>
+      <span class="langNow"><span class="langNowName">${LANGS[S.set.lang].label}</span><i aria-hidden="true">▾</i></span>
+    </div>
+    <div class="langSheet" id="langSheet" hidden role="listbox">
+      ${Object.keys(LANGS).map(k => `<button type="button" class="lang ${S.set.lang===k?'on':''}" data-lang="${k}" role="option" aria-selected="${S.set.lang===k?'true':'false'}"><span>${S.set.lang===k?'✓ ':''}${LANGS[k].label}</span><code>${k.toUpperCase()}</code></button>`).join('')}
+    </div>
     <div class="row" style="margin-bottom:2px"><div class="art" style="width:32px;height:32px">${A.icon('book')}</div><div class="grow">${L.saveSection}</div></div>
     <button class="btn wide" id="stExp" style="font-size:14px;margin-top:4px">${L.exportSave}</button>
     <button class="btn wide" id="stImp" style="font-size:14px;margin-top:6px">${L.importSave}</button>
@@ -1476,7 +1481,22 @@ function openSettings(){
   };
   slide('stSV', 'soundVol'); slide('stMV', 'musicVol');
   $('stV').onclick = () => { S.set.vib = !S.set.vib; save(); mark('stV', S.set.vib); };
-  $('modal').querySelectorAll('[data-lang]').forEach(b => b.onclick = () => { S.set.lang = b.dataset.lang; save(); applyLang(); renderAll(); openSettings(); });
+  const langRow = $('stLang'), langSheet = $('langSheet');
+  const toggleLangSheet = on => {
+    const open = on !== undefined ? on : langSheet.hidden;
+    langSheet.hidden = !open;
+    langRow.setAttribute('aria-expanded', open ? 'true' : 'false');
+    langRow.classList.toggle('open', open);
+    if (open) langSheet.scrollIntoView({block:'nearest'});
+  };
+  langRow.onclick = ev => { ev.stopPropagation(); toggleLangSheet(); };
+  langRow.onkeydown = ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); toggleLangSheet(); } };
+  langSheet.onclick = ev => ev.stopPropagation();
+  langSheet.querySelectorAll('[data-lang]').forEach(b => b.onclick = ev => {
+    ev.stopPropagation();
+    if (b.dataset.lang === S.set.lang){ toggleLangSheet(false); return; }
+    S.set.lang = b.dataset.lang; save(); applyLang(); renderAll(); openSettings();
+  });
   $('stReset').onclick = confirmReset;
   $('stExp').onclick = () => openExport();
   $('stImp').onclick = () => openImport(openSettings);

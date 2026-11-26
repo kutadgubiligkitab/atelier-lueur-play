@@ -674,7 +674,6 @@ function deliver(oi){
 /* ---------------- ئامبار، قايتۇرۇش، تەبرىك ۋە قىسقا ئۆگىتىش ---------------- */
 const INV_CAPS = [4, 8, 12, 16], INV_EXPAND = {8: 300, 12: 800}, INV_EXPAND_GEMS = {16: 20}, UNDO_MS = 8000;
 const GEM_ENERGY = {amt: 100, price: 10};
-const GEN_CD_MS = [0, 5000, 8000, 12000];   // short per-tap wait so skipping is optional; the game stays playable by waiting
 const GIFT_BOX_RATE = 0.10, GEM_BOX_OF_GIFTS = 0.10;
 function invCapFit(n, used){                         // only 4 / 8 / 12; never auto-upgrade because the player has many coins
   const need = Math.max(used || 0, INV_CAPS[0]);
@@ -885,11 +884,9 @@ function renderTut(){
 }
 
 /* ---------------- تاختا ھەرىكەتلىرى ---------------- */
-function genCdLeft(it){ return (it && it.g && it.t) ? Math.max(0, it.t - Date.now()) : 0; }
-function genSkipPrice(it){ const sec = Math.ceil(genCdLeft(it) / 1000); return sec <= 0 ? 0 : Math.max(1, Math.ceil(sec / 20)); }
 function produce(i){
   const g = S.board[i];
-  if (genCdLeft(g) > 0){ selected = i; SFX.tap(); renderBoard(); renderInfo(); return; }
+  if (!g || !g.g) return;
   if (S.energy < 1){ toast(L.noEnergy); SFX.empty(); openShop('energy'); return; }
   const gr = Math.floor(i/COLS), gc = i%COLS;
   let best = -1, bd = 1e9;
@@ -905,7 +902,6 @@ function produce(i){
     it = {c: pick(GEN_CHAINS[g.g]), l};
     discover(it);
   }
-  if (S.tut >= 5) g.t = Date.now() + (GEN_CD_MS[g.l] || GEN_CD_MS[1]);
   S.board[best] = it; count('tap');
   SFX.spawn(); buzz(8); save();
   if (S.tut === 1) tutAdvance(1);
@@ -950,20 +946,6 @@ function collectGem(i){
   give({gems: amt}); SFX.coin(); save();
   fxAfterGive(fromEl, snap);
   renderAll();
-}
-function skipGenCd(i){
-  const it = S.board[i]; if (!it || !it.g) return {ok:false, reason:'none'};
-  const price = genSkipPrice(it); if (!price) return {ok:false, reason:'ready'};
-  if ((S.gems || 0) < price){ SFX.no(); toast(L.noGems); return {ok:false, reason:'gems'}; }
-  return confirmGemSpend(L.gemSkipTitle, L.gemSkipAsk(payChip(price, 'gem'), Math.ceil(genCdLeft(it)/1000)), () => txn(() => {
-    const cur = S.board[i]; if (!cur || !cur.g) return {ok:false, reason:'none'};
-    const p = genSkipPrice(cur); if (!p) return {ok:false, reason:'ready'};
-    if ((S.gems || 0) < p) return {ok:false, reason:'gems'};
-    S.gems -= p; delete cur.t; return {ok:true};
-  }), r => {
-    if (r && r.ok){ SFX.shop(); renderBoard(); renderInfo(); renderTop(); }
-    else if (r && r.reason !== 'busy'){ SFX.no(); toast(r.reason === 'gems' ? L.noGems : L.supplyFail); }
-  });
 }
 function buyEnergyGems(){
   if ((S.gems || 0) < GEM_ENERGY.price){ SFX.no(); toast(L.noGems); return {ok:false, reason:'gems'}; }
@@ -1203,12 +1185,12 @@ function renderBoard(fx={}){
     const it = S.board[i];
     c.classList.toggle('want', want.has(i));
     c.classList.toggle('sel', selected === i);
-    const cd = genCdLeft(it), key = it ? (it.g ? 'g'+it.g+it.l+(cd?'cd':'') : it.box ? 'box'+it.box : it.gem ? 'gem'+it.gem : it.c+it.l) : '';
+    const key = it ? (it.g ? 'g'+it.g+it.l : it.box ? 'box'+it.box : it.gem ? 'gem'+it.gem : it.c+it.l) : '';
     const flies = fx.flies || (fx.fly ? [fx.fly] : []);
     const flyTo = flies.find(f => f.to === i), flyFrom = flies.find(f => f.from === i);
     if (c.dataset.k !== key || fx.pop===i || flyTo){
       c.dataset.k = key;
-      const extra = it && it.g ? `<span class="bolt">${A.icon('bolt')}</span>${cd ? `<span class="cd">${Math.ceil(cd/1000)}</span>` : ''}` : '';
+      const extra = it && it.g ? `<span class="bolt">${A.icon('bolt')}</span>` : '';
       c.innerHTML = it ? `<div class="it${it.g?' gen':''}${it.box?' box':''}${it.gem?' looseGem':''}">${itemArt(it)}${extra}</div>` : '';
     }
     const el = c.firstElementChild; if (!el) return;
@@ -1257,7 +1239,6 @@ function renderInfoInner(){
   box.innerHTML = infoItemHtml(it);
   if ($('bStore')) $('bStore').onclick = storeSelected;
   if (!it.g && !it.box && !it.gem && $('bSell')) $('bSell').onclick = sell;
-  if ($('bSkip')) $('bSkip').onclick = () => skipGenCd(selected);
 }
 function infoItemHtml(it){                  // markup of the selected-item panel (also used, off-screen, to measure the tallest possible content)
   if (it.box || it.gem){
@@ -1268,9 +1249,7 @@ function infoItemHtml(it){                  // markup of the selected-item panel
   const next = it.l < max ? (it.g ? {g:it.g, l:it.l+1} : {c:it.c, l:it.l+1}) : null;
   let hint;
   if (it.g){
-    const left = genCdLeft(it);
     hint = `${L.genHint}. ${next ? L.genMerge : L.genMax}`;
-    if (left) hint += ` ${L.gemWait(Math.ceil(left/1000))} <button type="button" class="btn" id="bSkip" style="padding:2px 8px;font-size:12px;height:auto;margin-inline-start:4px">${L.gemSkip(payChip(genSkipPrice(it), 'gem'))}</button>`;
   }
   else hint = next ? `${L.mergeInto} <i>${itemArt(next)}</i> ${itemName(next)}` : L.maxLevel;
   const store = `<button type="button" class="invStoreBtn" id="bStore"${invFree() < 1 ? ' disabled' : ''} aria-label="${L.invStore}">${INV_MARK}</button>`;
@@ -2354,20 +2333,10 @@ migrateLegacyEvents(); migrateEventGems(); migrateSupply(); settlePlaytestGrant(
 refreshContent(true).catch(e => console.warn('[content]', e && e.message));   // async; never blocks or breaks start-up
 window.__atelierBooted = true; if (window.__atelierStartupOk) window.__atelierStartupOk();   // startup finished: hide the safety-net message if it was shown
 document.fonts && document.fonts.ready.then(() => { layout(); });
-function refreshGenClocks(){
-  const bd = $('board'); if (!bd) return;
-  let dirty = false;
-  [...bd.children].forEach((c, i) => {
-    const it = S.board[i], el = c.querySelector('.cd'), left = genCdLeft(it);
-    if (left > 0){ if (el) el.textContent = String(Math.ceil(left/1000)); else dirty = true; }
-    else if (el) dirty = true;
-  });
-  if (dirty){ renderBoard(); if (selected != null && S.board[selected] && S.board[selected].g) renderInfo(); }
-}
-setInterval(() => { tick(); if ($('game').classList.contains('on')){ renderTop(); checkTaskBadges(); refreshEnergyInfo(); refreshGenClocks(); } }, 1000);
+setInterval(() => { tick(); if ($('game').classList.contains('on')){ renderTop(); checkTaskBadges(); refreshEnergyInfo(); } }, 1000);
 setInterval(save, 5000);
 document.addEventListener('visibilitychange', () => { if (document.hidden) save(true); else { tick(); renderAll(); refreshContent(false).catch(() => {}); } });
 
 // سىناق ئۈچۈن
-window.__game = { AUDIO, applyAudio, atelier: {open: () => openAtelier(), env: atelierEnv, notes: atelierNotes}, ALL_CHAINS, buyProp, buyColour, equipColour, salonInp, taskCounts, openTasks, tasksFor, get EV(){ return EV; }, energyTimes, ENERGY_CAP, ENERGY_MS, ENERGY_PACKS, GEM_ENERGY, energyOffer, buyEnergy, buyEnergyGems, eshopState, dayKey, weekKey, monthKey, tick, applyLang, buyProducer, placeQueued, producerPrice, equivOf, grantMilestones, claimEvent, newOrder, accessibleChains, deliver: oi => deliver(oi), save: () => save(), get contentInfo(){ return contentInfo; }, refreshContent, get S(){ return S; }, get gate(){ return saveGate; }, get recovery(){ return recovery; }, renderAll, openShop, MSN, MSN_CFG, select: i => { selected = i; renderBoard(); renderInfo(); }, storeSelected, placeInv, expandInv, undoLastSale, get undoSale(){ return undoSale; }, openGenUpgrade, genDropTable, claimDailyGift, giftStreakNext, giftReward, skipTut, tutAdvance, INV_CAPS, INV_EXPAND, INV_EXPAND_GEMS, get fxCoinHold(){ return fxCoinHold; }, get fxEnergyHold(){ return fxEnergyHold; }, get fxGemHold(){ return fxGemHold; }, get fxBits(){ return fxBits; }, fxWalletSnap, fxAfterGive, fxRewardFlight, fxGrantFromCell, drop, sell, produce, give, openBoardBox, collectGem, skipGenCd, genCdLeft, genSkipPrice, roadReward, addStarsCore, openRoad, openOrder };
+window.__game = { AUDIO, applyAudio, atelier: {open: () => openAtelier(), env: atelierEnv, notes: atelierNotes}, ALL_CHAINS, buyProp, buyColour, equipColour, salonInp, taskCounts, openTasks, tasksFor, get EV(){ return EV; }, energyTimes, ENERGY_CAP, ENERGY_MS, ENERGY_PACKS, GEM_ENERGY, energyOffer, buyEnergy, buyEnergyGems, eshopState, dayKey, weekKey, monthKey, tick, applyLang, buyProducer, placeQueued, producerPrice, equivOf, grantMilestones, claimEvent, newOrder, accessibleChains, deliver: oi => deliver(oi), save: () => save(), get contentInfo(){ return contentInfo; }, refreshContent, get S(){ return S; }, get gate(){ return saveGate; }, get recovery(){ return recovery; }, renderAll, openShop, MSN, MSN_CFG, select: i => { selected = i; renderBoard(); renderInfo(); }, storeSelected, placeInv, expandInv, undoLastSale, get undoSale(){ return undoSale; }, openGenUpgrade, genDropTable, claimDailyGift, giftStreakNext, giftReward, skipTut, tutAdvance, INV_CAPS, INV_EXPAND, INV_EXPAND_GEMS, get fxCoinHold(){ return fxCoinHold; }, get fxEnergyHold(){ return fxEnergyHold; }, get fxGemHold(){ return fxGemHold; }, get fxBits(){ return fxBits; }, fxWalletSnap, fxAfterGive, fxRewardFlight, fxGrantFromCell, drop, sell, produce, give, openBoardBox, collectGem, roadReward, addStarsCore, openRoad, openOrder };
 })();

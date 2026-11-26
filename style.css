@@ -67,8 +67,9 @@ button{font:inherit;color:inherit}
 .dot{position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;border-radius:9px;background:#ff3b5c;color:#fff;font:900 11px/18px sans-serif;padding:0 4px;border:2px solid #fff;text-align:center}
 
 /* ---------- orders ---------- */
-.ordersRow{display:flex;gap:6px;flex:none;margin-top:4px}
-#orders{flex:1;display:flex;gap:6px;min-width:0}
+.ordersRow{display:flex;gap:6px;flex:none;margin-top:4px;width:calc(var(--cell) * 7 + 18px);max-width:100%;margin-inline:auto;align-self:center;box-sizing:border-box}
+#orders{flex:1;display:flex;gap:6px;min-width:0;width:100%}
+.side:empty{display:none}
 .order{flex:1;min-width:0;height:var(--oh);background:linear-gradient(#fffaf2,#ffeef5);border:3px solid var(--gold);border-radius:16px;box-shadow:0 3px 0 var(--gold-dark);
   padding:3px var(--opad);display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto;column-gap:var(--ogap);align-items:center;justify-items:center;
   cursor:pointer;position:relative;transition:transform .3s,opacity .3s}

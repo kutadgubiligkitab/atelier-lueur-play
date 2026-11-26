@@ -637,13 +637,12 @@ function renderTop(){
   $('tEv').textContent = S.energy + '/' + ENERGY_CAP; $('tEt').textContent = timer; $('tEt').classList.toggle('full', S.energy >= ENERGY_CAP); $('tCv').textContent = S.coins;
 }
 const ATL_PREVIEW_LEVEL = 20;              // UI only: from this level the locked Atelier tile (with its requirements) is shown; its single sprite loads only then
-function renderSide(){
-  let h = `<button class="roundbtn" id="sRoad">${A.icon('crown')}</button>`;
+function renderSide(){                                 // the level star opens the road; no duplicate crown beside the orders
+  let h = '';
   const atlOpen = ATL.hasChapter(S), atlReady = atlOpen && S.atl.cur && ATL.requirements(S).ready;
   if (atlOpen || S.lv >= ATL_PREVIEW_LEVEL) h += `<button class="roundbtn atlBtn${atlOpen ? '' : ' lock'}" id="sAtl" aria-label="${L.atl.entryLabel}">${A.item('brs', 3)}${atlReady ? '<span class="dot">!</span>' : ''}${atlOpen ? '' : `<span class="lk">${A.icon('lock')}</span>`}</button>`;
   if (C.giftMode) h += `<button class="roundbtn" id="sSecret">${A.icon('letter')}${S.lv >= C.secretLevel && !S.secretSeen ? '<span class="dot">!</span>' : ''}</button>`;
   $('side').innerHTML = h;
-  $('sRoad').onclick = openRoad;
   if ($('sAtl')) $('sAtl').onclick = () => openAtelier();   // never pass the click event as the optional reward argument
   if (C.giftMode) $('sSecret').onclick = openSecret;
 }

@@ -1,9 +1,9 @@
 {
- "sourceCommit": "f5793b164373ff6c0d8a5fc8a1fbb950c67ccbcf",
+ "sourceCommit": "13ab39ca0920c21786b5488bd2a1f3ac1a111c19",
  "sourceHasUncommittedChanges": false,
- "cacheBust": "f5793b164373",
+ "cacheBust": "13ab39ca0920",
  "fileCount": 401,
- "totalBytes": 84489393,
+ "totalBytes": 84489546,
  "files": [
   {
    "path": "art.js",
@@ -1962,8 +1962,8 @@
   },
   {
    "path": "game.js",
-   "bytes": 140318,
-   "sha256": "3d906b9ed1e477be6d60a896db2417cab158c3486fc73044e03a0230a244f908"
+   "bytes": 140325,
+   "sha256": "d36f5d2f290d58570baa89a06bef54679dcca84757ce9a0cd0d4b337e44b1b3d"
   },
   {
    "path": "i18n.js",
@@ -1978,7 +1978,7 @@
   {
    "path": "index.html",
    "bytes": 8451,
-   "sha256": "074bb48bd789c31d5f9ac0d80bd1e200f1cda5e9c5a76e0dd5a2922e43bf390f"
+   "sha256": "6d6644ff344f13e3bf8b49b22752d852639fc9483b104eb55dc6299d336c0431"
   },
   {
    "path": "manifest.json",
@@ -2007,8 +2007,8 @@
   },
   {
    "path": "style.css",
-   "bytes": 52348,
-   "sha256": "c8218148c5c4dd780891d71d8406d51268b4ae354c6431c652d7efc5be64391e"
+   "bytes": 52494,
+   "sha256": "008499d81726eafa8ef649fa0df1c20df79f21cc5048779427cf51fd520b19b2"
   }
  ]
 }

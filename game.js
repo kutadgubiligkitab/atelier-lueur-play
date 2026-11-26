@@ -157,6 +157,7 @@ function applyLang(){
   L = LANGS[S.set.lang] || LANGS.ug;
   document.documentElement.dir = L.dir; document.documentElement.lang = S.set.lang;
   document.querySelectorAll('[data-t]').forEach(el => el.textContent = L[el.dataset.t]);
+  if ($('home') && $('home').classList.contains('on')) renderHome();
 }
 const itemName = it => it.g ? L.gens[it.g] : it.box === 'gem' ? L.gemBox : it.box ? L.giftBox : it.gem ? L.gemItem : L.items[it.c][it.l-1];
 const itemArt  = it => it.g ? A.gen(it.g, it.l) : it.box === 'gem' ? A.icon('gemBox') : it.box ? A.icon('gift') : it.gem ? A.icon('gem') : A.item(it.c, it.l);
@@ -851,13 +852,14 @@ function giftReward(n){
   const coins = 20 + 10 * Math.min(k, 6), energy = 20 + 10 * Math.min(k, 6);
   return k === 7 ? {coins, energy, gems: 10} : {coins, energy};
 }
-function claimDailyGift(){
+function claimDailyGift(from){
   const dk = dayKey(); if (S.gift === dk) return {ok:false, reason:'already'};
   const n = giftStreakNext(), rew = giftReward(n);
   const snap = fxWalletSnap();
   S.gift = dk; S.gst = {k: dk, n}; give(rew); SFX.coin(); save();
-  fxAfterGive($('shGift'), snap);
+  fxAfterGive(from || $('hGift') || $('shGift'), snap);
   if (S.tut === 4) tutAdvance(4);
+  if ($('home') && $('home').classList.contains('on')) renderHome();
   return {ok:true, n, rew};
 }
 
@@ -882,7 +884,7 @@ function renderTut(){
   if (S.tut === 1) pulse([2, 4]);
   if (S.tut === 2) pulse([16, 17]);
   if (S.tut === 3){ const o = $('orders') && $('orders').children[0]; if (o) o.classList.add('tutPulse'); }
-  if (S.tut === 4){ const b = document.querySelector('#nav button[data-k="shop"]'); if (b) b.classList.add('tutPulse'); const g = $('shGift'); if (g) g.classList.add('tutPulse'); }
+  if (S.tut === 4){ const b = document.querySelector('#homeNav [data-k="shop"]') || $('tC'); if (b) b.classList.add('tutPulse'); const g = $('shGift') || $('hGift'); if (g) g.classList.add('tutPulse'); }
 }
 
 /* ---------------- تاختا ھەرىكەتلىرى ---------------- */
@@ -1053,10 +1055,16 @@ function renderTop(){
       <div class="pill" id="tEp"><span class="ic">${A.icon('bolt')}</span><span class="val ev"><span id="tEv"></span><span class="sub" id="tEt"></span></span><button class="plus" id="tE">+</button></div>
       <div class="pill" id="tCp"><span class="ic">${A.icon('coin')}</span><span class="val" id="tCv"></span><button class="plus" id="tC">+</button></div>
       <div class="pill" id="tGp" title="${L.gems}"><span class="ic">${A.icon('gem')}</span><span class="val" id="tGv"></span><button type="button" class="plus" id="tG">+</button></div>
-      <button class="roundbtn" id="tSet">${A.icon('gear')}</button>`;
+      <button class="roundbtn" id="tSet">${A.icon('gear')}</button>
+      <button type="button" class="homebtn" id="btnHome" aria-label="${L.home}">${A.icon('home')}</button>`;
     $('tLv').onclick = openRoad; $('tE').onclick = openShop; $('tEp').onclick = e => { if (!e.target.closest('#tE')) openEnergy(); };   // + keeps opening the Shop; the rest of the pill shows the energy details
     $('tC').onclick = openShop; $('tSet').onclick = openSettings;
     if ($('tGp')) $('tGp').onclick = () => openShop('energy');   // gem + and the pill open the shop energy/gem row; no real-money shop yet
+    if ($('btnHome')) $('btnHome').onclick = () => showHome();
+  }
+  if ($('btnHome')){
+    $('btnHome').hidden = !($('game') && $('game').classList.contains('on'));
+    $('btnHome').setAttribute('aria-label', L.home);
   }
   $('tLvN').textContent = S.lv;
   if (fxStarHold == null) $('tLvB').style.width = pct + '%';
@@ -1200,8 +1208,8 @@ function renderOrders(){
     if (rq.length > 1) d.classList.add('mixed');
     d.innerHTML = `${r ? `<span class="ok">${A.icon('check')}</span><span class="deliverCue">${L.deliver}</span>` : ''}
       ${portraitHtml(oi)}
-      ${rq.length > 1 ? `<div class="need mixedNeed">${rq.map(x => `<div class="nd${x.have >= x.q.n ? ' got' : ''}"><div class="art">${A.item(x.q.c, x.q.l)}</div><div class="cnt">${x.have}/${x.q.n}</div></div>`).join('')}</div>`
-        : `<div class="need"><div class="art">${A.item(o.c, o.l)}</div><div class="cnt">${rq[0].have}/${rq[0].q.n}</div></div>`}
+      ${rq.length > 1 ? `<div class="need mixedNeed">${rq.map(x => `<div class="nd${x.have >= x.q.n ? ' got' : ''}"><div class="slot"><div class="art">${A.item(x.q.c, x.q.l)}</div></div><div class="cnt">${x.have}/${x.q.n}</div></div>`).join('')}</div>`
+        : `<div class="need"><div class="slot"><div class="art">${A.item(o.c, o.l)}</div></div><div class="cnt">${rq[0].have}/${rq[0].q.n}</div></div>`}
       <div class="rw"><span><i>${A.icon('coin')}</i>${o.coins}</span><span><i>${A.icon('star')}</i>${o.stars}</span></div>`;
     d.onclick = () => r ? deliver(oi) : openOrder(oi);
     d.querySelectorAll('.need .art').forEach(art => art.addEventListener('click', ev => { ev.stopPropagation(); openOrder(oi); }));
@@ -2046,7 +2054,7 @@ function openSettings(){
 }
 function confirmReset(){
   modal(L.reset, `<p class="center">${L.confirmNew}</p><div style="display:flex;gap:8px"><button class="btn pink wide" id="rY">${L.yes}</button><button class="btn wide" data-close>${L.no}</button></div>`);
-  $('rY').onclick = () => { const r = startNewGame(); if (!r.ok){ toast(xferError(r)); return; } closeModal(); go('board'); renderAll(); toast(L.newDone); };
+  $('rY').onclick = () => { const r = startNewGame(); if (!r.ok){ toast(xferError(r)); return; } closeModal(); showHome({silent:true}); toast(L.newDone); };
 }
 
 /* ---------------- Save protection UI: export / import / restore / recovery ---------------- */
@@ -2084,6 +2092,7 @@ function adoptState(state){                                // only after a succe
   settlePlaytestGrant(); save();
   $('recovery').classList.remove('on');
   if ($('start').classList.contains('on')) showStart();
+  else if ($('home') && $('home').classList.contains('on')) renderHome();
   renderAll();
 }
 function replaceSave(incoming){
@@ -2347,9 +2356,10 @@ function layout(){
      height between board and panel: reserve part of it for the panel so the board keeps its size; on height-limited phones the panel grows only when its content needs it.
      Storage lives inside this panel (not a new row), so the board keeps the pre-storage cell size. */
   const inf = $('info'), base = INFO_BASE(), root = document.documentElement;
-  const avail = w.clientHeight + inf.offsetHeight, cellW = Math.floor((w.clientWidth-18)/COLS), need = cellW*ROWS + 20, spare = avail - need - base;
+  const chrome = 10;   // must match --boardChrome (padding 2 + border 3, both sides). Never shrink cells vs the old 18px chrome.
+  const avail = w.clientHeight + inf.offsetHeight, cellW = Math.floor((w.clientWidth-chrome)/COLS), need = cellW*ROWS + 20, spare = avail - need - base;
   root.style.setProperty('--infoH', Math.max(base, infoNeed(), Math.min(104, base + Math.max(0, spare - 12))) + 'px');
-  const c = Math.floor(Math.min((w.clientWidth-18)/COLS, (w.clientHeight-20)/ROWS));
+  const c = Math.floor(Math.min((w.clientWidth-chrome)/COLS, (w.clientHeight-12)/ROWS));
   document.documentElement.style.setProperty('--cell', Math.max(20, c) + 'px');
 }
 window.addEventListener('resize', layout);
@@ -2368,13 +2378,88 @@ function showStart(){
   $('btnNew').style.display = hasSave ? '' : 'none';
   $('start').classList.add('on');
 }
-function enterGame(){
+function mountTop(hostId){
+  const top = $('top'), host = $(hostId);
+  if (!top || !host || top.parentElement === host) return;
+  host.insertBefore(top, host.firstChild);
+}
+function studioProgress(){
+  const ev = SALON.evaluate(salonInp());
+  const a = ev.find(x => x.id === 'studio') || ev[0];
+  if (!a) return {name: L.areaNames.studio, have: 0, total: 0};
+  const have = a.requiredTotal ? a.requiredOwned : a.ownedCount;
+  const total = a.requiredTotal || a.total || 0;
+  return {name: (L.areaNames && L.areaNames[a.id]) || a.id, have, total};
+}
+function dailyGiftReady(){ return !!(S && S.gift !== dayKey()); }   // existing shop gift only; no new reward
+function renderHome(){
+  if (!$('home')) return;
+  const st = studioProgress();
+  const pct = st.total ? Math.min(100, Math.round(st.have / st.total * 100)) : 0;
+  $('homeProg').innerHTML = `<div class="progRow"><span class="progName">${st.name}</span><span class="progN">${st.have}/${st.total}</span></div><div class="progBar"><i style="width:${pct}%"></i></div>`;
+  const ev = $('hEvent');
+  if (ev){
+    ev.innerHTML = `<span class="ic">${A.icon('star')}</span><span>${L.soon}</span>`;
+    ev.onclick = () => toast(L.soon);
+  }
+  const g = $('hGift');
+  if (g){
+    const ready = dailyGiftReady();
+    g.hidden = !ready;   // hide when today's gift is already claimed; do not invent a new economy
+    if (ready){
+      const n = giftStreakNext();
+      g.innerHTML = `<span class="dot"></span><span class="ic">${A.icon('gift')}</span><span class="txt"><b>${L.dailyGift}</b><small>${L.giftStreak(n)}</small></span>`;
+      g.onclick = () => { if (!claimDailyGift(g).ok) return; renderTop(); };
+    }
+  }
+  const tabs = [['shop','shop',() => openShop()],['album','book',openAlbum],['salon','salon',() => showSalonFromHome()],['tasks','tasks',() => openTasks({auto:true})]];
+  const tc = taskCounts(), nTask = tc.total, nAlb = albumClaimable();
+  $('homeNav').innerHTML = tabs.map(([k,ic]) => `<button type="button" data-k="${k}"><span class="ic">${A.icon(ic)}</span>${L[k]}${
+    k==='tasks' && nTask ? `<span class="dot">${nTask}</span>` : k==='album' && nAlb ? `<span class="dot">${nAlb}</span>` : ''}</button>`).join('');
+  [...$('homeNav').children].forEach((b, i) => b.onclick = () => { SFX.tap(); tabs[i][2](); });
+  const play = $('btnPlay'); if (play) play.textContent = L.play;
+  renderTop();
+}
+function showHome(opts){
+  opts = opts || {};
+  if (!opts.silent) { try { audio(); } catch(e){} }
+  $('start').classList.remove('on');
+  $('game').classList.remove('on');
+  $('game').classList.remove('playMode');
+  $('home').classList.add('on');
+  if (page === 'salon') endSalonFx();
+  if (page === 'board') endCustomerFx();
+  mountTop('homeTopHost');
+  renderHome();
+}
+function showBoard(){
+  try { audio(); } catch(e){}
+  SFX.tap();
   settlePlaytestGrant();
-  audio(); SFX.tap();
-  $('start').classList.remove('on'); $('game').classList.add('on');
+  $('start').classList.remove('on');
+  $('home').classList.remove('on');
+  $('game').classList.add('on');
+  $('game').classList.add('playMode');
+  mountTop('gameTopHost');
+  go('board');
   renderAll(); layout();
   startTutorial();
   setTimeout(layout, 50);
+}
+function showSalonFromHome(){
+  try { audio(); } catch(e){}
+  $('start').classList.remove('on');
+  $('home').classList.remove('on');
+  $('game').classList.add('on');
+  $('game').classList.add('playMode');
+  mountTop('gameTopHost');
+  go('salon');
+  renderTop();
+}
+function enterGame(){
+  settlePlaytestGrant();
+  audio(); SFX.tap();
+  showHome({silent:true});
 }
 $('btnStart').onclick = enterGame;
 $('btnNew').onclick = () => {
@@ -2382,8 +2467,9 @@ $('btnNew').onclick = () => {
   const r = startNewGame(); if (!r.ok){ toast(xferError(r)); return; }
   enterGame();
 };
+if ($('btnPlay')) $('btnPlay').onclick = showBoard;
 
-migrateEnergy(); applyLang(); applyAudio(); tick(); fillOrders(); settlePlaytestGrant(); save(); preloadPortraits(); preloadSprites(); showStart(); startBlinks(); if (recovery) showRecovery();
+migrateEnergy(); applyLang(); applyAudio(); tick(); fillOrders(); settlePlaytestGrant(); save(); preloadPortraits(); preloadSprites(); if (hasSave) showHome({silent:true}); else showStart(); startBlinks(); if (recovery) showRecovery();
 migrateLegacyEvents(); migrateEventGems(); migrateSupply(); settlePlaytestGrant();
 refreshContent(true).catch(e => console.warn('[content]', e && e.message));   // async; never blocks or breaks start-up
 window.__atelierBooted = true; if (window.__atelierStartupOk) window.__atelierStartupOk();   // startup finished: hide the safety-net message if it was shown
@@ -2404,7 +2490,7 @@ function refreshGenClocks(){
   if (S.inv && S.inv.items) S.inv.items.forEach(it => settleGen(it, now));
   if (dirty){ renderBoard(); if (selected != null && S.board[selected] && S.board[selected].g) renderInfo(); }
 }
-setInterval(() => { tick(); if ($('game').classList.contains('on')){ renderTop(); checkTaskBadges(); refreshEnergyInfo(); refreshGenClocks(); } }, 1000);
+setInterval(() => { tick(); if ($('game').classList.contains('on')){ renderTop(); checkTaskBadges(); refreshEnergyInfo(); refreshGenClocks(); } else if ($('home') && $('home').classList.contains('on')){ renderTop(); checkTaskBadges(); renderHome(); } }, 1000);
 setInterval(save, 5000);
 document.addEventListener('visibilitychange', () => { if (document.hidden) save(true); else { tick(); renderAll(); refreshContent(false).catch(() => {}); } });
 

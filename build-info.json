@@ -1,14 +1,14 @@
 {
- "sourceCommit": "aace445cd51dc1a0c303946ba50f0207251c86d9",
+ "sourceCommit": "00bcfaa0260fac07b7ae8d498a40e5909a1ce5e5",
  "sourceHasUncommittedChanges": false,
- "cacheBust": "aace445cd51d",
- "fileCount": 455,
- "totalBytes": 97548730,
+ "cacheBust": "00bcfaa0260f",
+ "fileCount": 456,
+ "totalBytes": 97673596,
  "files": [
   {
    "path": "art.js",
-   "bytes": 39407,
-   "sha256": "e191b959303367e1b2565c57b35b00f7ef9e41e1caeb237446d0032f61efe54b"
+   "bytes": 42544,
+   "sha256": "279df88ab7d7c4e29e106cb0b5935ce041fd744b6f1fbbaddf49e5d67358768c"
   },
   {
    "path": "assets/atelier-v1/generators/gen_atl_1.png",
@@ -2206,6 +2206,11 @@
    "sha256": "39184ee1684c5551464a028d2d5c32423b9e0856287cc4969494eb49379002ed"
   },
   {
+   "path": "assets/ui/salon-tall.webp",
+   "bytes": 111570,
+   "sha256": "2d408390170e9b7b24b844d9bd2ab221e981478905a3e441efa1b8b4fad972b6"
+  },
+  {
    "path": "atelier.js",
    "bytes": 13529,
    "sha256": "11748074a3a486de0ffd5e499c6576588a4fcc4df008e6300f1123380539b9b2"
@@ -2232,13 +2237,13 @@
   },
   {
    "path": "game.js",
-   "bytes": 174394,
-   "sha256": "7ec11d930953741d08f6810155ad9d8c0ae3c9df6484a27dec455e5c1a99cae9"
+   "bytes": 178604,
+   "sha256": "d3988653cd8aa592aa12e95a7ab5e01c8f4b800964d2ee29895f02d5acdfbd12"
   },
   {
    "path": "i18n.js",
-   "bytes": 237390,
-   "sha256": "ab96b4fffb8c9f5a1921c20f72fb435079b0a4722ac7de1bd5ddd17466c2ec2f"
+   "bytes": 237792,
+   "sha256": "d121b00df535caebf22fbfd4f123436d0bdd77ec31b5d157f0a386efac1427c4"
   },
   {
    "path": "icon.png",
@@ -2247,8 +2252,8 @@
   },
   {
    "path": "index.html",
-   "bytes": 8451,
-   "sha256": "9576fb3dba118b2b014c692e96fb52aec65a053f1e69cff2ac9dc8b51797ea0f"
+   "bytes": 9154,
+   "sha256": "0304419905fb7bf551cf149766448a0ce0242fcd40f833b2ef55c7812ceb4598"
   },
   {
    "path": "manifest.json",
@@ -2277,8 +2282,8 @@
   },
   {
    "path": "style.css",
-   "bytes": 61736,
-   "sha256": "521cfab77ffd4b329fae461d563486827119040c44a452c0c90011662adc4cd9"
+   "bytes": 66580,
+   "sha256": "617b1c0bf5c5d614b81407bc0c8a8213d7e237734e7732d6d3d886fea274f2c2"
   }
  ]
 }

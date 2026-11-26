@@ -9,15 +9,15 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Atelier Lueur">
 <meta name="theme-color" content="#ffd9ea">
-<link rel="apple-touch-icon" href="icon.png?v=aace445cd51d">
-<link rel="manifest" href="manifest.json?v=aace445cd51d">
+<link rel="apple-touch-icon" href="icon.png?v=00bcfaa0260f">
+<link rel="manifest" href="manifest.json?v=00bcfaa0260f">
 <title>Atelier Lueur</title>
-<link rel="preload" href="assets/fonts/NotoSansArabic-Variable.ttf?v=aace445cd51d" as="font" type="font/ttf" crossorigin>
-<link rel="preload" href="assets/fonts/Nunito-Variable.ttf?v=aace445cd51d" as="font" type="font/ttf" crossorigin>
-<link rel="preload" href="assets/fonts/NotoSansSC-Subset.ttf?v=aace445cd51d" as="font" type="font/ttf" crossorigin>
-<link rel="preload" href="assets/fonts/GreatVibes-Regular.ttf?v=aace445cd51d" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="fonts.css?v=aace445cd51d">
-<link rel="stylesheet" href="style.css?v=aace445cd51d">
+<link rel="preload" href="assets/fonts/NotoSansArabic-Variable.ttf?v=00bcfaa0260f" as="font" type="font/ttf" crossorigin>
+<link rel="preload" href="assets/fonts/Nunito-Variable.ttf?v=00bcfaa0260f" as="font" type="font/ttf" crossorigin>
+<link rel="preload" href="assets/fonts/NotoSansSC-Subset.ttf?v=00bcfaa0260f" as="font" type="font/ttf" crossorigin>
+<link rel="preload" href="assets/fonts/GreatVibes-Regular.ttf?v=00bcfaa0260f" as="font" type="font/ttf" crossorigin>
+<link rel="stylesheet" href="fonts.css?v=00bcfaa0260f">
+<link rel="stylesheet" href="style.css?v=00bcfaa0260f">
 </head>
 <body>
 <div id="bg"></div>
@@ -36,9 +36,27 @@
   </div>
 </section>
 
+
+<!-- باش بەت (سالون) -->
+<section class="screen" id="home">
+  <div class="homeBg" aria-hidden="true"></div>
+  <div class="homeScrimT" aria-hidden="true"></div>
+  <div class="homeScrimB" aria-hidden="true"></div>
+  <div class="topHost" id="homeTopHost"></div>
+  <div class="homeProg" id="homeProg"></div>
+  <div class="homeSpacer">
+    <button type="button" class="eventChip" id="hEvent"></button>
+    <button type="button" class="giftChip" id="hGift" hidden></button>
+  </div>
+  <div class="homeDock">
+    <nav class="homeNav" id="homeNav"></nav>
+    <button type="button" class="playBtn" id="btnPlay" data-t="play"></button>
+  </div>
+</section>
+
 <!-- ئويۇن بېتى -->
 <section class="screen" id="game">
-  <div class="top" id="top"></div>
+  <div class="topHost" id="gameTopHost"><div class="top" id="top"></div></div>
   <div id="pageBoard" style="display:contents">
     <div class="ordersRow">
       <div id="orders"></div>
@@ -125,16 +143,16 @@
 })();
 </script>
 
-<script src="config.js?v=aace445cd51d"></script>
-<script src="i18n.js?v=aace445cd51d"></script>
-<script src="art.js?v=aace445cd51d"></script>
-<script src="save.js?v=aace445cd51d"></script>
-<script src="progression.js?v=aace445cd51d"></script>
-<script src="salon-data.js?v=aace445cd51d"></script>
-<script src="atelier.js?v=aace445cd51d"></script>
-<script src="missions.js?v=aace445cd51d"></script>
-<script src="content.js?v=aace445cd51d"></script>
-<script src="audio.js?v=aace445cd51d"></script>
-<script src="game.js?v=aace445cd51d"></script>
+<script src="config.js?v=00bcfaa0260f"></script>
+<script src="i18n.js?v=00bcfaa0260f"></script>
+<script src="art.js?v=00bcfaa0260f"></script>
+<script src="save.js?v=00bcfaa0260f"></script>
+<script src="progression.js?v=00bcfaa0260f"></script>
+<script src="salon-data.js?v=00bcfaa0260f"></script>
+<script src="atelier.js?v=00bcfaa0260f"></script>
+<script src="missions.js?v=00bcfaa0260f"></script>
+<script src="content.js?v=00bcfaa0260f"></script>
+<script src="audio.js?v=00bcfaa0260f"></script>
+<script src="game.js?v=00bcfaa0260f"></script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 window.CONFIG = {
   giftMode: false,
   playtestCoinGrant: 60000,  // 0 = off (store/release). The play-site build passes --playtest-coins to set this to 60000.
-  playtestGemGrant: 50,   // 0 = off. The same play-site flag sets this to 50 so spending can be tried.
+  playtestGemGrant: 50,   // 0 = off. Only the preview play-site build passes --playtest-gems to set this to 50. The main play root must stay 0.
 
   contentUrl: '',            // set to the production content endpoint once it exists; '' = bundled content only
   progressionProfile: 'v2',

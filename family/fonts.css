@@ -1,0 +1,5 @@
+/* Local copies of the fonts the game asked Google Fonts for. Licenses: assets/fonts/OFL-*.txt (SIL OFL 1.1). */
+@font-face{font-family:"Great Vibes";src:url("assets/fonts/GreatVibes-Regular.ttf") format("truetype");font-weight:400;font-style:normal;font-display:block}
+@font-face{font-family:"Noto Sans Arabic";src:url("assets/fonts/NotoSansArabic-Variable.ttf") format("truetype");font-weight:100 900;font-stretch:62.5% 100%;font-style:normal;font-display:block}
+@font-face{font-family:"Nunito";src:url("assets/fonts/Nunito-Variable.ttf") format("truetype");font-weight:200 1000;font-style:normal;font-display:block}
+@font-face{font-family:"Noto Sans SC";src:url("assets/fonts/NotoSansSC-Subset.ttf") format("truetype");font-weight:500 800;font-style:normal;font-display:block}

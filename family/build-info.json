@@ -1,0 +1,2319 @@
+{
+ "sourceCommit": "addda4ce49f65bb97340661dbf49ed49dd08bd81",
+ "sourceHasUncommittedChanges": false,
+ "cacheBust": "addda4ce49f6",
+ "fileCount": 462,
+ "totalBytes": 98892832,
+ "files": [
+  {
+   "path": "art.js",
+   "bytes": 42684,
+   "sha256": "98e41396f0da639b6df3c2766419c2b9f16ac93ec517a90af591de33157ffcb6"
+  },
+  {
+   "path": "assets/atelier-v1/generators/gen_atl_1.png",
+   "bytes": 42791,
+   "sha256": "d5b58d890388876dfe00f7a07531d344c98efd30a993d8a0831911e6b56024fb"
+  },
+  {
+   "path": "assets/atelier-v1/generators/gen_atl_1@2x.png",
+   "bytes": 147810,
+   "sha256": "103e0c5c51d528a172efaee9c09a4730c13d0a92ae39176328df4dc0c4a1dfc6"
+  },
+  {
+   "path": "assets/atelier-v1/generators/gen_atl_1@3x.png",
+   "bytes": 316579,
+   "sha256": "9a4aac0aab0b05c1c1ff0c71225bd79fda99a3013b2b1097ebfd984ea018007e"
+  },
+  {
+   "path": "assets/atelier-v1/generators/gen_atl_2.png",
+   "bytes": 60989,
+   "sha256": "f58d084027c311d842d48b1d820f32f98be5f3724c1f1359e571ce5b54743d76"
+  },
+  {
+   "path": "assets/atelier-v1/generators/gen_atl_2@2x.png",
+   "bytes": 210680,
+   "sha256": "5150429a7be495d1d38373a1158d7f75b01115460b6fa77676bebef163231995"
+  },
+  {
+   "path": "assets/atelier-v1/generators/gen_atl_2@3x.png",
+   "bytes": 447093,
+   "sha256": "c3cc1d5ccf55c564fa236d9167a9c89a25f5caeb5051f3c6aefaeda19f833a8e"
+  },
+  {
+   "path": "assets/atelier-v1/generators/gen_atl_3.png",
+   "bytes": 64234,
+   "sha256": "04320a723b6a987d0772d406684fd58082ea1611aff26fa83b67cdb471fa51d7"
+  },
+  {
+   "path": "assets/atelier-v1/generators/gen_atl_3@2x.png",
+   "bytes": 222660,
+   "sha256": "316b8fee3eb83d97a039330ee51ba3e03bdab0db8da6cb34fb007478c2f5d0ee"
+  },
+  {
+   "path": "assets/atelier-v1/generators/gen_atl_3@3x.png",
+   "bytes": 475546,
+   "sha256": "1cec88e3dc52d7985aeb02f591aaa48101d190758fab15063973020c78f60a9c"
+  },
+  {
+   "path": "assets/atelier-v1/items/bag_1.png",
+   "bytes": 47642,
+   "sha256": "226166f0f3b5c8065935e298dc7b1fc6b88958aa5fd8f2a0bd7da20d4b2162b7"
+  },
+  {
+   "path": "assets/atelier-v1/items/bag_1@2x.png",
+   "bytes": 176907,
+   "sha256": "d2a2dea6afa26e26f3b31929ec8ae4de35427a454c0a0928e682ff8c0b2b5925"
+  },
+  {
+   "path": "assets/atelier-v1/items/bag_1@3x.png",
+   "bytes": 394156,
+   "sha256": "984929e075642347a1fd1dce9a984caf08301a317c5b525a2fc6a69f5c3b4443"
+  },
+  {
+   "path": "assets/atelier-v1/items/bag_2.png",
+   "bytes": 56471,
+   "sha256": "05a197bd9b99613a707428fc50714398504da2b7f13d89518a72d2a5b64fbeef"
+  },
+  {
+   "path": "assets/atelier-v1/items/bag_2@2x.png",
+   "bytes": 197856,
+   "sha256": "6c049aba6a53dd10839f7595a48754dbe4e214221ded4a27712c691159b0d40e"
+  },
+  {
+   "path": "assets/atelier-v1/items/bag_2@3x.png",
+   "bytes": 423468,
+   "sha256": "cfe13c577edf8486c2e7d925d7740bd4a0e6fe274ca7ee2efd460d6b636d5901"
+  },
+  {
+   "path": "assets/atelier-v1/items/bag_3.png",
+   "bytes": 45035,
+   "sha256": "16d6ee4b334217066fa9db305df2f5bf4f289223010142d04b6c9a0695162d31"
+  },
+  {
+   "path": "assets/atelier-v1/items/bag_3@2x.png",
+   "bytes": 154393,
+   "sha256": "2194e1bc0580387385371650f6f6d7fbdccfd5cb75633c81f1e58f922c7e36a1"
+  },
+  {
+   "path": "assets/atelier-v1/items/bag_3@3x.png",
+   "bytes": 342275,
+   "sha256": "9be24464c7bd3696c7998cc7c5c96eedb01c94484b8b27556f500551a01a3662"
+  },
+  {
+   "path": "assets/atelier-v1/items/bag_4.png",
+   "bytes": 54102,
+   "sha256": "570dbef347bb0a9063a17ae266f2a8db0ca8980f21553c59f01805fb4b876376"
+  },
+  {
+   "path": "assets/atelier-v1/items/bag_4@2x.png",
+   "bytes": 185814,
+   "sha256": "042962c73aade6c633e0c2f746fdd99be630e72631c4fd47219180554e0ef248"
+  },
+  {
+   "path": "assets/atelier-v1/items/bag_4@3x.png",
+   "bytes": 398110,
+   "sha256": "0770e953225535210571b692b1c5b2005264f69314bdd5dcf68d2fb43e9ac528"
+  },
+  {
+   "path": "assets/atelier-v1/items/bag_5.png",
+   "bytes": 64388,
+   "sha256": "82ffba510b6418dd6c6cb9bfa7e14630fd9e06beeaea2b52350f4c59db8a0266"
+  },
+  {
+   "path": "assets/atelier-v1/items/bag_5@2x.png",
+   "bytes": 228299,
+   "sha256": "2fc9469bc63f42611d413f01b25313f870839a554eaad3d52d172c1379e3587e"
+  },
+  {
+   "path": "assets/atelier-v1/items/bag_5@3x.png",
+   "bytes": 492303,
+   "sha256": "355583a23cf6155e8991e80c009b649cc45923b122647c0a0bd7d0a700d98987"
+  },
+  {
+   "path": "assets/atelier-v1/items/bag_6.png",
+   "bytes": 66994,
+   "sha256": "b0f4385f68928555fb3fbee7e205ce90c476fd0f0c1c87a0f04877c2116d17c5"
+  },
+  {
+   "path": "assets/atelier-v1/items/bag_6@2x.png",
+   "bytes": 233818,
+   "sha256": "643852f04b309a2539bd116a47bd6049e75854ddd978ad671bf3d864254905fa"
+  },
+  {
+   "path": "assets/atelier-v1/items/bag_6@3x.png",
+   "bytes": 510110,
+   "sha256": "db5f6ed61033a6b46443fb4b48f0521706cad3003c062ce381a6b8becf36ab00"
+  },
+  {
+   "path": "assets/atelier-v1/items/brs_1.png",
+   "bytes": 21760,
+   "sha256": "3152df64adc1b5f47ae3551983212bf3d2b3b4e75ce33c43a13a9f8a4a6f5f7d"
+  },
+  {
+   "path": "assets/atelier-v1/items/brs_1@2x.png",
+   "bytes": 74125,
+   "sha256": "47c9c004ac63dfed2d9a33b5c9a603e91f19b80cd18395b1d6b619d6e20dd42e"
+  },
+  {
+   "path": "assets/atelier-v1/items/brs_1@3x.png",
+   "bytes": 159874,
+   "sha256": "156aa2d3e6f8fe0586cc59706662ee576a2dbabf64fb6b278efaddd031c721c1"
+  },
+  {
+   "path": "assets/atelier-v1/items/brs_2.png",
+   "bytes": 37945,
+   "sha256": "4b6eab654b9a40eb3767502a1f492c27726f3669db26717eb68d0c683bdbeedc"
+  },
+  {
+   "path": "assets/atelier-v1/items/brs_2@2x.png",
+   "bytes": 127923,
+   "sha256": "3d56eb2a5b47624dc590214db686f857658db78cda18f2c3f4a15ceb1f23a23a"
+  },
+  {
+   "path": "assets/atelier-v1/items/brs_2@3x.png",
+   "bytes": 273234,
+   "sha256": "7145a17323e74a134ba525a094f14296b0d7058aca09c7706305bcacbd345a0d"
+  },
+  {
+   "path": "assets/atelier-v1/items/brs_3.png",
+   "bytes": 47260,
+   "sha256": "7f26cf001d897b43a0c1cf4b1ae46805adc3675dfa4ff7f54d1695ddd3faa819"
+  },
+  {
+   "path": "assets/atelier-v1/items/brs_3@2x.png",
+   "bytes": 160394,
+   "sha256": "315c6f18c16c584a9088e0db93c0df2eb4bbfa09289425ec755458dc769fe0eb"
+  },
+  {
+   "path": "assets/atelier-v1/items/brs_3@3x.png",
+   "bytes": 350410,
+   "sha256": "9f296a1688144f3bb6bd9a4406688b1ed8b9f32aaf4df2c0fe8b82e7b9a58f8e"
+  },
+  {
+   "path": "assets/atelier-v1/items/brs_4.png",
+   "bytes": 35502,
+   "sha256": "a2354075c469bded131ee4d18196a8ec038d682b9442bb3214e566e1db121cf0"
+  },
+  {
+   "path": "assets/atelier-v1/items/brs_4@2x.png",
+   "bytes": 117348,
+   "sha256": "cef3c3a4c54056f853a8fda5c91ae13062cb4787508f1d1b5941860adb6b8ff1"
+  },
+  {
+   "path": "assets/atelier-v1/items/brs_4@3x.png",
+   "bytes": 249140,
+   "sha256": "16969d728567d0304b37ec45d3545fed8df832fbcd4f481633b445b1f1d03ada"
+  },
+  {
+   "path": "assets/atelier-v1/items/brs_5.png",
+   "bytes": 54875,
+   "sha256": "07d39825dd062a02fc64c833750ff9d5955e853e024e1b84d98be2481cd4dcd2"
+  },
+  {
+   "path": "assets/atelier-v1/items/brs_5@2x.png",
+   "bytes": 175117,
+   "sha256": "42feb430f629aeb2e2a32ab3714df04b252e874f3b3af419a04c89c720b6c05a"
+  },
+  {
+   "path": "assets/atelier-v1/items/brs_5@3x.png",
+   "bytes": 367741,
+   "sha256": "98abe741442d155638ec8a75e3956aca3e11c32e38a095a6df86d787d4c5627d"
+  },
+  {
+   "path": "assets/atelier-v1/items/brs_6.png",
+   "bytes": 71279,
+   "sha256": "43a0c61c9d10ae17101d02b17a501cdb4daf69f2d143562284affac0305a89d1"
+  },
+  {
+   "path": "assets/atelier-v1/items/brs_6@2x.png",
+   "bytes": 241415,
+   "sha256": "f4db371e39f6a1be7c8741e36126ea64005fa903d8821feda82e752224bebd6c"
+  },
+  {
+   "path": "assets/atelier-v1/items/brs_6@3x.png",
+   "bytes": 507965,
+   "sha256": "9ed18821516fd7bf2ef2aa6e6e8772d0e7217faf31188b1f0f43bc65fe0b5f29"
+  },
+  {
+   "path": "assets/atelier-v1/station/atelier-station.png",
+   "bytes": 80941,
+   "sha256": "d7df39654e3b42fb755b3baf1a1aac2ec331c0a2da591bbe27e9cc7d61f6bf00"
+  },
+  {
+   "path": "assets/atelier-v1/station/atelier-station@2x.png",
+   "bytes": 286929,
+   "sha256": "bc2376ee5a0bcd1d5d9c0f8c4bad2ada6de5f70b66be0d7a130f74c2d9956477"
+  },
+  {
+   "path": "assets/atelier-v1/station/atelier-station@3x.png",
+   "bytes": 616878,
+   "sha256": "4403749bd2c76283e00694b16559dc3f5f3128ebce741f04149a939079f8cf44"
+  },
+  {
+   "path": "assets/audio/README.txt",
+   "bytes": 279,
+   "sha256": "5ef3d36ff824a517ae8381fc92155263a37ccbfd682d25aec8f43e40552f049e"
+  },
+  {
+   "path": "assets/characters/customer-ada-blink.png",
+   "bytes": 60063,
+   "sha256": "c1f3a281d048cf5da243de34e170d41fd0f5350274add870c7526273fe1e400e"
+  },
+  {
+   "path": "assets/characters/customer-ada-blink@2x.png",
+   "bytes": 206122,
+   "sha256": "b87634eaa294575e5529b90db308c781ee953d082172a00f6d906115d8a36cb5"
+  },
+  {
+   "path": "assets/characters/customer-ada-blink@3x.png",
+   "bytes": 424797,
+   "sha256": "405dfc26857906a1e36200379634683a5ee48a453dad58ae6c2310424605fdc4"
+  },
+  {
+   "path": "assets/characters/customer-ada-happy.png",
+   "bytes": 59711,
+   "sha256": "15af6ac2ea6c099eff0ea80a3bd9a8ef63467caec30d2e6bc0b5a69cd33c73b1"
+  },
+  {
+   "path": "assets/characters/customer-ada-happy@2x.png",
+   "bytes": 205430,
+   "sha256": "96a87f3b7422f0d56ae43434cd6054ea9425fd6ca30b804597257a33f2cff6c6"
+  },
+  {
+   "path": "assets/characters/customer-ada-happy@3x.png",
+   "bytes": 424119,
+   "sha256": "14db66fc36fd48379f1e5809edb373cee27a66e214bbdf8a002c282ffad34568"
+  },
+  {
+   "path": "assets/characters/customer-ada-idle.png",
+   "bytes": 60158,
+   "sha256": "99b95b7fa541747bb48e69fc95edbf03dc7f77eaa57dd84914197452465e10f1"
+  },
+  {
+   "path": "assets/characters/customer-ada-idle@2x.png",
+   "bytes": 209443,
+   "sha256": "6aa00a5277004f198ec7f90decc6266cd703f88190e1e16af24be7e1b1b9d7f7"
+  },
+  {
+   "path": "assets/characters/customer-ada-idle@3x.png",
+   "bytes": 441507,
+   "sha256": "bacf9600d14d1aafb12492e08052a86dbce9b6df471767c3cee5fdc3d3cdcb04"
+  },
+  {
+   "path": "assets/characters/customer-amina-blink.png",
+   "bytes": 60980,
+   "sha256": "94d439abc3820e066bbc31eeba7941c349835d30b1aa7da58ab4c88fc1350bc7"
+  },
+  {
+   "path": "assets/characters/customer-amina-blink@2x.png",
+   "bytes": 226994,
+   "sha256": "2ff97314f1822f76ee844caea4fb6a29f347dd5cd74e2d4370cd5dade53cf2d1"
+  },
+  {
+   "path": "assets/characters/customer-amina-blink@3x.png",
+   "bytes": 496251,
+   "sha256": "33d9ec9fced3da8604e8fc277a881df6504dfab7f0ff8f7ad901bb8792ee3ab5"
+  },
+  {
+   "path": "assets/characters/customer-amina-happy.png",
+   "bytes": 61385,
+   "sha256": "02d598c58f7d0bab78de18e78fa6b9ee5008bbb3ced7e95f61d4915030e8fb61"
+  },
+  {
+   "path": "assets/characters/customer-amina-happy@2x.png",
+   "bytes": 228224,
+   "sha256": "961f388e94289e6e19429f70637ae442db8863d134e68351bd2f262bf5b1e0c8"
+  },
+  {
+   "path": "assets/characters/customer-amina-happy@3x.png",
+   "bytes": 496457,
+   "sha256": "84bf3bf40c0098b18e8f49bcaab60b5bffb3ba1db2e7398f6f2a99f13c8d0104"
+  },
+  {
+   "path": "assets/characters/customer-amina-idle.png",
+   "bytes": 61283,
+   "sha256": "fe5862c2bcfb5ba2b087b5574194cc5853022c57847ee42767314d5b69181b15"
+  },
+  {
+   "path": "assets/characters/customer-amina-idle@2x.png",
+   "bytes": 229125,
+   "sha256": "cacda7ecde7d40c7e058c83a3d235f1fe3044094f1d3b5242cd484dae9674321"
+  },
+  {
+   "path": "assets/characters/customer-amina-idle@3x.png",
+   "bytes": 499835,
+   "sha256": "9559b04c490cb6e01d991236ce30cc5a5952563ac0e02dbcc6821862c3f9415d"
+  },
+  {
+   "path": "assets/characters/customer-celine-blink.png",
+   "bytes": 62954,
+   "sha256": "011c546e06320d171dabea1dd1808e05a6532a995fff1769be7975175d2d648f"
+  },
+  {
+   "path": "assets/characters/customer-celine-blink@2x.png",
+   "bytes": 222139,
+   "sha256": "94a30a5f6d2fedefb0ca101a6349c6e7d021da98a2456f787a681ab0f9880466"
+  },
+  {
+   "path": "assets/characters/customer-celine-blink@3x.png",
+   "bytes": 470969,
+   "sha256": "eaf6dcbc6f35250f7bfd200ae0798608e4c2d5b4dc1a4e1d1e169a375eed3048"
+  },
+  {
+   "path": "assets/characters/customer-celine-happy.png",
+   "bytes": 63507,
+   "sha256": "25dcc1cb7348c01f31b8ee3cadb6abf3b95ff36bf6c52d7f674aed02ea59ba8f"
+  },
+  {
+   "path": "assets/characters/customer-celine-happy@2x.png",
+   "bytes": 223824,
+   "sha256": "07729c13e44471c77aca4b76ed11ed8e2e94a38c0a938117a5c738239ac3bb0f"
+  },
+  {
+   "path": "assets/characters/customer-celine-happy@3x.png",
+   "bytes": 474168,
+   "sha256": "69b8ce2d20362c4360563065cec6ca53628362f1b7d6a20df72ddcdb0e43416d"
+  },
+  {
+   "path": "assets/characters/customer-celine-idle.png",
+   "bytes": 63609,
+   "sha256": "b9bb85f6ed4854ea543bd3965da055a6d80cf216c554962dd34960caa5819520"
+  },
+  {
+   "path": "assets/characters/customer-celine-idle@2x.png",
+   "bytes": 224829,
+   "sha256": "405c44b232c132c7fb197347f36090471fca71af31c61b3191e9a9a6693d6825"
+  },
+  {
+   "path": "assets/characters/customer-celine-idle@3x.png",
+   "bytes": 477800,
+   "sha256": "1a18e20579401bbcfb55c85ab3e24921a69fb21cd3f592be7b421e4899200a4b"
+  },
+  {
+   "path": "assets/characters/customer-elara-blink.png",
+   "bytes": 58533,
+   "sha256": "aeb30c4afc4e31934dda8661ca99e222635835c9542de726664c257b520dad00"
+  },
+  {
+   "path": "assets/characters/customer-elara-blink@2x.png",
+   "bytes": 198967,
+   "sha256": "967b0d33c53c992bd5bc318996c0af1426aa879d2e2c4c957ac40a781de9a04c"
+  },
+  {
+   "path": "assets/characters/customer-elara-blink@3x.png",
+   "bytes": 414726,
+   "sha256": "628262ed762d62ebf065dbfc2c6914d9df690b7fabe8cd283ebe21fae86e0c93"
+  },
+  {
+   "path": "assets/characters/customer-elara-happy.png",
+   "bytes": 66191,
+   "sha256": "48208e39f8feb2bc926dac57f03649b99e8af9bbce53da7eb9f847e1fe622387"
+  },
+  {
+   "path": "assets/characters/customer-elara-happy@2x.png",
+   "bytes": 223728,
+   "sha256": "07190d3315c6d26803fe695c759fa3e1f6c6feee7c469a31b34d77783fd49bdf"
+  },
+  {
+   "path": "assets/characters/customer-elara-happy@3x.png",
+   "bytes": 463602,
+   "sha256": "a0d26ac092f76d0c75f510db9d03bf6a96b4771b9e9b4dcb6e4d19594831a149"
+  },
+  {
+   "path": "assets/characters/customer-elara-idle.png",
+   "bytes": 58754,
+   "sha256": "2b3424cc6c1da24aad09a06451cc090de9168986b9612442b446082e749592e1"
+  },
+  {
+   "path": "assets/characters/customer-elara-idle@2x.png",
+   "bytes": 199992,
+   "sha256": "b09bb55f1b3c34e050baa7dea00d619027f4f0cb4640e0484627e507288733ec"
+  },
+  {
+   "path": "assets/characters/customer-elara-idle@3x.png",
+   "bytes": 416769,
+   "sha256": "9a73e7b993d8d7fbbe37eed7e8548c7a8e0576f00e2c7d6b94183b29deeffa78"
+  },
+  {
+   "path": "assets/characters/customer-gulnar-blink.png",
+   "bytes": 64845,
+   "sha256": "7d5a3d337adc35b5fc845def19a9ff3095ed2efef4d1163d54038b819942da86"
+  },
+  {
+   "path": "assets/characters/customer-gulnar-blink@2x.png",
+   "bytes": 212828,
+   "sha256": "a13114ad12feb030e9f453ef3f240370ea41cf55df36ed41806e0660e67cb109"
+  },
+  {
+   "path": "assets/characters/customer-gulnar-blink@3x.png",
+   "bytes": 418296,
+   "sha256": "85fc68d957ea817f405905a6db1ad33c948157545150df74dd15c6bcbbb90638"
+  },
+  {
+   "path": "assets/characters/customer-gulnar-happy.png",
+   "bytes": 66553,
+   "sha256": "ef9349320d7ae746c51a218f4d39a840e1c1b1f5e15c6a5caad7aef551ca6997"
+  },
+  {
+   "path": "assets/characters/customer-gulnar-happy@2x.png",
+   "bytes": 217965,
+   "sha256": "976e528a4b5c97887d3d23152680daf54f3dbaceefaa60b01206b03bdc309d3b"
+  },
+  {
+   "path": "assets/characters/customer-gulnar-happy@3x.png",
+   "bytes": 429518,
+   "sha256": "ed3e677764000d26b8d46de3e9b8e4531cee01e4260cb39738a6853b6842ddc3"
+  },
+  {
+   "path": "assets/characters/customer-gulnar-idle.png",
+   "bytes": 66320,
+   "sha256": "c1b11206675040de7f3f0e76046346ed8185c3780271fb8c32cd2af6c5801fe9"
+  },
+  {
+   "path": "assets/characters/customer-gulnar-idle@2x.png",
+   "bytes": 218656,
+   "sha256": "a583df41d28f887c370af00977f62c9b1c8222564fa6ef85fe11b57f999adb74"
+  },
+  {
+   "path": "assets/characters/customer-gulnar-idle@3x.png",
+   "bytes": 431217,
+   "sha256": "cc02a0d39075960fac4ff61ed883ec79ea9579f30fd560b6827468cf02ca82ee"
+  },
+  {
+   "path": "assets/characters/customer-ingrid-blink.png",
+   "bytes": 54019,
+   "sha256": "2c248de5af803fd9c3b23700378fd01ef73b7871f480292cefe0fef5ade54878"
+  },
+  {
+   "path": "assets/characters/customer-ingrid-blink@2x.png",
+   "bytes": 182187,
+   "sha256": "1f67c32f8428f2d50f9e915ebf44ceddcf822d771065cc0eff0ae6a2ae28e93a"
+  },
+  {
+   "path": "assets/characters/customer-ingrid-blink@3x.png",
+   "bytes": 371378,
+   "sha256": "8eef52cc0f022c61aec4259babbacbe4b211e29451c7144ec4f36cd39b21237c"
+  },
+  {
+   "path": "assets/characters/customer-ingrid-happy.png",
+   "bytes": 56555,
+   "sha256": "9f99d0145055516a9be071b7ddbf3a6e6a4ca6af54f16872e52f834b55c1ae48"
+  },
+  {
+   "path": "assets/characters/customer-ingrid-happy@2x.png",
+   "bytes": 189350,
+   "sha256": "5461a5bf3c0854fb4c6bb5f9e448a0f3cf687c1f93eecf185db86d5ffc4d45b4"
+  },
+  {
+   "path": "assets/characters/customer-ingrid-happy@3x.png",
+   "bytes": 382476,
+   "sha256": "a8e2f11cdaf498f8dffef107f6739c631ba8362f89fce7f0cf2fbb1203088ce3"
+  },
+  {
+   "path": "assets/characters/customer-ingrid-idle.png",
+   "bytes": 54314,
+   "sha256": "9ed5234f15589615f99e01d2c2a8f21ebce483623eea6a507a3431f5e9dc5bef"
+  },
+  {
+   "path": "assets/characters/customer-ingrid-idle@2x.png",
+   "bytes": 185567,
+   "sha256": "40e6d2940a312dfb75c74e6f68c405677684ada422d1d2c419199d6549d2bed3"
+  },
+  {
+   "path": "assets/characters/customer-ingrid-idle@3x.png",
+   "bytes": 381731,
+   "sha256": "ea21f8d3a512deea4e312bb5ceec427dd2fd5bf436ca1f01234c634dc1adf489"
+  },
+  {
+   "path": "assets/characters/customer-jiwoo-blink.png",
+   "bytes": 63304,
+   "sha256": "4b7be90e1150f0f9bb64beb93e66cd916d5573adbea803b0af2469406168ba22"
+  },
+  {
+   "path": "assets/characters/customer-jiwoo-blink@2x.png",
+   "bytes": 217732,
+   "sha256": "5e9fccb3fd6c8bf8e77588ed771ea31c3f1305a21c75487642b6d732aa9a0711"
+  },
+  {
+   "path": "assets/characters/customer-jiwoo-blink@3x.png",
+   "bytes": 452823,
+   "sha256": "cad6ab0bd1d8786bc188e34efb4ba723b3779617a99bbc4a7d903f643a5b4e25"
+  },
+  {
+   "path": "assets/characters/customer-jiwoo-happy.png",
+   "bytes": 63980,
+   "sha256": "6bc5292612e036c1d8fa801b5923543601f03d91d82e465acbce143e2b43e1ee"
+  },
+  {
+   "path": "assets/characters/customer-jiwoo-happy@2x.png",
+   "bytes": 222571,
+   "sha256": "084ca918e09b3776601361395eb2d62dab4490a457dd541e3de16fc4ffc53918"
+  },
+  {
+   "path": "assets/characters/customer-jiwoo-happy@3x.png",
+   "bytes": 463954,
+   "sha256": "21b404a51b7c3d252825baf87af0f8586057a93cf8e5185f23fa51543e74a935"
+  },
+  {
+   "path": "assets/characters/customer-jiwoo-idle.png",
+   "bytes": 65219,
+   "sha256": "a870db2ae6d52b8aa6fcce68db6c08b4ac944511eacfb9e16781b01d9ba062fd"
+  },
+  {
+   "path": "assets/characters/customer-jiwoo-idle@2x.png",
+   "bytes": 230911,
+   "sha256": "6ec363eb0f5ee1fe32268051c3a4adc2cf6d453d80562501416d63edfa2128cb"
+  },
+  {
+   "path": "assets/characters/customer-jiwoo-idle@3x.png",
+   "bytes": 487312,
+   "sha256": "f7ee18da95cfbc4cf6c6cb4b2cdbc5db52171196b968304dfab94f4ecd797bea"
+  },
+  {
+   "path": "assets/characters/customer-marisol-blink.png",
+   "bytes": 61309,
+   "sha256": "f2b33726e0f3f9d712e58e2a979f0daedd4f971d92a9985ea91f28509ad6baa6"
+  },
+  {
+   "path": "assets/characters/customer-marisol-blink@2x.png",
+   "bytes": 211521,
+   "sha256": "bb20cccb831486d756849b04273f6931569718b450785edf54ea618dbe6ddc9b"
+  },
+  {
+   "path": "assets/characters/customer-marisol-blink@3x.png",
+   "bytes": 443126,
+   "sha256": "e322b38b92e3306447bc8dc90dfaeba1c3db88b5a3041fb608abf2a0ccdd31c5"
+  },
+  {
+   "path": "assets/characters/customer-marisol-happy.png",
+   "bytes": 64158,
+   "sha256": "57b66f6f1394c324d09340176fc7a89b379fe6abbc47ae32401a6be4a0e7bf02"
+  },
+  {
+   "path": "assets/characters/customer-marisol-happy@2x.png",
+   "bytes": 222057,
+   "sha256": "6aeffed626100b8a801c68fe8b4d16f88302ef97976337d5f0cd8aa961a91550"
+  },
+  {
+   "path": "assets/characters/customer-marisol-happy@3x.png",
+   "bytes": 469021,
+   "sha256": "dc6d107d81604659a4038a28d124bd41327cec4de33d67f528c152a6077d861d"
+  },
+  {
+   "path": "assets/characters/customer-marisol-idle.png",
+   "bytes": 62597,
+   "sha256": "4f9db3acc8a4f37526335c58c259be868578373f5c00caead8a7ed39b6bd331a"
+  },
+  {
+   "path": "assets/characters/customer-marisol-idle@2x.png",
+   "bytes": 221932,
+   "sha256": "a7f02e999d3d2b0ad628a9569f66b428a99fe3b994b2791ed9747425014e832a"
+  },
+  {
+   "path": "assets/characters/customer-marisol-idle@3x.png",
+   "bytes": 477650,
+   "sha256": "4515ae59aa0bb7b72c32c049b47dcad42982e3cd04b38af7144b138a4d02494c"
+  },
+  {
+   "path": "assets/characters/customer-mira-blink.png",
+   "bytes": 59659,
+   "sha256": "1fd4e3b14dbdc0225721f77aad8e998515b2f93d5559764a359c0eb35d83675d"
+  },
+  {
+   "path": "assets/characters/customer-mira-blink@2x.png",
+   "bytes": 203343,
+   "sha256": "6e5275116a0abea7819899887af7200839b112bc9d7e2bc36d157e6e5e137a54"
+  },
+  {
+   "path": "assets/characters/customer-mira-blink@3x.png",
+   "bytes": 424129,
+   "sha256": "d854c2071b0c26935ee48834df8662b70b141f61430ecc09b0d28775e5b465b6"
+  },
+  {
+   "path": "assets/characters/customer-mira-happy.png",
+   "bytes": 65503,
+   "sha256": "c340a9f37cdb6176d2cd54fe511fe30e3703220643e3f14e5fc37523e87e5043"
+  },
+  {
+   "path": "assets/characters/customer-mira-happy@2x.png",
+   "bytes": 223893,
+   "sha256": "093acebe45a47a8e562bddfea476b4cc3945333233737d265cff697346683bb4"
+  },
+  {
+   "path": "assets/characters/customer-mira-happy@3x.png",
+   "bytes": 465491,
+   "sha256": "6c14b96766600e8b9526d8cdcc27fe26e6104daefdf7b578500a088944c65a5c"
+  },
+  {
+   "path": "assets/characters/customer-mira-idle.png",
+   "bytes": 59525,
+   "sha256": "d5c09081fdd50f3ab17b5c13ae49600d8edbb7981fef8be79a216aada16e9c0c"
+  },
+  {
+   "path": "assets/characters/customer-mira-idle@2x.png",
+   "bytes": 204228,
+   "sha256": "b2fb184a99fda8fa29488bccf014bb56f0327d41ccbad8f28838b7b26162c7a1"
+  },
+  {
+   "path": "assets/characters/customer-mira-idle@3x.png",
+   "bytes": 427417,
+   "sha256": "ed9847d91d08646bc1cfb89b68f422be64868201c33f68944ce99ff2902cfe78"
+  },
+  {
+   "path": "assets/characters/customer-nila-blink.png",
+   "bytes": 54901,
+   "sha256": "22bb4b465c390373ee2a2471790ba9a8dbf1c76f4b89096686048519e9b0196a"
+  },
+  {
+   "path": "assets/characters/customer-nila-blink@2x.png",
+   "bytes": 195558,
+   "sha256": "fe62a6965fb0e085cc9e1bd18bbffeddb5618bbdd6435d4b6415fc057163064b"
+  },
+  {
+   "path": "assets/characters/customer-nila-blink@3x.png",
+   "bytes": 419268,
+   "sha256": "9da1febd57be3eff8f9293cfa3338ba16be60e44ecfd2c7846a5c10927d72974"
+  },
+  {
+   "path": "assets/characters/customer-nila-happy.png",
+   "bytes": 55570,
+   "sha256": "6c63b4c999e7edbcf8de77d26c8fc586f62fc87ce9bdd1ef7b3448a888fc1826"
+  },
+  {
+   "path": "assets/characters/customer-nila-happy@2x.png",
+   "bytes": 197216,
+   "sha256": "04df55143f50f58d3225e84a582b3c08fd4c5897b665867ff146bb758fc42e51"
+  },
+  {
+   "path": "assets/characters/customer-nila-happy@3x.png",
+   "bytes": 422095,
+   "sha256": "b84619180f231ec76c287a27a6de3778170db6a711c95041e7e67ac6b13641c9"
+  },
+  {
+   "path": "assets/characters/customer-nila-idle.png",
+   "bytes": 55323,
+   "sha256": "e61bb03cf855b02c0a03ae1538c3d91a3450af905f1c84fb7988d203e9578575"
+  },
+  {
+   "path": "assets/characters/customer-nila-idle@2x.png",
+   "bytes": 196949,
+   "sha256": "c965ee7bebbcd53f4e100fdabd9c03b64941a642053a3e645ed5e2e196a32a4c"
+  },
+  {
+   "path": "assets/characters/customer-nila-idle@3x.png",
+   "bytes": 423431,
+   "sha256": "324d8b8cba1ce3eaed78877ba7ad27b8d12993373a3ef000864199ec00e4ac48"
+  },
+  {
+   "path": "assets/characters/customer-sora-blink.png",
+   "bytes": 64089,
+   "sha256": "84dedbbbb358756359dd27f076e98e3ee65011621d90d3c676dc42b4c9faf636"
+  },
+  {
+   "path": "assets/characters/customer-sora-blink@2x.png",
+   "bytes": 216799,
+   "sha256": "79cc6ee9fb5589de53e9c871676677bf0977dc9c3d0af377ef39812f90ca1133"
+  },
+  {
+   "path": "assets/characters/customer-sora-blink@3x.png",
+   "bytes": 450136,
+   "sha256": "65f5761e99a804a07686039b4d9eaa8296803b5616775a9c34cb4e1f4f854754"
+  },
+  {
+   "path": "assets/characters/customer-sora-happy.png",
+   "bytes": 71545,
+   "sha256": "cae1998133f2c9201ce362e6dcaf2951573d988622752618b002ff306e65f01e"
+  },
+  {
+   "path": "assets/characters/customer-sora-happy@2x.png",
+   "bytes": 240494,
+   "sha256": "7a6423c81ee8f61c9816206c7e3f893aaa5784c9da16e2e30a087e498108412c"
+  },
+  {
+   "path": "assets/characters/customer-sora-happy@3x.png",
+   "bytes": 497829,
+   "sha256": "bcad83b60b47937432f6e1ddfb9a265320a005af1cf16f0a485cf5f14c812f23"
+  },
+  {
+   "path": "assets/characters/customer-sora-idle.png",
+   "bytes": 64532,
+   "sha256": "62bd1108a9e4ed0d8082b009999f9389216873cb7c52f02b2a89358ebd71d712"
+  },
+  {
+   "path": "assets/characters/customer-sora-idle@2x.png",
+   "bytes": 218255,
+   "sha256": "a55bdf3a870ad36fef78d491ce06d3153c5218579d08c0db059cb86bf0328f1e"
+  },
+  {
+   "path": "assets/characters/customer-sora-idle@3x.png",
+   "bytes": 452471,
+   "sha256": "66bfb4bf49647eff242b9ea24bcb3b97a73f3629f8d963b0c27fe12cb836a4cf"
+  },
+  {
+   "path": "assets/characters/customer-tamara-blink.png",
+   "bytes": 68618,
+   "sha256": "0ce335f3943a66887cd90526f503e7f43eeaed84ed88840e44b308f9b3e527db"
+  },
+  {
+   "path": "assets/characters/customer-tamara-blink@2x.png",
+   "bytes": 237338,
+   "sha256": "53e611a0ff6b82024b028f205faa7f5d05adad7fcb2eb8c0f6e9c77a5fbe36b0"
+  },
+  {
+   "path": "assets/characters/customer-tamara-blink@3x.png",
+   "bytes": 489451,
+   "sha256": "72552a3a1ac2f41736b7683280bed96fa24b983fbc51b32ab4e24cdcf3881bd5"
+  },
+  {
+   "path": "assets/characters/customer-tamara-happy.png",
+   "bytes": 69483,
+   "sha256": "94a0c0ab5e5111ef9ed48d7f621ac7b08166db79dae2745c52043cc1322cd5e2"
+  },
+  {
+   "path": "assets/characters/customer-tamara-happy@2x.png",
+   "bytes": 239175,
+   "sha256": "90ad01dc00df7ccb8924ce20049cf4dabc6b774381751361b18ef794d69ca05a"
+  },
+  {
+   "path": "assets/characters/customer-tamara-happy@3x.png",
+   "bytes": 489593,
+   "sha256": "2eb6ac7b59e23011f329ec72c5d4b28806f98a6729ac1362224daa918a942203"
+  },
+  {
+   "path": "assets/characters/customer-tamara-idle.png",
+   "bytes": 68391,
+   "sha256": "33bb10fb96ee62cc785369c6035be58138e174dc68fc36535b6a64973c33554f"
+  },
+  {
+   "path": "assets/characters/customer-tamara-idle@2x.png",
+   "bytes": 239672,
+   "sha256": "16a24f5caf9b8705afdce3dd30265f997fd75cbb3552f870aaae8b5536f6e849"
+  },
+  {
+   "path": "assets/characters/customer-tamara-idle@3x.png",
+   "bytes": 500120,
+   "sha256": "9655e8251f584dcbd1ef8d970c1f9b3057503edececc81d9ce3d9bdee9d7386d"
+  },
+  {
+   "path": "assets/fonts/GreatVibes-Regular.ttf",
+   "bytes": 457588,
+   "sha256": "8d509802186f1b51572531ecf313e8098f9a5bfdfaca93f0c9b34467f9982d15"
+  },
+  {
+   "path": "assets/fonts/NotoSansArabic-Variable.ttf",
+   "bytes": 844676,
+   "sha256": "63111b5b2e074dd48cc67692e0a2726d86ee94c1c37fe8598257b7b4e87e869e"
+  },
+  {
+   "path": "assets/fonts/NotoSansSC-Subset.ttf",
+   "bytes": 337352,
+   "sha256": "57128f594d961222c35e4080b8017ab9d6f681d3dc601f1241a17ddcfb17724a"
+  },
+  {
+   "path": "assets/fonts/Nunito-Variable.ttf",
+   "bytes": 276932,
+   "sha256": "bb55a5ca5c2042335b3991af27c4d0705d0ef41cac6164ac737fd8f2a1e85207"
+  },
+  {
+   "path": "assets/fonts/OFL-GreatVibes.txt",
+   "bytes": 4399,
+   "sha256": "61093a21f5e63dedf54222b3c09997e54c0fe43e3851d21386e02ddcbc246d49"
+  },
+  {
+   "path": "assets/fonts/OFL-NotoSansArabic.txt",
+   "bytes": 4382,
+   "sha256": "07fc70bfeb985cc1a87a8587d0a0c80bab11c86c9dc3fd95b6f0cb332f983e96"
+  },
+  {
+   "path": "assets/fonts/OFL-NotoSansSC.txt",
+   "bytes": 4388,
+   "sha256": "1c05c68c34f9708415aada51f17e1b0092d2cea709bf4a94cd38114f9e73d7d9"
+  },
+  {
+   "path": "assets/fonts/OFL-Nunito.txt",
+   "bytes": 4385,
+   "sha256": "580df76c95a1ec5ab878ceb25bb3d85c6a076804e9c970c8c6972aea775fdf65"
+  },
+  {
+   "path": "assets/makeup/mkcabinet.png",
+   "bytes": 41223,
+   "sha256": "13228ea1cb505f700e5808de6118fa6a2b0fe1271a28b63bf6a0e2e47719d4fc"
+  },
+  {
+   "path": "assets/makeup/mkcabinet@2x.png",
+   "bytes": 137830,
+   "sha256": "77a51407a0e1efb25dbc2c3b1960f77fddd9325f22ae87892554da357724dfd1"
+  },
+  {
+   "path": "assets/makeup/mkcabinet@3x.png",
+   "bytes": 293164,
+   "sha256": "5495382139bbb0dc1a5c9bbfb2161199b7fa58a60b93e742036730c5e2132932"
+  },
+  {
+   "path": "assets/makeup/mkchair.png",
+   "bytes": 58917,
+   "sha256": "ce8ab8c86bc7ed56e57d02ab3295697b8778aba0e36a8a88cd08e339f71840b0"
+  },
+  {
+   "path": "assets/makeup/mkchair@2x.png",
+   "bytes": 210098,
+   "sha256": "600030c081e2e6d1ffc1295c3df8bc796ed3d2574cedde9808210c8c5be3819d"
+  },
+  {
+   "path": "assets/makeup/mkchair@3x.png",
+   "bytes": 466019,
+   "sha256": "6007f17983cb5e1c8d8d184963279b1c459ec2ca445f1edc65c7c5fa162b540f"
+  },
+  {
+   "path": "assets/makeup/mkgallery.png",
+   "bytes": 64784,
+   "sha256": "d6b3f10e4b73ef0ac705c6c2c282e98eac3454b5049358bb980514867e8cb11f"
+  },
+  {
+   "path": "assets/makeup/mkgallery@2x.png",
+   "bytes": 232463,
+   "sha256": "8906eb2865a395f3521ad78f5409b81608b2ee92accad1ae7d8b8bc7218456ed"
+  },
+  {
+   "path": "assets/makeup/mkgallery@3x.png",
+   "bytes": 510840,
+   "sha256": "792857a83dfab7a2cfb138c046dc47581fb1b40dae03175369c36d6b824618ea"
+  },
+  {
+   "path": "assets/makeup/mkmirror.png",
+   "bytes": 66870,
+   "sha256": "b0ff3edc010bf0cae0ae45490dcebb07f1cd42baaf9c980826a9dda3de9c6471"
+  },
+  {
+   "path": "assets/makeup/mkmirror@2x.png",
+   "bytes": 246604,
+   "sha256": "ca2860bbda6f6081a3af393a9c318cc7ce35763e04816ecb3afe94fa37ac95e9"
+  },
+  {
+   "path": "assets/makeup/mkmirror@3x.png",
+   "bytes": 556074,
+   "sha256": "4a1e8d4d782cd69869bbe642e81987ec16bf1a14352fcb48c77a2662db5521e8"
+  },
+  {
+   "path": "assets/makeup/mkplinth.png",
+   "bytes": 33484,
+   "sha256": "22544ceca5daa32f98ff5abf179ffa78063e5ff4bfa5437c7c88001885b57cf6"
+  },
+  {
+   "path": "assets/makeup/mkplinth@2x.png",
+   "bytes": 109330,
+   "sha256": "4cb2474565dd1328ed60e1c2492be3d1a3c44d4d805c6e1f21e73be65afd6a57"
+  },
+  {
+   "path": "assets/makeup/mkplinth@3x.png",
+   "bytes": 228161,
+   "sha256": "397a2a8adf494fa843786ec43198a82079dfe5f3ba4b8a4065f9342267a48c31"
+  },
+  {
+   "path": "assets/makeup/mkring.png",
+   "bytes": 13536,
+   "sha256": "12e3081907b65b2ae13a265e200afd840b3011301b1a675c60b1c0c1e6922bad"
+  },
+  {
+   "path": "assets/makeup/mkring@2x.png",
+   "bytes": 37956,
+   "sha256": "379a66c56123b33cf1d28c358bd555ba1052fd27392f92c6966dc982f92b5544"
+  },
+  {
+   "path": "assets/makeup/mkring@3x.png",
+   "bytes": 72148,
+   "sha256": "2456e94cd34febc2bae4b4cf96fc012b1e9c813614c8233c408d565e34a8151c"
+  },
+  {
+   "path": "assets/makeup/mkrug.png",
+   "bytes": 29135,
+   "sha256": "3b51fffc914c9666aeba3080a36df838bdeebac11bf7a82f54bb6492ed088faf"
+  },
+  {
+   "path": "assets/makeup/mkrug@2x.png",
+   "bytes": 105149,
+   "sha256": "ee04d1762f3d0c3dd9957a5b6f870f07b6d63eea6594342f8da0cf8fd07149fd"
+  },
+  {
+   "path": "assets/makeup/mkrug@3x.png",
+   "bytes": 245033,
+   "sha256": "4e4755633b717d7747c5856aef0d26b4416ff53ae176f5e3f5f4be3fbcc888d9"
+  },
+  {
+   "path": "assets/makeup/mksheers.png",
+   "bytes": 51981,
+   "sha256": "fb0af04a397ce5b8bbb7083f4a252188871d33a5660af3b85fb7db2a93808baf"
+  },
+  {
+   "path": "assets/makeup/mksheers@2x.png",
+   "bytes": 172233,
+   "sha256": "4de9bcb1763ada49821efd14a408688ced7eba86c9cdac5425b8e26b6cbb3bc5"
+  },
+  {
+   "path": "assets/makeup/mksheers@3x.png",
+   "bytes": 355481,
+   "sha256": "c69717cdf5f35b703212fc0b9823fb87748e0d3aedd700803c131de84f87c818"
+  },
+  {
+   "path": "assets/makeup/mkshelf.png",
+   "bytes": 51911,
+   "sha256": "16cdf0e04577389aa2cd20d3b216087bbe2f8a9d648feda0b96bf6c7f85b529d"
+  },
+  {
+   "path": "assets/makeup/mkshelf@2x.png",
+   "bytes": 163200,
+   "sha256": "f915a23c29dcb8fc3a286636731ca69a09688f987dd65e266ce4c1fd249a94e9"
+  },
+  {
+   "path": "assets/makeup/mkshelf@3x.png",
+   "bytes": 333102,
+   "sha256": "66776abf986e76de98b521b80f3e679589da4d4d8c0dbbc7ba6631f67c94f61a"
+  },
+  {
+   "path": "assets/makeup/mkvanity.png",
+   "bytes": 50117,
+   "sha256": "a89749cbe5701a625d9787e93865775404b3f32d382fb4df9605b3560bae1e0f"
+  },
+  {
+   "path": "assets/makeup/mkvanity@2x.png",
+   "bytes": 163255,
+   "sha256": "eb0b1ca2427de6ce0261e92e4eaa9273e19353d80d4883fbb24e8f6c53b9c33d"
+  },
+  {
+   "path": "assets/makeup/mkvanity@3x.png",
+   "bytes": 345425,
+   "sha256": "42e1397656c1592709963aa84a07e4c0598a926d4f6f755b4cc3ec0d8148f371"
+  },
+  {
+   "path": "assets/makeup/salon-makeup-base.png",
+   "bytes": 1755489,
+   "sha256": "3d23cf2a2ebcc5d2b53af7c7133eba36a5079f6ff6439003cdb9efd077de70e3"
+  },
+  {
+   "path": "assets/reception/rcpcase.png",
+   "bytes": 31946,
+   "sha256": "d311900aa4748fca0425685f2705a22727468ff26fb7285a014b9daf18553201"
+  },
+  {
+   "path": "assets/reception/rcpcase@2x.png",
+   "bytes": 102623,
+   "sha256": "a8c6bb78b770c1ef5b4e9a5cd75bf05cafa9920888583ba21afbd4b1216615d0"
+  },
+  {
+   "path": "assets/reception/rcpcase@3x.png",
+   "bytes": 211251,
+   "sha256": "4a38ebd2d806b08731188bb1aadc147000567d39b07551dce462b518d08c71f1"
+  },
+  {
+   "path": "assets/reception/rcpdesk.png",
+   "bytes": 57902,
+   "sha256": "6f32c67b382926321865f4d5a8fc92b0a56aa0401776b0381e1ad49d5164a441"
+  },
+  {
+   "path": "assets/reception/rcpdesk@2x.png",
+   "bytes": 198290,
+   "sha256": "c57505fdca1bcbeea793d60b3ede2d25d3bdc996ab9f8a5394fdcf063c388e8e"
+  },
+  {
+   "path": "assets/reception/rcpdesk@3x.png",
+   "bytes": 428914,
+   "sha256": "414de75d850ee9d05bf785d82210f9bbcf04f4ec0d2d78a7116368516cf9386e"
+  },
+  {
+   "path": "assets/reception/rcplights.png",
+   "bytes": 30405,
+   "sha256": "dc484461be00e7132ed078d0e1628931715f8dd7e82fb9f52ae37db956f67527"
+  },
+  {
+   "path": "assets/reception/rcplights@2x.png",
+   "bytes": 95196,
+   "sha256": "6d2ce2e799706a1e733e3b814aef6614c7644589978ac8f8e349f80d7b507738"
+  },
+  {
+   "path": "assets/reception/rcplights@3x.png",
+   "bytes": 201878,
+   "sha256": "288a75c91abecb947830401badcdea95b45403157b293f653a2d3dee21a2eb4b"
+  },
+  {
+   "path": "assets/reception/rcpplant.png",
+   "bytes": 23270,
+   "sha256": "ab50395b502f3418ab5e06df9bca6981cdb945f15ef2a5a6bb44e4f763e9d0a8"
+  },
+  {
+   "path": "assets/reception/rcpplant@2x.png",
+   "bytes": 72688,
+   "sha256": "6b9908c744abf8d42d92208dbeef2fdc5775d9afe900ebbbd0602ef1a07e21c0"
+  },
+  {
+   "path": "assets/reception/rcpplant@3x.png",
+   "bytes": 146051,
+   "sha256": "d4c955588176471a732ed7835d675a2197f9ae64fdf85d4323299ec1746040ca"
+  },
+  {
+   "path": "assets/reception/rcprunner.png",
+   "bytes": 20956,
+   "sha256": "afcfbddeb1f15f7daa739305999d865b2d79a1b5e722f082ec96d97346ff1fb4"
+  },
+  {
+   "path": "assets/reception/rcprunner@2x.png",
+   "bytes": 76210,
+   "sha256": "a5f60741bc38f2320c7214bf83aa2fd9e11b27c29e13825e205830596df9be20"
+  },
+  {
+   "path": "assets/reception/rcprunner@3x.png",
+   "bytes": 167065,
+   "sha256": "fde4d2c09fa62b94fbfe834b5ee49f355573267482228c3c904489ed88b23478"
+  },
+  {
+   "path": "assets/reception/rcpsign.png",
+   "bytes": 30385,
+   "sha256": "ea27cb5c6c189bfcf3ae68acafa6d52d14549991b84933cf47c5685468b04255"
+  },
+  {
+   "path": "assets/reception/rcpsign@2x.png",
+   "bytes": 97445,
+   "sha256": "19398b166ad4e9289687ea1caaf108e5a19f4f93f5f37daffe63a34ececc5472"
+  },
+  {
+   "path": "assets/reception/rcpsign@3x.png",
+   "bytes": 199027,
+   "sha256": "779f905a356d536d6ed47f239fd36d19393869bdf5c875b0f0730af69d0a75d7"
+  },
+  {
+   "path": "assets/reception/rcpsofa.png",
+   "bytes": 54259,
+   "sha256": "d52ab12132793c7f8137a26f9884bcdf9ae34bacf351e1f3e08cae70b62dc48a"
+  },
+  {
+   "path": "assets/reception/rcpsofa@2x.png",
+   "bytes": 187932,
+   "sha256": "0f788c1d7091e42de6f846f658de526d0ed3f6f4f48e1c2ce1e46abc808dc9eb"
+  },
+  {
+   "path": "assets/reception/rcpsofa@3x.png",
+   "bytes": 409188,
+   "sha256": "af47c55ab47ed58ce1e706dc1697d6d7a8244d857041f1cbea17249e791663be"
+  },
+  {
+   "path": "assets/reception/rcptea.png",
+   "bytes": 47279,
+   "sha256": "da3f635245f11f3acf266a6a1b447f6427fb73bd7a80357f53c344fc3d180636"
+  },
+  {
+   "path": "assets/reception/rcptea@2x.png",
+   "bytes": 156253,
+   "sha256": "97a0878590defe613d8c1efcdb0fc7b1ff8a1c0e574a4e35299dd27916554e85"
+  },
+  {
+   "path": "assets/reception/rcptea@3x.png",
+   "bytes": 323122,
+   "sha256": "b228876a8a00c7d736de4ec73068f3cb4d77655917b45a77280699832b7da7ef"
+  },
+  {
+   "path": "assets/reception/rcpwall.png",
+   "bytes": 40742,
+   "sha256": "5507919b54899d7d3c1e0931df136f7d21d3391f67684b8943f33d47196fc518"
+  },
+  {
+   "path": "assets/reception/rcpwall@2x.png",
+   "bytes": 143292,
+   "sha256": "c6e0ba3b34e538f1bab0a8c23019e3d138446ed6dd38d3b6791d13468a9f2ea5"
+  },
+  {
+   "path": "assets/reception/rcpwall@3x.png",
+   "bytes": 306612,
+   "sha256": "3f3983db173a6293ea0e28a5c47c91ea2590e8e19ffc8fc94d41e7c9826296c6"
+  },
+  {
+   "path": "assets/reception/salon-reception-base.png",
+   "bytes": 1705309,
+   "sha256": "3c443ce16a6f023181a2abeb63e3704ee87ac252d0d34a30b406159929e58457"
+  },
+  {
+   "path": "assets/salon-v1/chair.png",
+   "bytes": 65144,
+   "sha256": "e14043c7ee4481219a9dcebedd69bf18d21e5469d1bde11ddb739d9072559306"
+  },
+  {
+   "path": "assets/salon-v1/chair@2x.png",
+   "bytes": 228634,
+   "sha256": "31d736bcdca3c4968772f0d23379faa0e5f28f54bf01eb4b71cd129a19ea5528"
+  },
+  {
+   "path": "assets/salon-v1/chair@3x.png",
+   "bytes": 495224,
+   "sha256": "970dd0924aac2371f725e5b3cab23f6ef524a58d2c9b9ba6c03c5b0ea6a0fee8"
+  },
+  {
+   "path": "assets/salon-v1/curtain.png",
+   "bytes": 36526,
+   "sha256": "1c92b59f1a42cb7c6aaeb6f7cf08d555016a79b0729f753f438013b503a067b8"
+  },
+  {
+   "path": "assets/salon-v1/curtain@2x.png",
+   "bytes": 119218,
+   "sha256": "0d4364671d86cd3af60b06c4762783a1a67192362188e64ab508892bd95ed774"
+  },
+  {
+   "path": "assets/salon-v1/curtain@3x.png",
+   "bytes": 249588,
+   "sha256": "6a2e8a36737b06094e742c8d53920fe45f9d2d55b15422cdd8a0d99aecb3cbae"
+  },
+  {
+   "path": "assets/salon-v1/flowers.png",
+   "bytes": 71984,
+   "sha256": "09935eb84e43eba3fcb31abfb5123f464f1638852b4a232aea5d872c23d589cb"
+  },
+  {
+   "path": "assets/salon-v1/flowers@2x.png",
+   "bytes": 249046,
+   "sha256": "42ac894f967d3fd0bd7b5cbcefd4d1fdc7e65490d5f1757d60af39896e578dbc"
+  },
+  {
+   "path": "assets/salon-v1/flowers@3x.png",
+   "bytes": 522144,
+   "sha256": "9756d1b249ce1885ca722e87573b47c30f54e101a37e2fd715a0ef1efdc0b139"
+  },
+  {
+   "path": "assets/salon-v1/lamp.png",
+   "bytes": 12453,
+   "sha256": "70ceb7931a4bcca7466c3025d968175d891cada7ce8cef51eda0f3df469587cb"
+  },
+  {
+   "path": "assets/salon-v1/lamp@2x.png",
+   "bytes": 42423,
+   "sha256": "9e7ed830f4336121ccb5e42ea9dcc58a88baebe24ec3752d2e71d221865aebb3"
+  },
+  {
+   "path": "assets/salon-v1/lamp@3x.png",
+   "bytes": 86841,
+   "sha256": "d46b218d2ae189e69476532cef08fa386f6dcb77539bfe3c958af95ba0a008ad"
+  },
+  {
+   "path": "assets/salon-v1/mirror.png",
+   "bytes": 54317,
+   "sha256": "76859f33df395c4136ab67917fa83ffea3e3490d814be30d310c18ef6d2b77f7"
+  },
+  {
+   "path": "assets/salon-v1/mirror@2x.png",
+   "bytes": 195751,
+   "sha256": "9a3b389a3d431c304a5c1ac37424d9d86b9e92f694ca4e0c1ef276fab20771de"
+  },
+  {
+   "path": "assets/salon-v1/mirror@3x.png",
+   "bytes": 411352,
+   "sha256": "5c400cc169832fc69c185d1167f78033fc6b3b08dab4d575ce220ab6f601445e"
+  },
+  {
+   "path": "assets/salon-v1/rug.png",
+   "bytes": 32356,
+   "sha256": "65c804a73bd5cf1a3e8c4407658ee47338c2b9e0cd95e2cfa4cae224be785870"
+  },
+  {
+   "path": "assets/salon-v1/rug@2x.png",
+   "bytes": 125614,
+   "sha256": "7ea23076276b9193e4e207e92ebe1ef03a11a840e29e2fb534a01de8633e09e0"
+  },
+  {
+   "path": "assets/salon-v1/rug@3x.png",
+   "bytes": 284764,
+   "sha256": "a798f27010c055cfef69d17630f3de8cf5975f85cdce4851f6097d23104327ce"
+  },
+  {
+   "path": "assets/salon-v1/salon-base.png",
+   "bytes": 2000220,
+   "sha256": "6d3c13f6c6bf53a6d68fe64631ada09fc416001037895f502bafd47520dfb7df"
+  },
+  {
+   "path": "assets/salon-v1/shelf.png",
+   "bytes": 30900,
+   "sha256": "ef2d0c96b9e4143171faeaf8748aca088e968fdb7b099d6b2620ffc9caf5eb49"
+  },
+  {
+   "path": "assets/salon-v1/shelf@2x.png",
+   "bytes": 103997,
+   "sha256": "e87e74854579d68e6ed08634f27b7cb65af0dc1be7aa51dc188140b2a1defca4"
+  },
+  {
+   "path": "assets/salon-v1/shelf@3x.png",
+   "bytes": 212400,
+   "sha256": "4b36f4d631ca9a92815a40883dc9bf999491594c553a5a259a408a9d3b56381c"
+  },
+  {
+   "path": "assets/salon-v1/table.png",
+   "bytes": 33636,
+   "sha256": "3d10c8813b5e9d82e83783145cc386406c674b7b957579cc000af95a9bc338be"
+  },
+  {
+   "path": "assets/salon-v1/table@2x.png",
+   "bytes": 110774,
+   "sha256": "59693e479a77071c7797430519c559ab3a2be6137cba6b9e29d0f1f52d5de562"
+  },
+  {
+   "path": "assets/salon-v1/table@3x.png",
+   "bytes": 230506,
+   "sha256": "060ad7158b36c795030773ea90e39127342f86cd5f4b6db0fee69f62bccd8ad0"
+  },
+  {
+   "path": "assets/skincare-v1/generators/gen_skn_1.png",
+   "bytes": 57714,
+   "sha256": "cd450befa41a3a5af696b51a005899714f021e687e6ea22171f390cce8ee02e0"
+  },
+  {
+   "path": "assets/skincare-v1/generators/gen_skn_1@2x.png",
+   "bytes": 204440,
+   "sha256": "0abc9654cf0ea0f3c0a26448e537761b28c4b84f27bef0faf00a044bffdbcc40"
+  },
+  {
+   "path": "assets/skincare-v1/generators/gen_skn_1@3x.png",
+   "bytes": 444214,
+   "sha256": "2f8bbcd302c467e4fa5871c8c7e3f4f38028c9266c2f4a627507c7c268300550"
+  },
+  {
+   "path": "assets/skincare-v1/generators/gen_skn_2.png",
+   "bytes": 81019,
+   "sha256": "6834c57691d12823ec8a8bcae27846efb23844072cb8d74165fd0f7dfdab01f2"
+  },
+  {
+   "path": "assets/skincare-v1/generators/gen_skn_2@2x.png",
+   "bytes": 278290,
+   "sha256": "75d095fe2ee3d0e7ac7c422394317a03d088e6f74e67bef35a233fd6097f265f"
+  },
+  {
+   "path": "assets/skincare-v1/generators/gen_skn_2@3x.png",
+   "bytes": 592589,
+   "sha256": "962d46c6ce00e7324f7854d9db8043bf56f9ee75dc258caa82a059780691585f"
+  },
+  {
+   "path": "assets/skincare-v1/generators/gen_skn_3.png",
+   "bytes": 70406,
+   "sha256": "7c9bc0cf8ef362f2f52902f838f58392be09a05156db736e4d674012c696d4ac"
+  },
+  {
+   "path": "assets/skincare-v1/generators/gen_skn_3@2x.png",
+   "bytes": 242528,
+   "sha256": "59c07e5c5ade9e6c7ebe3208c9084b1c2c8182fcc9edf7af6dfcca7b19989d40"
+  },
+  {
+   "path": "assets/skincare-v1/generators/gen_skn_3@3x.png",
+   "bytes": 520132,
+   "sha256": "a33a073799c0c1ecf4763337680c060b441f2e45bcc23fbc9fcc032b1058490c"
+  },
+  {
+   "path": "assets/skincare-v1/items/skn_1.png",
+   "bytes": 30555,
+   "sha256": "b901740db64cbe5e7f7cdb828597617eb2162cd4cb5a3f670c466bc35945ac0c"
+  },
+  {
+   "path": "assets/skincare-v1/items/skn_1@2x.png",
+   "bytes": 106475,
+   "sha256": "947700d36affadb6198d8f738807a73adac649b0736d3e9aef8721f338ae848c"
+  },
+  {
+   "path": "assets/skincare-v1/items/skn_1@3x.png",
+   "bytes": 227209,
+   "sha256": "2dc03c49cf3fc0698cfb8dc08a16a9fa879236a405a42fe620d6b47d738d48d2"
+  },
+  {
+   "path": "assets/skincare-v1/items/skn_2.png",
+   "bytes": 32030,
+   "sha256": "51b96ec0c77c83942841cc78a76c0be578c41c65379cec053fea87e152f5e325"
+  },
+  {
+   "path": "assets/skincare-v1/items/skn_2@2x.png",
+   "bytes": 110000,
+   "sha256": "5bf0f6e0d1c2a588281b1b1e1feb710ee3b069b6d51fe9dbb977cc02761d9dc7"
+  },
+  {
+   "path": "assets/skincare-v1/items/skn_2@3x.png",
+   "bytes": 232464,
+   "sha256": "46c961a065060aab65dac0a3e9ca3a74740a39c2d6c430ac377b06b054d36b9b"
+  },
+  {
+   "path": "assets/skincare-v1/items/skn_3.png",
+   "bytes": 25355,
+   "sha256": "c4ae3a9506991a4ffa7e8ac68bdc881b1c87cf5af3c9a4b3d3ab8ef1290f52a5"
+  },
+  {
+   "path": "assets/skincare-v1/items/skn_3@2x.png",
+   "bytes": 82134,
+   "sha256": "c25d33ce403ed06ca52a565412b275abcb4782583e13b3f4c4705befe78d476d"
+  },
+  {
+   "path": "assets/skincare-v1/items/skn_3@3x.png",
+   "bytes": 170024,
+   "sha256": "4987a3cb153cde3e3447bb08c14b2b48c089dc327058f4a0a6e1277e5b6d3118"
+  },
+  {
+   "path": "assets/skincare-v1/items/skn_4.png",
+   "bytes": 27653,
+   "sha256": "e3696e17e42b4c1c7e59768ac5845915ce38e2bab274670d0b5034b89ae3e147"
+  },
+  {
+   "path": "assets/skincare-v1/items/skn_4@2x.png",
+   "bytes": 90223,
+   "sha256": "41a0102de8d61689a9739de043468d9803c2afecf713a155354056aba933e57d"
+  },
+  {
+   "path": "assets/skincare-v1/items/skn_4@3x.png",
+   "bytes": 187291,
+   "sha256": "1e8557a49583caa181f338446a664096a15746dd3a5ef9ceeff08dbb755b45f8"
+  },
+  {
+   "path": "assets/skincare-v1/items/skn_5.png",
+   "bytes": 52141,
+   "sha256": "08e1e99f65998cf428371048894b59d8f91444de31040da7c0840d66e46cc6af"
+  },
+  {
+   "path": "assets/skincare-v1/items/skn_5@2x.png",
+   "bytes": 174777,
+   "sha256": "d2a39e443dedc682bee1541589cc1d76ad48d1d0fc3f26c9e0cdcd18530f2f23"
+  },
+  {
+   "path": "assets/skincare-v1/items/skn_5@3x.png",
+   "bytes": 376320,
+   "sha256": "9e4a8afb1e538e8338a63cb9bfcea0b6d495b9faaca1acb4800ddfaedf9658a1"
+  },
+  {
+   "path": "assets/skincare-v1/items/skn_6.png",
+   "bytes": 63952,
+   "sha256": "eb59dace7188223877fe9dd388dc41b3afdac58f3f91f0cd0bcd981f5d69ac80"
+  },
+  {
+   "path": "assets/skincare-v1/items/skn_6@2x.png",
+   "bytes": 216391,
+   "sha256": "86d4bddee5fb0c749d056f2c282f4c4453d975c2835851b23a2831e9dab0a774"
+  },
+  {
+   "path": "assets/skincare-v1/items/skn_6@3x.png",
+   "bytes": 461252,
+   "sha256": "b03adfa45accf719bfc006a120a1b816e4d0b01de9ffd509011a2cfe060d3cc1"
+  },
+  {
+   "path": "assets/spa/salon-spa-base.png",
+   "bytes": 1705032,
+   "sha256": "b2303900b41043f4efd56939943c21733bfacd33df8e0807e437d3968a8b4468"
+  },
+  {
+   "path": "assets/spa/spabasin.png",
+   "bytes": 57363,
+   "sha256": "8318cff9bd4376ec2fb1d527715675367d18514749cd9bdff6ff8fd9259029b7"
+  },
+  {
+   "path": "assets/spa/spabasin@2x.png",
+   "bytes": 200216,
+   "sha256": "e0235cb101d97da4c846db3d445d8a6a294813dd9636eefe9d717bedf564f99e"
+  },
+  {
+   "path": "assets/spa/spabasin@3x.png",
+   "bytes": 434780,
+   "sha256": "6dfae2a5ee1c5548aeb9acccfe974474137c58342f3187a365f8b48b869842c7"
+  },
+  {
+   "path": "assets/spa/spabed_lilac.png",
+   "bytes": 41964,
+   "sha256": "6a8f16f761b078cbaf01cda99d0c1dc2378dac0dcd04db31ccb36956688a9bb6"
+  },
+  {
+   "path": "assets/spa/spabed_lilac@2x.png",
+   "bytes": 144049,
+   "sha256": "87a9195e0b95cff6bde0d1e49ca99b603e06734dcd5582bfd864224b3fa201ae"
+  },
+  {
+   "path": "assets/spa/spabed_lilac@3x.png",
+   "bytes": 312386,
+   "sha256": "1d339ded3ea8c05ac66e00418b3a43e71e8e489948352951185459d8d98cde68"
+  },
+  {
+   "path": "assets/spa/spabed_rose.png",
+   "bytes": 41634,
+   "sha256": "16b6a25f043fc2746299e24e9f9c3c1cad1d56353df2767a2353df1e0d0b17e1"
+  },
+  {
+   "path": "assets/spa/spabed_rose@2x.png",
+   "bytes": 142332,
+   "sha256": "06745841c959e85658025c77aa7ca5e9b9ea6631a1ad7fb30f0fa6f118e218a0"
+  },
+  {
+   "path": "assets/spa/spabed_rose@3x.png",
+   "bytes": 308198,
+   "sha256": "ef9094738173dc6cbdca8d1297625acbcf23ab59e10ae0b6e2c2b5e383080270"
+  },
+  {
+   "path": "assets/spa/spabed_sage.png",
+   "bytes": 41833,
+   "sha256": "7179197bee97906e19ffcfc092b524341ff87f10e4d3a556cb190eb9f9fd019e"
+  },
+  {
+   "path": "assets/spa/spabed_sage@2x.png",
+   "bytes": 143808,
+   "sha256": "c34f6a41c258b3bee2537c0a1305810aadbce13b813f8a5063f137f7c4866ed5"
+  },
+  {
+   "path": "assets/spa/spabed_sage@3x.png",
+   "bytes": 311294,
+   "sha256": "4dd704e2401de4579bee08f404c21c42654729fe15056828e0301804245f042a"
+  },
+  {
+   "path": "assets/spa/spacandles.png",
+   "bytes": 42733,
+   "sha256": "3cd8b07961324fa8e3b607cdf65f64966c1aaee4aec31f9cc9c838b4c4e48e68"
+  },
+  {
+   "path": "assets/spa/spacandles@2x.png",
+   "bytes": 144826,
+   "sha256": "ca4fea5c82dc8d1ba84c391a0c5fe758dade4c69bf9c3e99c16e744b1d3f744d"
+  },
+  {
+   "path": "assets/spa/spacandles@3x.png",
+   "bytes": 312039,
+   "sha256": "ce85b86dac5f6d19b86e7b2a2411aad1cf2014f7480b92aa9e4f8d3544ba10da"
+  },
+  {
+   "path": "assets/spa/spachair_lilac.png",
+   "bytes": 68378,
+   "sha256": "426e18291025ddf3b6d5c1d35978defcb4e86084dd1a8c36836fdca255f07472"
+  },
+  {
+   "path": "assets/spa/spachair_lilac@2x.png",
+   "bytes": 239572,
+   "sha256": "320e987a0585047d7f2779a85787617bb23261ad5aa1dab920c9a6d8723dd70b"
+  },
+  {
+   "path": "assets/spa/spachair_lilac@3x.png",
+   "bytes": 525595,
+   "sha256": "f407924907e72f64fb13e062ab46e30205fcbb7579e34b7e819ea4d9e8722f31"
+  },
+  {
+   "path": "assets/spa/spachair_rose.png",
+   "bytes": 68327,
+   "sha256": "f83e081a51d3646ea30b89a4a923c421bf68c4391c45060a1fe7eda8fed3787a"
+  },
+  {
+   "path": "assets/spa/spachair_rose@2x.png",
+   "bytes": 240118,
+   "sha256": "252a4c9241d69bff9a2aef5dd73704d4f5fb3e1cc81e79f8b8f7cbb222cf2944"
+  },
+  {
+   "path": "assets/spa/spachair_rose@3x.png",
+   "bytes": 523215,
+   "sha256": "59343d47985983feebd14e2f2fa6df1c0c342161b18e7e42042230209ad723a8"
+  },
+  {
+   "path": "assets/spa/spachair_sage.png",
+   "bytes": 68470,
+   "sha256": "38acdbc1ab33f298538818b576c350f4ce2ac7de27c7970d99f00a4b48dda3c7"
+  },
+  {
+   "path": "assets/spa/spachair_sage@2x.png",
+   "bytes": 239927,
+   "sha256": "205851eafff36524f4b1908ae80107797c6450c1d3df097bcce80622b76b6266"
+  },
+  {
+   "path": "assets/spa/spachair_sage@3x.png",
+   "bytes": 524027,
+   "sha256": "985d54edc7e849d21cbfde4356f53c614b62b66d8f0c75dc2961806067825e45"
+  },
+  {
+   "path": "assets/spa/spadrape_lilac.png",
+   "bytes": 49988,
+   "sha256": "0ee7ffe0feb55d824592e887410acd58f30298657a2d65e468151d2b74db9b31"
+  },
+  {
+   "path": "assets/spa/spadrape_lilac@2x.png",
+   "bytes": 158784,
+   "sha256": "11ad64f74924e0d5070a90980f4b97d23ac31683db4b0c89c765d436f1778c0a"
+  },
+  {
+   "path": "assets/spa/spadrape_lilac@3x.png",
+   "bytes": 338201,
+   "sha256": "67df4d1f14350135351f6bb0ba10778d12a366853dd04ab1e46d3ff2498062c5"
+  },
+  {
+   "path": "assets/spa/spadrape_rose.png",
+   "bytes": 49620,
+   "sha256": "49e4c087aeac0006c1090b831ecf5bc54ec0913dc859d6f8121917c59bc20111"
+  },
+  {
+   "path": "assets/spa/spadrape_rose@2x.png",
+   "bytes": 156253,
+   "sha256": "8d33bd6290b9991cbe25a7d71af2633dfacd06a39eff7b2378eecaa3291a5cfd"
+  },
+  {
+   "path": "assets/spa/spadrape_rose@3x.png",
+   "bytes": 330911,
+   "sha256": "a7f74aeef1927e7d9ce5951cd1085ce7934763a10c6ec781236f4fbbe234fa99"
+  },
+  {
+   "path": "assets/spa/spadrape_sage.png",
+   "bytes": 49778,
+   "sha256": "fd106d98c83d441f899294c06d3ae17095f35f676c0a0dae122311e4875eb6d5"
+  },
+  {
+   "path": "assets/spa/spadrape_sage@2x.png",
+   "bytes": 157863,
+   "sha256": "5a91bde08a3ea0863940b75a2d219f0051305a5c7d9cb746418a8e35bd596386"
+  },
+  {
+   "path": "assets/spa/spadrape_sage@3x.png",
+   "bytes": 335544,
+   "sha256": "56c2470456c94deda30583484d29b2c0dbd3a53edb97e90191ef47b588b7c8c0"
+  },
+  {
+   "path": "assets/spa/spafountain.png",
+   "bytes": 48492,
+   "sha256": "0e89b1299884f350cc47a198bb1558f3cbddfbd43850a88963fa7298bf337eab"
+  },
+  {
+   "path": "assets/spa/spafountain@2x.png",
+   "bytes": 161205,
+   "sha256": "129782a86fc1d799528145fdc5b1b1da1626f9a0ba30bb3f27879a37dd76c0db"
+  },
+  {
+   "path": "assets/spa/spafountain@3x.png",
+   "bytes": 338231,
+   "sha256": "efe7833eb54469bf02445fd917020cdda3192517f93abc05c6c528536656b514"
+  },
+  {
+   "path": "assets/spa/spalamp.png",
+   "bytes": 11205,
+   "sha256": "8838644f27c984c54868d09d03b16bc3e8507b33fa0be056f066229b210c8725"
+  },
+  {
+   "path": "assets/spa/spalamp@2x.png",
+   "bytes": 35694,
+   "sha256": "f4e7a64c1d05f34337d540df1878edeb38aa79629848b029bb4f6a4616411cb7"
+  },
+  {
+   "path": "assets/spa/spalamp@3x.png",
+   "bytes": 72127,
+   "sha256": "dd5d3dec54baf074dc17001d626d745651092a81256d32a87cfd62d246569f25"
+  },
+  {
+   "path": "assets/spa/spaorchid.png",
+   "bytes": 49645,
+   "sha256": "ea4b26b5513d69a2d59dbc88d45bce865b7562ddc0fb33dc3fd725b01c11709c"
+  },
+  {
+   "path": "assets/spa/spaorchid@2x.png",
+   "bytes": 157184,
+   "sha256": "c094c3d2618cbbc2916bccedb4ac11252170f99f89785e96d08e6a89b0b4cad9"
+  },
+  {
+   "path": "assets/spa/spaorchid@3x.png",
+   "bytes": 320418,
+   "sha256": "c832f1ed48ce7a8a886010304b21635d41823feb1d7cc0662379f977d2192968"
+  },
+  {
+   "path": "assets/spa/spaplant.png",
+   "bytes": 35318,
+   "sha256": "509f6c3f3f75b717b25417c8b73fc71eb2c2bd9a08bb2b477d9d846a2a6b0b71"
+  },
+  {
+   "path": "assets/spa/spaplant@2x.png",
+   "bytes": 112446,
+   "sha256": "084b329e00e46ee3e3cc1ac8cdac23f827e205137c472072c80ed9b5ec10aa1e"
+  },
+  {
+   "path": "assets/spa/spaplant@3x.png",
+   "bytes": 226460,
+   "sha256": "569ee39ce5daf6f6a7a7f42658577634b770f5b8be3441bbb157b24bb0b46d91"
+  },
+  {
+   "path": "assets/spa/spapouf.png",
+   "bytes": 42496,
+   "sha256": "62ebcf95f6e07953aac016ffc24df51e9943ebbde4a1c032b5a6f2fbe2313dd4"
+  },
+  {
+   "path": "assets/spa/spapouf@2x.png",
+   "bytes": 149046,
+   "sha256": "a6ca16c4dd98d5b934befa646d540a0159e0e555600f1619f66b9b58a9078d5e"
+  },
+  {
+   "path": "assets/spa/spapouf@3x.png",
+   "bytes": 341276,
+   "sha256": "bda6ad98472ba07d178ebefa119fc2180c64f94a8d4b867a56e463847dbd0100"
+  },
+  {
+   "path": "assets/spa/sparug.png",
+   "bytes": 22372,
+   "sha256": "36e14f7d592ff1b557c104fe5ed070ea71f619db23662a11cc3ac85d350ca7af"
+  },
+  {
+   "path": "assets/spa/sparug@2x.png",
+   "bytes": 80694,
+   "sha256": "7f8796219b8db895284667da88638f54e3ae5f77c966be6ef18529644d98ec19"
+  },
+  {
+   "path": "assets/spa/sparug@3x.png",
+   "bytes": 178393,
+   "sha256": "33dd0b0ae5529524f45a93c88d9ba783a8df122728fe60fa507f55ab92fecbed"
+  },
+  {
+   "path": "assets/spa/spascreen_lilac.png",
+   "bytes": 47413,
+   "sha256": "2fe591b0b9384d82e10f74ca49c7332f610ecb4d044e0cd05743014098b90d10"
+  },
+  {
+   "path": "assets/spa/spascreen_lilac@2x.png",
+   "bytes": 165104,
+   "sha256": "c5f18758464dbf6b7d6277a8f1b9357ebb7025a58a59f12d2273803ec672c7cc"
+  },
+  {
+   "path": "assets/spa/spascreen_lilac@3x.png",
+   "bytes": 383163,
+   "sha256": "6ce3eed9bd70f2f7d8a137aa5abc183a315edc31dcb2a19f348975d8e500b88b"
+  },
+  {
+   "path": "assets/spa/spascreen_rose.png",
+   "bytes": 46443,
+   "sha256": "d6d70920c353c0732ee6a7837c5f6cb140b0cc426b5ba72ae95f816184860c47"
+  },
+  {
+   "path": "assets/spa/spascreen_rose@2x.png",
+   "bytes": 160078,
+   "sha256": "64b326cdd929cb16037b670e1b6fbdb63d08eca8b0970a150a4ecb4ba6a244cf"
+  },
+  {
+   "path": "assets/spa/spascreen_rose@3x.png",
+   "bytes": 366679,
+   "sha256": "7c6eb237cdd2f75b6f82dab7dd6072052a88ec1c4f1bfd5d43dec3a57ce3b046"
+  },
+  {
+   "path": "assets/spa/spascreen_sage.png",
+   "bytes": 47165,
+   "sha256": "743deff8e89453213fa689e872cd756f3c4c848ee875f0ddd84febef1c8aef93"
+  },
+  {
+   "path": "assets/spa/spascreen_sage@2x.png",
+   "bytes": 163333,
+   "sha256": "b80db7d55ea1494fe7fd82bbd36c09250be0e7f11516935b68728ab8737ce691"
+  },
+  {
+   "path": "assets/spa/spascreen_sage@3x.png",
+   "bytes": 376682,
+   "sha256": "47281db7bd7af73ce3c077fa68f0560e887c1d1d308eca93467fdfc64f5218d9"
+  },
+  {
+   "path": "assets/spa/spashelf.png",
+   "bytes": 59490,
+   "sha256": "60ee54bfc4d945b0436e0caf159f4359bdc8c9e2eed889bcda1ffcecf5a21b9b"
+  },
+  {
+   "path": "assets/spa/spashelf@2x.png",
+   "bytes": 201664,
+   "sha256": "17db2117ffbf983d23e6321000d51e6998406c04c7c0d3ade9040e12070e2aab"
+  },
+  {
+   "path": "assets/spa/spashelf@3x.png",
+   "bytes": 428662,
+   "sha256": "7d7ad8ed36b4c84f732b45ae237997fe266616f2f299033da007f26ac87f91db"
+  },
+  {
+   "path": "assets/spa/spasteam.png",
+   "bytes": 18139,
+   "sha256": "4d52185c1a67c8c1a2bac72798983dc44ad772d48779184a160eb6869d1b1738"
+  },
+  {
+   "path": "assets/spa/spasteam@2x.png",
+   "bytes": 54997,
+   "sha256": "4533561b7d606fa0cd65abdd3a9944d6fda918db8a3226795df640d60ec50ecd"
+  },
+  {
+   "path": "assets/spa/spasteam@3x.png",
+   "bytes": 109509,
+   "sha256": "d9fcd9b7af4d1df0fcbd8e6ecad61ad70d1c4e76b331ccc634010c0f9d9a7fa9"
+  },
+  {
+   "path": "assets/spa/spatowels.png",
+   "bytes": 33151,
+   "sha256": "6544da4c4db1ac2ab9e57958240587f27f4631875565baa7167617a97eb5c607"
+  },
+  {
+   "path": "assets/spa/spatowels@2x.png",
+   "bytes": 113097,
+   "sha256": "428842aca1c6badad5810e6a9bb2825045870dd8887c76725a131c189481eff7"
+  },
+  {
+   "path": "assets/spa/spatowels@3x.png",
+   "bytes": 243754,
+   "sha256": "43369dfb78f62d2e9942823070dc1bed7b396f090c05d7d6b227baf31927a9e7"
+  },
+  {
+   "path": "assets/spa/spatrolley.png",
+   "bytes": 78126,
+   "sha256": "1f32c0f0f9cd16ec542feeb61472526a84881dddb1e5009c98d108a3b7dd8acd"
+  },
+  {
+   "path": "assets/spa/spatrolley@2x.png",
+   "bytes": 268960,
+   "sha256": "0f24869dc526e3a795d847d3b42c097068f07c50315b511725e13178476ad720"
+  },
+  {
+   "path": "assets/spa/spatrolley@3x.png",
+   "bytes": 580461,
+   "sha256": "4f85917f5d7dbfdc034405dd379d9a87163c20c4e387e36749c7f449dd7750ab"
+  },
+  {
+   "path": "assets/sprites-v1/generators/gen_lav_1.png",
+   "bytes": 50426,
+   "sha256": "afbc5783035242378877a1b7c626c52ee3c6eba2a791bf39ac23891ea8d41ebd"
+  },
+  {
+   "path": "assets/sprites-v1/generators/gen_lav_1@2x.png",
+   "bytes": 160651,
+   "sha256": "81528f53cd89606aa3a22addfb5957f324b44cadfbb55330dd6f957cf15f6047"
+  },
+  {
+   "path": "assets/sprites-v1/generators/gen_lav_1@3x.png",
+   "bytes": 300400,
+   "sha256": "8d02e0f0c16cbb978391c11a5a7a6bf6e7e56730efe2c4dac4c51f421e5883aa"
+  },
+  {
+   "path": "assets/sprites-v1/generators/gen_lav_2.png",
+   "bytes": 73784,
+   "sha256": "164bfddb2914ac5e151fbd6092696a7288bac660223b5d30707cc571388f05eb"
+  },
+  {
+   "path": "assets/sprites-v1/generators/gen_lav_2@2x.png",
+   "bytes": 244858,
+   "sha256": "96e9e9a6f4bc12e2aa6b0d2233938c6a066824191e106cc9a1efbdfff11ebc00"
+  },
+  {
+   "path": "assets/sprites-v1/generators/gen_lav_2@3x.png",
+   "bytes": 467585,
+   "sha256": "1ac9884690d43039a981f219037e6d7f5b400852b368ec1d445a67e410bc97a1"
+  },
+  {
+   "path": "assets/sprites-v1/generators/gen_lav_3.png",
+   "bytes": 83870,
+   "sha256": "71301219d2a7b0148fed61b8756d902b83db1145fa107eef09c3b48a2d77d3cc"
+  },
+  {
+   "path": "assets/sprites-v1/generators/gen_lav_3@2x.png",
+   "bytes": 284537,
+   "sha256": "8cdb9b6df04c1ec9e7aa943bfc1b1c821357e4ff001cff207f107ddbd8f9d44d"
+  },
+  {
+   "path": "assets/sprites-v1/generators/gen_lav_3@3x.png",
+   "bytes": 548331,
+   "sha256": "6a3171f9dbbedc92712942a57fa0b9f6de2ec236e3d9f9ba348c610bf3f2c187"
+  },
+  {
+   "path": "assets/sprites-v1/generators/gen_pink_1.png",
+   "bytes": 45815,
+   "sha256": "22129a4719c1f768330c5893dbe30d71be48fc500b4f378b0dbdb70e5d454054"
+  },
+  {
+   "path": "assets/sprites-v1/generators/gen_pink_1@2x.png",
+   "bytes": 148103,
+   "sha256": "b912627eb0c1e3739700239441ad7f3225a9d937be14d733d117aeb0a0ba21ab"
+  },
+  {
+   "path": "assets/sprites-v1/generators/gen_pink_1@3x.png",
+   "bytes": 279128,
+   "sha256": "cec5c1994904fd6a69ee6e5df196163135d64dccd64b7ef517dd76ea790c9c34"
+  },
+  {
+   "path": "assets/sprites-v1/generators/gen_pink_2.png",
+   "bytes": 69239,
+   "sha256": "fcfe90b332a0c92991f5360ad894a6c9dc0fa5eec59c99c7efe98adfafef6eea"
+  },
+  {
+   "path": "assets/sprites-v1/generators/gen_pink_2@2x.png",
+   "bytes": 233069,
+   "sha256": "ad8bb48d13bdfe618bc9f4eafc81ed065b4b08d4cc6007d925750590530ce355"
+  },
+  {
+   "path": "assets/sprites-v1/generators/gen_pink_2@3x.png",
+   "bytes": 448236,
+   "sha256": "308b6bc5a7b9ad2f632bb8c5c2fab38d1e50f462520274d43d3726dc1db50bf8"
+  },
+  {
+   "path": "assets/sprites-v1/generators/gen_pink_3.png",
+   "bytes": 82344,
+   "sha256": "8016167b09eb7eb133e8c1701e883ff9f6fa1fe18b96ac29be5e0b27268060df"
+  },
+  {
+   "path": "assets/sprites-v1/generators/gen_pink_3@2x.png",
+   "bytes": 282095,
+   "sha256": "f5d33b302282cd8546bb9e84859b47c7a0561c307a1826a38602d3bd8a46c481"
+  },
+  {
+   "path": "assets/sprites-v1/generators/gen_pink_3@3x.png",
+   "bytes": 543505,
+   "sha256": "5c75f04a5f7514f4c08233c216eb91f0df89da076129cc3f9bb573646f2d0ec3"
+  },
+  {
+   "path": "assets/sprites-v1/items/cmp_1.png",
+   "bytes": 61118,
+   "sha256": "9e241557f0e4206a0869411471deefdd50378780562eb902d3f7dee425b13794"
+  },
+  {
+   "path": "assets/sprites-v1/items/cmp_1@2x.png",
+   "bytes": 206080,
+   "sha256": "126778f5606ea9d2694e8dbd5b545ef7f611fe9a5854f3ed4a16886b8a87fd47"
+  },
+  {
+   "path": "assets/sprites-v1/items/cmp_1@3x.png",
+   "bytes": 388160,
+   "sha256": "9a312c46fdb1de0129a6b3b8c2959dda64854b1652d42b83d500660300ef6d11"
+  },
+  {
+   "path": "assets/sprites-v1/items/cmp_2.png",
+   "bytes": 58767,
+   "sha256": "e3de93722297a309795a103803384dd7671c35d1770efdb7c7fc6f02300ab828"
+  },
+  {
+   "path": "assets/sprites-v1/items/cmp_2@2x.png",
+   "bytes": 184794,
+   "sha256": "d1724e6ef8cb5fc9e6759bf0ce5919bbfc1008d6661760674bbf3cd52582210c"
+  },
+  {
+   "path": "assets/sprites-v1/items/cmp_2@3x.png",
+   "bytes": 343359,
+   "sha256": "412feebb15bfcef55ec26b088b75646a8a8bdefbef16c0d51fb0ac8cc0c1b3d7"
+  },
+  {
+   "path": "assets/sprites-v1/items/cmp_3.png",
+   "bytes": 69525,
+   "sha256": "41e542b59f6363b98c124334bca147abd911c0ba1b115d4b69f2c10e2843e02b"
+  },
+  {
+   "path": "assets/sprites-v1/items/cmp_3@2x.png",
+   "bytes": 233564,
+   "sha256": "80e54d0a52951ca23f49d04838a7af39a2ae9e8f44843ee3cf79389e53d06e4c"
+  },
+  {
+   "path": "assets/sprites-v1/items/cmp_3@3x.png",
+   "bytes": 448636,
+   "sha256": "b9650dab09f6fc9ad66b0cf94ab60a8b1c16333e30672b9607e42d43784bd8ed"
+  },
+  {
+   "path": "assets/sprites-v1/items/cmp_4.png",
+   "bytes": 77638,
+   "sha256": "396f452449015d99f20fe7de6ebc7deb4a1ad65ee66d4e6f216c446ac08e8984"
+  },
+  {
+   "path": "assets/sprites-v1/items/cmp_4@2x.png",
+   "bytes": 262456,
+   "sha256": "2cc71d240a416372f3d6e6d20a04b76e3867feaf0a79a04bb8e1218cab83af8b"
+  },
+  {
+   "path": "assets/sprites-v1/items/cmp_4@3x.png",
+   "bytes": 503575,
+   "sha256": "8302c72b68730aa2ec7baa6ae31bb626cb173b9250434f9ed9362c023a7a1b61"
+  },
+  {
+   "path": "assets/sprites-v1/items/cmp_5.png",
+   "bytes": 79030,
+   "sha256": "1c85a65d15a064de98ca008b4d5e093d4f356d408521e6abe177fb6b0d9f5930"
+  },
+  {
+   "path": "assets/sprites-v1/items/cmp_5@2x.png",
+   "bytes": 276952,
+   "sha256": "dd1c34e02b1ff3b7ed7250b21fb8b1be8a4e57dd85d2463f03ddc7508e232edc"
+  },
+  {
+   "path": "assets/sprites-v1/items/cmp_5@3x.png",
+   "bytes": 532807,
+   "sha256": "625051d8ede4b4c65f143f79e6a8980cd154be5a9e3ceb520c9d921564f33db1"
+  },
+  {
+   "path": "assets/sprites-v1/items/cmp_6.png",
+   "bytes": 83565,
+   "sha256": "036cff47ad92249045dbaf3a6bdfa5842b77478578834227b3e16f692d74d325"
+  },
+  {
+   "path": "assets/sprites-v1/items/cmp_6@2x.png",
+   "bytes": 285789,
+   "sha256": "4a29605341a7ce2e4319ae255a6e8c2695d97281d58bf8bfda62b2d517bf70cc"
+  },
+  {
+   "path": "assets/sprites-v1/items/cmp_6@3x.png",
+   "bytes": 555431,
+   "sha256": "578692d40dddcdb311d5779a804c931fa2079543a9a4aba37b15aeb64dae0a47"
+  },
+  {
+   "path": "assets/sprites-v1/items/lip_1.png",
+   "bytes": 36039,
+   "sha256": "f380b44902152c673ed987a7fae2f84c903fa88f819ef8f162c36a753e78c77a"
+  },
+  {
+   "path": "assets/sprites-v1/items/lip_1@2x.png",
+   "bytes": 109708,
+   "sha256": "612c876f7d3edf20b7061a2788df5aeedbcbf98aabc522204cb8cff73b6db47d"
+  },
+  {
+   "path": "assets/sprites-v1/items/lip_1@3x.png",
+   "bytes": 202219,
+   "sha256": "2323f20df20ab4046e8d41c612334e23b54d19adabefbf9b4c1ebba79081e6e7"
+  },
+  {
+   "path": "assets/sprites-v1/items/lip_2.png",
+   "bytes": 47261,
+   "sha256": "32258c88eb8691f498144db557ca7a07b2e8511b8dbb4e7aabf8babf78220a13"
+  },
+  {
+   "path": "assets/sprites-v1/items/lip_2@2x.png",
+   "bytes": 145111,
+   "sha256": "87580557d745da6d3d7ed3ad089e1984202c142f4cfbd924c0d3f64d1e8f51b3"
+  },
+  {
+   "path": "assets/sprites-v1/items/lip_2@3x.png",
+   "bytes": 267250,
+   "sha256": "4041c7a0027af37927faddd69decb9a86d7266dfc8801e8d3716fa0d51de6dde"
+  },
+  {
+   "path": "assets/sprites-v1/items/lip_3.png",
+   "bytes": 40209,
+   "sha256": "23d35a09a3482ddd8bac224275a10137707d999fce8fba7080c64dffd8ba0457"
+  },
+  {
+   "path": "assets/sprites-v1/items/lip_3@2x.png",
+   "bytes": 125507,
+   "sha256": "3a39c870d5e894c1642b8a34abf319f595869f893b335997af888fe6edf18036"
+  },
+  {
+   "path": "assets/sprites-v1/items/lip_3@3x.png",
+   "bytes": 234369,
+   "sha256": "55cca8459b5e189828f9e416a3bd96bf5d6ca90754a6d45ccc0b49a04b483b68"
+  },
+  {
+   "path": "assets/sprites-v1/items/lip_4.png",
+   "bytes": 39869,
+   "sha256": "9017b5f3252ef9fd86c8a2899d9b8dbe3cd8fca1e406c4f3516a7d8efcc2d7ee"
+  },
+  {
+   "path": "assets/sprites-v1/items/lip_4@2x.png",
+   "bytes": 124402,
+   "sha256": "d6d60d4f6f2d427847a6708b32e6e469d49a3232708962a6018f2a1d220c9e4d"
+  },
+  {
+   "path": "assets/sprites-v1/items/lip_4@3x.png",
+   "bytes": 231867,
+   "sha256": "f4dc6549659f056d47e09786af9c30d1841e0dd244da3ce48c157b4a1354655c"
+  },
+  {
+   "path": "assets/sprites-v1/items/lip_5.png",
+   "bytes": 86752,
+   "sha256": "113a9b7e8444b1d4ff6f39350cc8b8e98eb72c9a8d3a0f1786296ff7b9965737"
+  },
+  {
+   "path": "assets/sprites-v1/items/lip_5@2x.png",
+   "bytes": 287151,
+   "sha256": "3a115e8ad1720db3f7b2f43f3d69402f956dadffaeccf59255babf6429400d10"
+  },
+  {
+   "path": "assets/sprites-v1/items/lip_5@3x.png",
+   "bytes": 541669,
+   "sha256": "a6ef286b2d827cb46ba79ea97cad3a4e634ffa4bfda1bb8fea1a8caa336cb2bc"
+  },
+  {
+   "path": "assets/sprites-v1/items/lip_6.png",
+   "bytes": 57533,
+   "sha256": "4a30ba770cbc14098a58994d5991e266b1fe121326f288a49941e5ea20d6eda8"
+  },
+  {
+   "path": "assets/sprites-v1/items/lip_6@2x.png",
+   "bytes": 179772,
+   "sha256": "3c5a9fc6e6ccd2c32e0426243292ca32d6d7e15fb67da10cbfcbf819f0849c82"
+  },
+  {
+   "path": "assets/sprites-v1/items/lip_6@3x.png",
+   "bytes": 336088,
+   "sha256": "ebbff195b6230039ba36d670213a0d92d99b30ae47cb09ac8619a5e4d255ee50"
+  },
+  {
+   "path": "assets/sprites-v1/items/nail_1.png",
+   "bytes": 46269,
+   "sha256": "a90745b30e72a53deb436df57b744b9c30d7201293f5f39c374b3f9035447530"
+  },
+  {
+   "path": "assets/sprites-v1/items/nail_1@2x.png",
+   "bytes": 138235,
+   "sha256": "1aa2d330e8f44e38cad3f47c23a3cba87918b89989cd53caf8d45899e00acadc"
+  },
+  {
+   "path": "assets/sprites-v1/items/nail_1@3x.png",
+   "bytes": 249777,
+   "sha256": "4162249a95d7d260cfc2254fc73831aec63039c18e6ca717301b8b0943f75f88"
+  },
+  {
+   "path": "assets/sprites-v1/items/nail_2.png",
+   "bytes": 50992,
+   "sha256": "4fea659987da1aacb4847c0c559d46580520121ea7108e6d8105d46b5440fc6f"
+  },
+  {
+   "path": "assets/sprites-v1/items/nail_2@2x.png",
+   "bytes": 155965,
+   "sha256": "500a8c8147c0b81ca869a433a60447f3dab1543d3f4c26eef6741cd15c90e32f"
+  },
+  {
+   "path": "assets/sprites-v1/items/nail_2@3x.png",
+   "bytes": 286948,
+   "sha256": "9e14d99950ad47c21397e74a89d6c643615f2ba84a52f066b423941dda34e84c"
+  },
+  {
+   "path": "assets/sprites-v1/items/nail_3.png",
+   "bytes": 50916,
+   "sha256": "04bca9893ba66520f7aaf615f86d8c70ad7b5b7f5865045e25879c4b6aecd8ce"
+  },
+  {
+   "path": "assets/sprites-v1/items/nail_3@2x.png",
+   "bytes": 160871,
+   "sha256": "426b3e8a583249f6ee5e6374fa8267ed0406b38773313c907ac076ca98be81d6"
+  },
+  {
+   "path": "assets/sprites-v1/items/nail_3@3x.png",
+   "bytes": 297705,
+   "sha256": "a3b1e6668c87ea855597f79252634e536a92c6766daff4623b5cc035ac277492"
+  },
+  {
+   "path": "assets/sprites-v1/items/nail_4.png",
+   "bytes": 60241,
+   "sha256": "929abc7e74d3ba3903f8958976303a558317c6198ed53ea7dfc721f3705360e5"
+  },
+  {
+   "path": "assets/sprites-v1/items/nail_4@2x.png",
+   "bytes": 191201,
+   "sha256": "0aa23ad39a4f762a5810fcc538db1f556ccba70619efa94c2bb7d6117d8ec128"
+  },
+  {
+   "path": "assets/sprites-v1/items/nail_4@3x.png",
+   "bytes": 355059,
+   "sha256": "55d4f24d672621960567f1b9a85c95ac2f4d0a25068761ed6af69d092ef6ca00"
+  },
+  {
+   "path": "assets/sprites-v1/items/nail_5.png",
+   "bytes": 70097,
+   "sha256": "41f11113d160bc8266bf9edd10adf850ccdc427e038bcf9a233a623427c6a303"
+  },
+  {
+   "path": "assets/sprites-v1/items/nail_5@2x.png",
+   "bytes": 227475,
+   "sha256": "76a35f5f7173e71f571da67a22f2dcc222bc7461a2fa0c40dc2502f3fa8fee7b"
+  },
+  {
+   "path": "assets/sprites-v1/items/nail_5@3x.png",
+   "bytes": 428305,
+   "sha256": "4eb09411e43dc3860a49901598f8b185aff6fbf4a7efc576d2ca829a4752c303"
+  },
+  {
+   "path": "assets/sprites-v1/items/nail_6.png",
+   "bytes": 65245,
+   "sha256": "318172046bd546041aaad487db956d8f28fae9120223f14d44707f9ef63c258e"
+  },
+  {
+   "path": "assets/sprites-v1/items/nail_6@2x.png",
+   "bytes": 211313,
+   "sha256": "91de6cded6d7e011c50270f73ff39fcedf3cbd49d661b9c741a4152bcf6eaa53"
+  },
+  {
+   "path": "assets/sprites-v1/items/nail_6@3x.png",
+   "bytes": 403905,
+   "sha256": "eee5f73ab5432e1f32c4cd5fa76657142dbc2a7eeee480664c4e3fba2b06ea84"
+  },
+  {
+   "path": "assets/sprites-v1/items/per_1.png",
+   "bytes": 51270,
+   "sha256": "ff255f45d9f7406f8f6ba60651bc866c006e6f110ba884028528e66f6077e1e0"
+  },
+  {
+   "path": "assets/sprites-v1/items/per_1@2x.png",
+   "bytes": 147358,
+   "sha256": "4cec2a2acf0e6fb3b62a6f9490ec94868ac98f539a93f893b9fba73ce23c176c"
+  },
+  {
+   "path": "assets/sprites-v1/items/per_1@3x.png",
+   "bytes": 266025,
+   "sha256": "5d46a4911b0c42b8b898e291ea34284235fbc0ab68cfd7d42a076edef3f2009f"
+  },
+  {
+   "path": "assets/sprites-v1/items/per_2.png",
+   "bytes": 71285,
+   "sha256": "05d81c62cc60c6fa6be6394eb18621cc2cdbc6cb47272a6e93cdec349c4a95a3"
+  },
+  {
+   "path": "assets/sprites-v1/items/per_2@2x.png",
+   "bytes": 221661,
+   "sha256": "9631eae275e309b92df3ea03122f47ad4050ed7bba53ec8f6f4f26305f5f4df6"
+  },
+  {
+   "path": "assets/sprites-v1/items/per_2@3x.png",
+   "bytes": 407174,
+   "sha256": "69ceedfdfe843b4f63e5ea365a5e0cfb1ebababfe3f7018805da8cc19aa6d937"
+  },
+  {
+   "path": "assets/sprites-v1/items/per_3.png",
+   "bytes": 72822,
+   "sha256": "868ec3ff42dd07af0c4c7ed5c3e0577fa16150c4d5e9ec22db39cd5b83ebc2fa"
+  },
+  {
+   "path": "assets/sprites-v1/items/per_3@2x.png",
+   "bytes": 218786,
+   "sha256": "b618a8f92fd81b02fc3905569a63401e5ffbbd8da1e8fdfde3a4d7a0d9909af4"
+  },
+  {
+   "path": "assets/sprites-v1/items/per_3@3x.png",
+   "bytes": 400193,
+   "sha256": "bedd7fd5ad36fc40e2519e971411808ca2fb7e4d0121c81c981ca33f3bd2c752"
+  },
+  {
+   "path": "assets/sprites-v1/items/per_4.png",
+   "bytes": 84986,
+   "sha256": "47ebb269b742e6b3e22d102b66206a0118fced941a4f785a6216a6427c0516a5"
+  },
+  {
+   "path": "assets/sprites-v1/items/per_4@2x.png",
+   "bytes": 270857,
+   "sha256": "2eaeaedcf10eb3382fe1793dbb262ab113eae29e15e27875a01c157406de9b91"
+  },
+  {
+   "path": "assets/sprites-v1/items/per_4@3x.png",
+   "bytes": 510967,
+   "sha256": "4e682580af6bb10f1a02cc55c11ae039a1aff514d250edc1a14fb5817d8e78a8"
+  },
+  {
+   "path": "assets/sprites-v1/items/per_5.png",
+   "bytes": 71456,
+   "sha256": "9ced53c21266e72ba8624f91c871a063c2cb72a30bce47367583e91911d6b549"
+  },
+  {
+   "path": "assets/sprites-v1/items/per_5@2x.png",
+   "bytes": 216292,
+   "sha256": "764b92db14a53d550efe2b3859ed650c143080de3f7e00e8af5ba1726f7cbb03"
+  },
+  {
+   "path": "assets/sprites-v1/items/per_5@3x.png",
+   "bytes": 401805,
+   "sha256": "34e587b6b400c043b65d0e64a77fb9b5d0c9e7e3de8ff66497d99f385752c173"
+  },
+  {
+   "path": "assets/sprites-v1/items/per_6.png",
+   "bytes": 77469,
+   "sha256": "e97eed94ce4e4c66a29cdf87485add6b354eeef995fd7f8c4212ff09500b3cf5"
+  },
+  {
+   "path": "assets/sprites-v1/items/per_6@2x.png",
+   "bytes": 244615,
+   "sha256": "d44e09382d59380035ef0dae4619de02465075430b72187ae6d5390324ca8ce2"
+  },
+  {
+   "path": "assets/sprites-v1/items/per_6@3x.png",
+   "bytes": 461604,
+   "sha256": "39184ee1684c5551464a028d2d5c32423b9e0856287cc4969494eb49379002ed"
+  },
+  {
+   "path": "assets/sprites-v1/items/wrap_box.png",
+   "bytes": 50781,
+   "sha256": "79df89af1dbc627722c47ac23d2024b081ee99093a90c1f29baac2b954e82715"
+  },
+  {
+   "path": "assets/sprites-v1/items/wrap_box@2x.png",
+   "bytes": 173312,
+   "sha256": "b80e85413ff600663e176a400ae22d076c623759ead84952433a347613a67587"
+  },
+  {
+   "path": "assets/sprites-v1/items/wrap_box@3x.png",
+   "bytes": 350527,
+   "sha256": "6ed515ce4a08893049d3bb0da9864a9e969a546a1d47ee59d998d7664429d0e5"
+  },
+  {
+   "path": "assets/sprites-v1/items/wrap_table.png",
+   "bytes": 57468,
+   "sha256": "823cc635649a7c49c2ce58a11026072a8ddc8f3fdf3d42a7ac73aeb3c7e19aa8"
+  },
+  {
+   "path": "assets/sprites-v1/items/wrap_table@2x.png",
+   "bytes": 184167,
+   "sha256": "4f9df43dfbbc0a4455c66a19841716a6b27d88e13d8eb9edc04cfd129a414625"
+  },
+  {
+   "path": "assets/sprites-v1/items/wrap_table@3x.png",
+   "bytes": 373853,
+   "sha256": "51eb5ee90d51a7e6ff130d5dadc92f530f01d279d047e82f866bd6fba54df47f"
+  },
+  {
+   "path": "assets/ui/salon-tall.webp",
+   "bytes": 111570,
+   "sha256": "2d408390170e9b7b24b844d9bd2ab221e981478905a3e441efa1b8b4fad972b6"
+  },
+  {
+   "path": "atelier.js",
+   "bytes": 13529,
+   "sha256": "11748074a3a486de0ffd5e499c6576588a4fcc4df008e6300f1123380539b9b2"
+  },
+  {
+   "path": "audio.js",
+   "bytes": 6562,
+   "sha256": "5e57dbb7ec5150d3d6387765d83e7aae6cdfd92acf1db3452210a7262a974b1c"
+  },
+  {
+   "path": "config.js",
+   "bytes": 956,
+   "sha256": "dc81dc42236536a959e0813e180e0d01e8adf572eb2c274d05d0c72f524c2b10"
+  },
+  {
+   "path": "content.js",
+   "bytes": 20281,
+   "sha256": "4419e4a574ac1ab142cde83ca7bde78ccd2e4dcbe23b15f9ef3d32fa4d1a0275"
+  },
+  {
+   "path": "fonts.css",
+   "bytes": 780,
+   "sha256": "e9df5caa41c0e57e299d7f0cadeafe3f05412a0490d4ac9a86f7ae4cd3efc549"
+  },
+  {
+   "path": "game.js",
+   "bytes": 192212,
+   "sha256": "c12b09ecf8a1772519534f4e698d4afaf7d07cc8b59ae93b5eb2875294ec05a5"
+  },
+  {
+   "path": "i18n.js",
+   "bytes": 244991,
+   "sha256": "8eb0a1802aa313ed58e5645019610a4d416bc990a110a7b92c1838942a02ea9f"
+  },
+  {
+   "path": "icon.png",
+   "bytes": 190286,
+   "sha256": "ebc02b3f5810b523b9332522a43643d93e9cf85fac5b9a8f707dc181c6071b6d"
+  },
+  {
+   "path": "index.html",
+   "bytes": 9161,
+   "sha256": "f138613d6ec081e16d6055aaca3924f8441ea41e3a011b5baf415eb62d878bd6"
+  },
+  {
+   "path": "manifest.json",
+   "bytes": 305,
+   "sha256": "c83c7ebecda2a5282d05076315c2e65fc1adc0c0ec714a45a5c5155119416488"
+  },
+  {
+   "path": "missions.js",
+   "bytes": 24133,
+   "sha256": "db5cd7739eb7913ae1ed22433fc07a0814bad829ff61367e3222d32c29152e7a"
+  },
+  {
+   "path": "progression.js",
+   "bytes": 5137,
+   "sha256": "7b004b83ddec014fa55a63051380b15fc704beb92c761bed30b62da887fa7328"
+  },
+  {
+   "path": "salon-data.js",
+   "bytes": 23852,
+   "sha256": "e53a68633cb73c9fc8fade6e5d43c4a7af2f7dba771300ea0753c6e48e7214f4"
+  },
+  {
+   "path": "save.js",
+   "bytes": 34507,
+   "sha256": "c3086268c93c014e0cf6159f20b60321e8decb0fc5461be5cf12a87aa2d4e765"
+  },
+  {
+   "path": "style.css",
+   "bytes": 70568,
+   "sha256": "54025586baa15b5dc80e21668b74b5ae9ee3dfc97c9b86034629337d41a5d56b"
+  }
+ ]
+}

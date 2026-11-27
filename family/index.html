@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="ug" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="format-detection" content="telephone=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Atelier Lueur">
+<meta name="theme-color" content="#ffd9ea">
+<link rel="apple-touch-icon" href="icon.png?v=addda4ce49f6">
+<link rel="manifest" href="manifest.json?v=addda4ce49f6">
+<title>Atelier Lueur</title>
+<link rel="preload" href="assets/fonts/NotoSansArabic-Variable.ttf?v=addda4ce49f6" as="font" type="font/ttf" crossorigin>
+<link rel="preload" href="assets/fonts/Nunito-Variable.ttf?v=addda4ce49f6" as="font" type="font/ttf" crossorigin>
+<link rel="preload" href="assets/fonts/NotoSansSC-Subset.ttf?v=addda4ce49f6" as="font" type="font/ttf" crossorigin>
+<link rel="preload" href="assets/fonts/GreatVibes-Regular.ttf?v=addda4ce49f6" as="font" type="font/ttf" crossorigin>
+<link rel="stylesheet" href="fonts.css?v=addda4ce49f6">
+<link rel="stylesheet" href="style.css?v=addda4ce49f6">
+</head>
+<body>
+<div id="bg"></div>
+
+<!-- باشلىنىش بېتى -->
+<section class="screen" id="start">
+  <div>
+    <div class="logo">Atelier Lueur</div>
+    <div class="subtitle" data-t="appName"></div>
+  </div>
+  <div class="hero" id="hero"></div>
+  <div>
+    <div class="giftline" id="giftLine"></div>
+    <button class="bigbtn" id="btnStart"></button>
+    <button class="bigbtn light" id="btnNew"></button>
+  </div>
+</section>
+
+
+<!-- باش بەت (سالون) -->
+<section class="screen" id="home">
+  <div class="homeBg" aria-hidden="true"></div>
+  <div class="homeScrimT" aria-hidden="true"></div>
+  <div class="homeScrimB" aria-hidden="true"></div>
+  <div class="topHost" id="homeTopHost"></div>
+  <div class="homeProg" id="homeProg"></div>
+  <div class="homeSpacer">
+    <button type="button" class="eventChip" id="hEvent"></button>
+    <button type="button" class="giftChip" id="hGift" hidden></button>
+  </div>
+  <div class="homeDock">
+    <nav class="homeNav" id="homeNav"></nav>
+    <button type="button" class="playBtn" id="btnPlay" data-t="play"></button>
+  </div>
+</section>
+
+<!-- ئويۇن بېتى -->
+<section class="screen" id="game">
+  <div class="topHost" id="gameTopHost"><div class="top" id="top"></div></div>
+  <div id="pageBoard" style="display:contents">
+    <div class="ordersRow">
+      <div id="orders"></div>
+      <div class="side" id="side"></div>
+    </div>
+    <div class="boardWrap" id="boardWrap"><div id="board"></div></div>
+    <div class="info" id="info"></div>
+  </div>
+  <div id="pageSalon" style="display:none;flex:1;min-height:0;flex-direction:column;gap:8px">
+    <div class="ribbon" data-t="decorate"></div>
+    <div class="salonTabs" id="salonTabs"></div>
+    <div class="roomBox"><div class="room" id="room"></div></div>
+    <div class="decoPanel"><h3><span data-t="salon"></span><span class="prog" id="decoProg"></span></h3><div class="decoList" id="decoList"></div></div>
+  </div>
+  <nav class="nav" id="nav"></nav>
+  <div id="undoBar" hidden></div>
+  <div id="tutLayer" hidden></div>
+</section>
+
+<div class="overlay" id="overlay"><div class="modal" id="modal"></div></div>
+<div class="overlay" id="recovery" role="dialog" aria-modal="true"><div class="modal" id="recoveryBody"></div></div>
+<div id="saveWarn" role="alert" hidden></div>
+<div id="toast"></div>
+
+<!-- Startup safety net: if any script fails to load or throws before the game has started, a visible, localized
+     message with a Retry button replaces the blank screen. Plain ES5, no dependency on the game scripts or style.css.
+     It never reads, writes or clears saved data (it only peeks at the saved language to choose UG/EN). -->
+<div id="startupError" role="alert" style="display:none"></div>
+<script>
+(function () {
+  var T = {
+    ug: {dir: 'rtl', title: 'ئويۇن ئېچىلمىدى', body: 'باشلىنىشتا خاتالىق كۆرۈلدى. ساقلانغان ئىلگىرىلەشلىرىڭىز ئۆچۈرۈلمىدى ۋە ئۆزگەرمىدى. «قايتا سىناش» نى بېسىڭ.', retry: 'قايتا سىناش', tech: 'تېخنىكىلىق ئۇچۇر'},
+    en: {dir: 'ltr', title: 'The game could not start', body: 'Something went wrong while starting. Your saved progress was not deleted or changed. Tap Retry.', retry: 'Retry', tech: 'Technical details'}
+  };
+  var detail = '', box = document.getElementById('startupError');
+  var LANG_KEYS = ['ug','en','tr','ar','zh-Hans','ru','fr','de','es','pt-BR'];
+  function pickBest(nav) {
+    var map = {}, i, raw, low, parts, primary;
+    for (i = 0; i < LANG_KEYS.length; i++) map[LANG_KEYS[i].toLowerCase()] = LANG_KEYS[i];
+    raw = String(nav || '').replace(/_/g, '-').trim();
+    if (!raw) return 'en';
+    low = raw.toLowerCase();
+    if (map[low]) return map[low];
+    parts = low.split('-'); primary = parts[0];
+    if (primary === 'zh') {
+      if (/\b(hant|tw|hk|mo)\b/.test(low)) return 'en';
+      return map['zh-hans'] || 'en';
+    }
+    if (primary === 'pt') return map['pt-br'] || 'en';
+    return map[primary] || 'en';
+  }
+  function lang() {
+    try { var m = /"lang"\s*:\s*"([^"]+)"/.exec(localStorage.getItem('atelierLueur.family.v2') || ''); if (m && LANG_KEYS.indexOf(m[1]) >= 0) return m[1]; } catch (e) {}
+    return pickBest((navigator.language || (navigator.languages && navigator.languages[0]) || ''));
+  }
+  function retry() {
+    var u = ['index.html', 'style.css', 'fonts.css', 'config.js', 'i18n.js', 'art.js', 'save.js', 'progression.js', 'salon-data.js', 'atelier.js', 'missions.js', 'content.js', 'audio.js', 'game.js'], done = false;
+    function go() { if (!done) { done = true; location.reload(); } }
+    try { Promise.all(u.map(function (f) { return fetch(f, {cache: 'reload', credentials: 'same-origin'}); })).then(go, go); } catch (e) { go(); }   // refresh the HTTP cache copies only
+    setTimeout(go, 3000);
+  }
+  function show() {
+    if (window.__atelierBooted || !box) return;
+    var code = lang(); var t = T[code] || T.en; t = {dir: (code === 'ug' || code === 'ar') ? 'rtl' : 'ltr', title: t.title, body: t.body, retry: t.retry, tech: t.tech};
+    box.style.cssText = 'position:fixed;left:0;top:0;right:0;bottom:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;text-align:center;background:#ffd9ea;color:#6a2350;font:16px/1.6 system-ui,-apple-system,"Geeza Pro",sans-serif;direction:' + t.dir;
+    box.innerHTML = '';
+    var h = document.createElement('div'); h.style.cssText = 'font-size:22px;font-weight:800;margin-bottom:10px'; h.textContent = t.title; box.appendChild(h);
+    var p = document.createElement('div'); p.style.cssText = 'max-width:320px;margin-bottom:18px'; p.textContent = t.body; box.appendChild(p);
+    var b = document.createElement('button'); b.type = 'button'; b.textContent = t.retry;
+    b.style.cssText = 'min-height:48px;padding:10px 28px;border:0;border-radius:16px;background:#ff5fa2;color:#fff;font:inherit;font-weight:800;box-shadow:0 4px 0 #c43a7e;touch-action:manipulation';
+    b.onclick = retry; box.appendChild(b);
+    if (detail) { var d = document.createElement('div'); d.style.cssText = 'max-width:340px;font:11px/1.4 ui-monospace,Menlo,monospace;direction:ltr;text-align:left;opacity:.7;word-break:break-all'; d.textContent = detail; var l = document.createElement('div'); l.style.cssText = 'margin-top:18px;font-size:11px;opacity:.7'; l.textContent = t.tech; box.appendChild(l); box.appendChild(d); d.style.marginTop = '2px'; }
+  }
+  window.__atelierStartupOk = function () { if (box) box.style.display = 'none'; };   // called by game.js once the start screen is up
+  window.addEventListener('error', function (e) {
+    if (window.__atelierBooted) return;
+    var t = e.target;
+    if (t && t !== window && (t.tagName === 'SCRIPT' || t.tagName === 'LINK')) detail = 'failed to load ' + (t.src || t.href || '').split('/').pop();
+    else detail = (e.message || 'error') + (e.filename ? ' (' + String(e.filename).split('/').pop() + ':' + e.lineno + ')' : '');
+    show();
+  }, true);
+  window.addEventListener('unhandledrejection', function (e) { if (window.__atelierBooted) return; detail = 'promise: ' + String(e.reason && e.reason.message || e.reason).slice(0, 120); show(); });
+  setTimeout(function () { if (!window.__atelierBooted) { detail = detail || 'startup timeout'; show(); } }, 10000);
+})();
+</script>
+
+<script src="config.js?v=addda4ce49f6"></script>
+<script src="i18n.js?v=addda4ce49f6"></script>
+<script src="art.js?v=addda4ce49f6"></script>
+<script src="save.js?v=addda4ce49f6"></script>
+<script src="progression.js?v=addda4ce49f6"></script>
+<script src="salon-data.js?v=addda4ce49f6"></script>
+<script src="atelier.js?v=addda4ce49f6"></script>
+<script src="missions.js?v=addda4ce49f6"></script>
+<script src="content.js?v=addda4ce49f6"></script>
+<script src="audio.js?v=addda4ce49f6"></script>
+<script src="game.js?v=addda4ce49f6"></script>
+</body>
+</html>

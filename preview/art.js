@@ -294,12 +294,13 @@ const SALON_DIR = 'assets/salon-v1/';
    (window rod/sill, vanity under the mirror, vase foot on the tabletop, floor feet). Boxes fill
    the sprite exactly, so object-fit:contain no longer letterboxes and “drops” props in mid-air. */
 const SALON_LAYOUT = {rug:[79.56,189.94,200.88,75.08,0], curtain:[225.06,0,116.31,163,1], shelf:[3.98,32.07,74.09,184.97,2], mirror:[84.03,14.92,107.9,128.04,3],
-  table:[82,121.25,150,96.75,4], lamp:[315,66.63,42.02,131.77,5], chair:[100,134.01,100.44,115.11,6], flowers:[188.28,88.03,40.03,45.25,7]};
-/* Reception (Reception Art v1): own empty-room image + nine props. Measured layout from assets/reception/layout.json (natural aspect ratios; verify/salon-areas.js
-   checks these numbers equal that file). The single-file build embeds the base + @2x props in window.SALON_INLINE under the same ids. */
+  table:[82,121.25,150,96.75,4], lamp:[322.84,66.63,42.02,131.77,5], chair:[100,134.01,100.44,115.11,6], flowers:[188.28,88.03,40.03,45.25,7]};
+/* Reception (Reception Art v2): new empty-room image + nine drawn props (ChatGPT room). rcpsign is the floor vase beside the
+   entrance doors (price 500). Measured layout from assets/reception/layout.json
+   (natural aspect ratios; verify/salon-areas.js checks these numbers equal that file). The single-file build embeds the base + @2x props. */
 const RECEPTION_DIR = 'assets/reception/';
-const RECEPTION_LAYOUT = {rcprunner:[105.511,201,206.979,57,0], rcpdesk:[112,132.598,125,87.402,3], rcpsign:[211.801,182,26.398,62,4], rcpsofa:[239,162.197,105,72.803,3],
-  rcpplant:[329,146.584,29,96.416,4], rcptea:[258.1,225,60.8,38,5], rcpwall:[110,38.262,138,75.738,1], rcplights:[123.219,0,89.563,60,6], rcpcase:[65,92.74,43,127.26,3]};
+const RECEPTION_LAYOUT = {rcprunner:[60.094,199.815,264.176,58.82,0], rcpdesk:[120.31,91.55,134.472,92.799,3], rcpsign:[36.796,120.331,47.213,89.751,4], rcpsofa:[244.129,127.334,115.871,87.658,4],
+  rcpplant:[258.295,73.972,58.217,105.201,3], rcptea:[261.014,175.157,50.361,51.707,5], rcpwall:[134.96,54.341,92.069,51.429,1], rcplights:[162.412,0,45.183,47.666,6], rcpcase:[60.174,52.064,56.17,126.507,2]};
 /* Spa Art v1 (assets/spa/): installed and verified but NOT ACTIVE — no gameplay, unlock, purchase UI or preload uses it yet (docs/salon/SPA_PLAN.md).
    Measured layout = docs/art/spa-v1/layout.json (verify/spa-art.js checks equality). Colour slots have <id>_rose|sage|lilac files; all other props are single files. */
 const SPA_DIR = 'assets/spa/';
@@ -331,7 +332,7 @@ function makeupSrc(id){               // pure URL helper (no preload, no DOM); n
   if (key === 'makeup-base') return {src: MAKEUP_DIR + 'salon-makeup-base.png', srcset: ''};
   return {src: `${MAKEUP_DIR}${key}.png`, srcset: `${MAKEUP_DIR}${key}.png 1x, ${MAKEUP_DIR}${key}@2x.png 2x, ${MAKEUP_DIR}${key}@3x.png 3x`};
 }
-const isReception = id => id === 'reception-base' || RECEPTION_LAYOUT[id] !== undefined;
+const isReception = id => id === 'reception-base' || id.indexOf('rcp') === 0;
 function salonSrc(id, colour){
   if (id === 'spa-base') return spaSrc('base');
   if (id === 'makeup-base') return makeupSrc('base');

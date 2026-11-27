@@ -9,7 +9,7 @@ const COLS = 7, ROWS = 8, N = COLS*ROWS;
 const ENERGY_CAP = 100, ENERGY_MS = 120000;     // ONE shared cap: passive regeneration stops at 100 (rewards may exceed it); +1 energy every 2 minutes
 const INITIAL_ENERGY = 50;                    // a new game still starts with 50 (separate from the cap)
 const LEGACY_ENERGY_CAP = 50;                 // the cap before the 100 cap (used only to settle old saves exactly once)
-const MAXLV = 6, GEN_MAXLV = 3, GEN_STOCK = 20, GEN_REST_MS = 180000;   // 20 productions, then a 3-minute rest; leftover time counts while away
+const MAXLV = 6, GEN_MAXLV = 3, GEN_STOCK = 60, GEN_REST_MS = 120000;   // 60 productions, then a 2-minute rest; leftover time counts while away
 const WRAP_LEVEL = 5, WRAP_MS = 10000;   // wrapping table unlocks at level 5 (preview grants it early so it can be tried)
 const GIFT_ORDER_MIN = 8, GIFT_ORDER_MAX = 10;   // one gift order every 8–10 regular orders
 const CHEST_GAP_MS = 90 * 60 * 1000;             // at most one board chest per 90 minutes (wall clock)

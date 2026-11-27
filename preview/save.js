@@ -17,6 +17,8 @@
 
   let CFG = null;
   function configure(c) { CFG = c; }
+  // producer stock ceiling follows the game's GEN_STOCK (60 today); never below 60 so saves written by any 60-stock build stay valid
+  const genStock = () => Math.max(60, (CFG && isInt(CFG.GEN_STOCK, 1, 1000)) ? CFG.GEN_STOCK : 0);
 
   // plain object (any realm): prototype is null or a root prototype whose own prototype is null
   const isObj = x => { if (x === null || typeof x !== 'object' || Array.isArray(x)) return false; const p = Object.getPrototypeOf(x); return p === null || Object.getPrototypeOf(p) === null; };
@@ -93,7 +95,7 @@
         const g = { g: it.g, l: it.l };
         if (it.ch !== undefined) { if (!isNum(it.ch, 0, 1e6)) return bad('producer'); g.ch = it.ch; }
         if (it.t !== undefined) { if (!isNum(it.t, 0, 1e15)) return bad('producer'); g.t = it.t; }
-        if (it.n !== undefined) { if (!isInt(it.n, 0, 20)) return bad('producer'); g.n = it.n; }
+        if (it.n !== undefined) { if (!isInt(it.n, 0, genStock())) return bad('producer'); g.n = it.n; }
         if (it.rt !== undefined) { if (!isNum(it.rt, 0, 1e15)) return bad('producer'); g.rt = it.rt; }
         board.push(g);
       } else if (it.box === 'gift' || it.box === 'gem') {
@@ -271,7 +273,7 @@
           const g = { g: it.g, l: it.l };
           if (it.ch !== undefined) { if (!isNum(it.ch, 0, 1e6)) return bad('inv'); g.ch = it.ch; }
           if (it.t !== undefined) { if (!isNum(it.t, 0, 1e15)) return bad('inv'); g.t = it.t; }
-          if (it.n !== undefined) { if (!isInt(it.n, 0, 20)) return bad('inv'); g.n = it.n; }
+          if (it.n !== undefined) { if (!isInt(it.n, 0, genStock())) return bad('inv'); g.n = it.n; }
           if (it.rt !== undefined) { if (!isNum(it.rt, 0, 1e15)) return bad('inv'); g.rt = it.rt; }
           items.push(g);
         } else if (it.box === 'gift' || it.box === 'gem') {

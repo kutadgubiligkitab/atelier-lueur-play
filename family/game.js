@@ -51,7 +51,7 @@ const A = window.ART, C = window.CONFIG;
 document.body.insertAdjacentHTML('afterbegin', A.DEFS);
 const PREVIEW = typeof location !== 'undefined' && /\/preview(?:\/|$)/.test(location.pathname || '');
 const KEY = PREVIEW ? 'atelierLueur.family.preview.v2' : 'atelierLueur.family.v2';   // preview play path uses its own save so the main playtest is untouched
-SAVE.configure({N, CHAINS: ALL_CHAINS, CUSTOMERS: ['mira','elara','sora','amina','nila','celine','ada','marisol','jiwoo','gulnar','ingrid','tamara'], MAXLV, GEN_TYPES: GEN_TYPES_ALL, GEN_MAXLV, LANG_KEYS:Object.keys(LANGS),
+SAVE.configure({N, GEN_STOCK, CHAINS: ALL_CHAINS, CUSTOMERS: ['mira','elara','sora','amina','nila','celine','ada','marisol','jiwoo','gulnar','ingrid','tamara'], MAXLV, GEN_TYPES: GEN_TYPES_ALL, GEN_MAXLV, LANG_KEYS:Object.keys(LANGS),
   validateEv: v => window.CONTENT.strictEventState(v), evSummary: v => window.CONTENT.summaryOf(v), checkVariants: (o, vo, ve) => window.SALON.checkVariants(o, vo, ve)});
 // storage adapter: may throw (blocked storage / quota). save.js reports every failure; nothing is swallowed here.
 const persist = SAVE.createStore({
